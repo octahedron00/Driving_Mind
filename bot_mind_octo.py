@@ -149,7 +149,7 @@ def get_green(image):
 
 
 
-def get_sliding_window_result(image, init: int =-1):
+def get_sliding_window_result(image, init=-1):
     """
     Sliding window를 자동으로 돌려주기.
     기존 이미지에 대한 비율로 설정: 높이, 너비, 개수(맨 아래부터)
