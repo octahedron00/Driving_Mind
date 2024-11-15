@@ -272,7 +272,7 @@ class bot_mind:
     # GO_CURVE = 5
     WELL_DONE = -1
 
-    LIST = [0, 1, 2, 1, 2, 4, 2, 1, 2, 1, 2, 4, 3, 1, -1]
+    LIST = [1, 2, 1, 2, 4, 2, 1, 2, 1, 2, 4, 3, 1, -1]
 
     stage = 0
     state = 0
@@ -324,10 +324,10 @@ class bot_mind:
 
         if green_max > true_green_confidence and self.line_road.get_distance(green_pos[1], green_pos[0]) < true_green_dist_from_road:
             print("What, the true Green!!!", green_max, self.line_road.get_distance(green_pos[1], green_pos[0]))
-            green_encounter += 1
+            self.green_encounter += 1
         else:
-            green_encounter -= 1
-            green_encounter = max(int(green_encounter*0.8), green_encounter)
+            self.green_encounter -= 1
+            self.green_encounter = max(int(self.green_encounter*0.8), self.green_encounter)
 
 
         if green_encounter >= 5:
@@ -335,6 +335,7 @@ class bot_mind:
 
             self.stage += 1
             self.state = self.LIST[self.stage]
+
 
         if self.state == self.GO_STRAIGHT:
             self.go_stanley()
