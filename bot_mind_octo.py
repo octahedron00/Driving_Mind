@@ -377,6 +377,8 @@ class bot_mind:
         cv2.namedWindow('window')
         cv2.moveWindow('window', 0, 600)
         cv2.imshow('window', window_frame)
+        
+        cv2.waitKey(1)
 
 
     def go_stanley(self):
