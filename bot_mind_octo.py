@@ -278,6 +278,7 @@ class bot_mind:
     state = 0
     green_encounter = 0
     line_road = None
+    init_pos_for_sliding_windows = -1
 
     def __init__(self):
         self.bridge = CvBridge()
@@ -305,16 +306,16 @@ class bot_mind:
 
         green_frame = get_green(bev_frame)
 
-        window_frame, x_list, y_list = get_sliding_window_result(filter_frame, init_pos_for_sliding_windows)
+        window_frame, x_list, y_list = get_sliding_window_result(filter_frame, self.init_pos_for_sliding_windows)
 
         if len(x_list) > 3:
-            init_pos_for_sliding_windows = x_list[0]
+            self.init_pos_for_sliding_windows = x_list[0]
             self.line_road = Line(x_list, y_list)
 
             print("x = ", self.line_road.var_1, " y + ", self.line_road.var_0)
             print("Dist from origin: ", self.line_road.get_distance(bot_from_bev_x,bot_from_bev_y), ", angle: ", self.line_road.get_angle())
         else:
-            init_pos_for_sliding_windows = -1
+            self.init_pos_for_sliding_windows = -1
         
         if self.line_road == None:
             return
