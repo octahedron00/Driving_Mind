@@ -1,3 +1,8 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, division
+
 from ast import Mod
 from turtle import color, distance
 import cv2
@@ -83,13 +88,12 @@ def get_road(image):
 
 def get_green(image):
     """
-    green 색상 부분만 뽑아 이미지로 만들어 줌.
-    주변의 녹색이 문제가 되지만, 일단 filter 해놓고 생각하기.
+    get green only image: to binary threshold.
 
     """
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    green_mask = cv2.inRange(image, (0, 80, 0), (80, 255, 80))
+    green_mask = cv2.inRange(image, (0, 60, 0), (80, 255, 80))
     green = cv2.bitwise_and(image, image, mask = green_mask)
     
     
@@ -190,8 +194,7 @@ def get_sliding_window_result(image, init: int =-1):
 
 
 
-
-def get_square_pos(green_frame):
+def get_rect_blur(frame, size_square_mm = 31):
 
     size_square_mm = 31 # odd
 
@@ -199,6 +202,12 @@ def get_square_pos(green_frame):
 
     blurred_frame = cv2.filter2D(green_frame, -1, filter)
 
+    return blurred_frame
+
+
+
+def get_square_pos(green_frame, size_square_mm = 31):
+    blurred_frame = get_filter_result(green_frame, size_square_mm)
     color_frame = cv2.cvtColor(blurred_frame, cv2.COLOR_GRAY2BGR)
 
     max_pos = (0, 0)

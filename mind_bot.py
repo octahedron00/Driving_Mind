@@ -18,6 +18,7 @@ from collections import deque
 
 
 from src.lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
+from mode import Stanley2GreenMode
 
 
 true_green_confidence = 100
@@ -26,6 +27,8 @@ true_green_dist_from_road = 20 #mm
 bot_from_bev_x = 100
 bot_from_bev_y = 400
 
+
+frame_ignore_level = 2
 
 
 class bot_mind:
@@ -37,28 +40,24 @@ class bot_mind:
     # GO_CURVE = 5
     WELL_DONE = -1
 
-    LIST = [0, 1, 2, 1, 2, 4, 2, 1, 2, 1, 2, 4, 3, 1, -1]
-
-    stage = 1
-    state = 1
-    green_encounter = 0
-    line_road = None
-    init_pos_for_sliding_windows = -1
-
     def __init__(self):
         self.bridge = CvBridge()
         rospy.init_node('lane_detection_node', anonymous=False)
         rospy.Subscriber('/main_camera/image_raw/compressed', CompressedImage, self.camera_callback)
         self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
         
-        self.stage = 1
-        self.state = 1
-        self.green_encounter = 0
-        self.line_road = None
+        self.stage = 0
+        self.mode_list = [
+            Stanley2GreenMode(),
+            
+        ]
+        self.count_frame = 1
 
     def camera_callback(self, data):
         self.image = self.bridge.compressed_imgmsg_to_cv2(data, desired_encoding="bgr8")
-        self.action()
+        self.count_frame += 1
+        if self.count_frame % frame_ignore_level == 0:
+            self.action()
 
 
     def action(self):
@@ -95,8 +94,8 @@ class bot_mind:
             self.green_encounter = max(int(self.green_encounter*0.8), self.green_encounter)
 
 
-        if green_encounter >= 5:
-            green_encounter = -10
+        if self.green_encounter >= 5:
+            self.green_encounter = -10
 
             self.stage += 1
             self.state = self.LIST[self.stage]
