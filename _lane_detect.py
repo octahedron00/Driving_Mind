@@ -1,19 +1,61 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function, division
-
-from ast import Mod
-from turtle import color, distance
+import rospy
 import cv2
 import numpy as np
+import time
 import math
 
-# import matplotlib.pyplot as plt
+from sensor_msgs.msg import CompressedImage
+from cv_bridge import CvBridge
+from geometry_msgs.msg import Twist
+from math import *
+from collections import deque
 
-# BEV 변환 코드... 일단 적기
+true_green_confidence = 100
+true_green_dist_from_road = 20 #mm
 
+bot_from_bev_x = 100
+bot_from_bev_y = 400
 
+class Line:
+    var_1 = 0
+    var_0 = 0
+    calc = None
+    from_y_to_x = True
+
+    def __init__(self, x_list, y_list, from_y_to_x=True):
+
+        if len(x_list) == 0:
+            pass
+
+        variables = np.polyfit(y_list, x_list, deg=1)
+
+        self.var_1 = variables[0]
+        self.var_0 = variables[1]
+
+        self.calc = np.poly1d(variables)
+        self.from_y_to_x = from_y_to_x
+    
+
+    def get_distance(self, x, y):
+        
+        dist = ((self.var_1 * y) - x + self.var_0) / math.sqrt(1 + (self.var_1*self.var_1))
+        dist = abs(dist)
+
+        return dist
+
+    def get_offset(self, x, y):
+        
+        dist = -((self.var_1 * y) - x + self.var_0) / math.sqrt(1 + (self.var_1*self.var_1))
+
+        return dist
+
+    def get_angle(self, is_deg=True):
+
+        angle = math.atan(self.var_1)
+
+        if is_deg:
+            return -(angle / math.pi) * 180
+        return angle
 
 
 
@@ -45,9 +87,6 @@ def get_bev(image):
     warp_image = cv2.warpPerspective(image, M, (h, w), flags=cv2.INTER_LINEAR)
 
     return warp_image, Minv
-
-
-
 
 
 
@@ -85,27 +124,7 @@ def get_road(image):
 
 
 
-
-def get_green(image):
-    """
-    get green only image: to binary threshold.
-
-    """
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-    green_mask = cv2.inRange(image, (0, 60, 0), (80, 255, 80))
-    green = cv2.bitwise_and(image, image, mask = green_mask)
-    
-    
-    green_gray = cv2.cvtColor(green, cv2.COLOR_BGR2GRAY)
-    ret, bev_binary = cv2.threshold(green_gray, 30, 255, cv2.THRESH_BINARY)
-
-    return bev_binary
-
-
-
-
-def get_sliding_window_result(image, init: int =-1):
+def get_sliding_window_result(image, init=-1):
     """
     Sliding window를 자동으로 돌려주기.
     기존 이미지에 대한 비율로 설정: 높이, 너비, 개수(맨 아래부터)
@@ -193,21 +212,39 @@ def get_sliding_window_result(image, init: int =-1):
 
 
 
-
 def get_rect_blur(frame, size_square_mm = 31):
 
     size_square_mm = 31 # odd
 
     filter = np.ones((size_square_mm, size_square_mm), dtype=np.float64) / (size_square_mm*size_square_mm)
 
-    blurred_frame = cv2.filter2D(green_frame, -1, filter)
+    blurred_frame = cv2.filter2D(frame, -1, filter)
 
     return blurred_frame
 
 
 
+def get_green(image):
+    """
+    green 색상 부분만 뽑아 이미지로 만들어 줌.
+    주변의 녹색이 문제가 되지만, 일단 filter 해놓고 생각하기.
+
+    """
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    green_mask = cv2.inRange(image, (0, 80, 0), (80, 255, 80))
+    green = cv2.bitwise_and(image, image, mask = green_mask)
+    
+    
+    green_gray = cv2.cvtColor(green, cv2.COLOR_BGR2GRAY)
+    ret, bev_binary = cv2.threshold(green_gray, 30, 255, cv2.THRESH_BINARY)
+
+    return bev_binary
+
+
+
 def get_square_pos(green_frame, size_square_mm = 31):
-    blurred_frame = get_filter_result(green_frame, size_square_mm)
+    blurred_frame = get_rect_blur(green_frame, size_square_mm)
     color_frame = cv2.cvtColor(blurred_frame, cv2.COLOR_GRAY2BGR)
 
     max_pos = (0, 0)
@@ -223,174 +260,3 @@ def get_square_pos(green_frame, size_square_mm = 31):
     cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(blurred_frame[max_pos]), 0), 5)
 
     return color_frame, max_pos, blurred_frame[max_pos]
-
-
-
-
-
-for i in range(10, 0, -1):
-    print(i)
-print(min(1, 2, 3.0, 4, 5))
-
-
-
-
-
-
-class Mode:
-    GO_STRAIGHT = 1
-    TURN_LEFT = 2
-    TURN_RIGHT = 3
-    MISSION = 4
-    # GO_CURVE = 5
-    WELL_DONE = -1
-
-    LIST = [0, 1, 2, 1, 2, 4, 2, 1, 2, 1, 2, 4, 3, 1, -1]
-
-
-
-
-
-class Line:
-    var_1 = 0
-    var_0 = 0
-    calc = None
-    from_y_to_x = True
-
-    def __init__(self, x_list, y_list, from_y_to_x=True):
-
-        if len(x_list) == 0:
-            pass
-
-        variables = np.polyfit(y_list, x_list, deg=1)
-
-        self.var_1 = variables[0]
-        self.var_0 = variables[1]
-
-        self.calc = np.poly1d(variables)
-        self.from_y_to_x = from_y_to_x
-    
-
-    def get_distance(self, x, y):
-        
-        dist = ((self.var_1 * y) - x + self.var_0) / math.sqrt(1 + (self.var_1*self.var_1))
-        dist = abs(dist)
-
-        return dist
-
-    def get_offset(self, x, y):
-        
-        dist = ((self.var_1 * y) - x + self.var_0) / math.sqrt(1 + (self.var_1*self.var_1))
-
-        return dist
-
-    def get_angle(self, is_deg=True):
-
-        angle = math.atan(self.var_1)
-
-        if is_deg:
-            return -(angle / math.pi) * 180
-        return angle
-
-
-
-
-
-
-if __name__ == "__main__":
-
-    cap = cv2.VideoCapture("omo2.mp4")
-    print(cap)
-    # ret, frame = cap.read()
-    # print(ret, frame)
-
-    init_pos_for_sliding_windows = -1
-
-    stage = 0
-    state = 0
-    mode = Mode()
-    green_encounter = 0
-    line_road = None
-
-    true_green_confidence = 100
-    true_green_dist_from_road = 20 #mm
-
-    while cap.isOpened():
-        
-        state = mode.LIST[stage]
-
-        ret, frame = cap.read()
-
-        if not ret:
-            print("End of Video?")
-            break
-
-        bev_frame, Minv = get_bev(frame)
-
-        filter_frame = get_road(bev_frame)
-
-        green_frame = get_green(bev_frame)
-
-        window_frame, x_list, y_list = get_sliding_window_result(filter_frame, init_pos_for_sliding_windows)
-
-        if len(x_list) > 3:
-            init_pos_for_sliding_windows = x_list[0]
-            line_road = Line(x_list, y_list)
-
-            print("x = ", line_road.var_1, " y + ", line_road.var_0)
-            print("Dist from origin: ", line_road.get_offset(100,400), ", angle: ", line_road.get_angle())
-        else:
-            init_pos_for_sliding_windows = -1
-        
-        if line_road == None:
-            continue
-
-        green_position_frame, green_pos, green_max = get_square_pos(green_frame)
-
-        if green_max > true_green_confidence and line_road.get_distance(green_pos[1], green_pos[0]) < true_green_dist_from_road:
-            print("What, the true Green!!!", green_max, line_road.get_distance(green_pos[1], green_pos[0]))
-            green_encounter += 1
-        else:
-            green_encounter -= 1
-            green_encounter = max(int(green_encounter*0.8), green_encounter)
-
-
-        if green_encounter >= 5:
-            a = input("")
-            green_encounter = 0
-
-
-        # green_position
-
-        cv2.namedWindow('ori')
-        cv2.moveWindow('ori', 0, 0)
-        cv2.imshow('ori', frame)
-
-        cv2.namedWindow('bev')
-        cv2.moveWindow('bev', 700, 0)
-        cv2.imshow('bev', bev_frame)
-
-        cv2.namedWindow('filt')
-        cv2.moveWindow('filt', 1400, 0)
-        cv2.imshow('filt', filter_frame)
-
-        cv2.namedWindow('green')
-        cv2.moveWindow('green', 1400, 300)
-        cv2.imshow('green', green_frame)
-        
-        cv2.namedWindow('green_blur')
-        cv2.moveWindow('green_blur', 1400, 600)
-        cv2.imshow('green_blur', green_position_frame)
-
-        cv2.line(window_frame, (int(line_road.calc(0)), 0), (int(line_road.calc(np.shape(window_frame)[0])), np.shape(window_frame)[0]), (0, 0, 255), 5)
-        cv2.namedWindow('window')
-        cv2.moveWindow('window', 0, 600)
-        cv2.imshow('window', window_frame)
-
-
-        # a = input("")
-
-        if cv2.waitKey(10) & 0xFF == ord('q'):
-            break
-    cap.release()
-    cv2.destroyAllWindows()
