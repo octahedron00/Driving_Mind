@@ -61,7 +61,6 @@ class Line:
 
 def get_bev(image):
     """
-        Image, 그리고 position 4개 > height와 width, mm 단위로 나타내기. 
         rt: right top, lt: left top, rd: right down, ld: left down
 
 
@@ -92,8 +91,7 @@ def get_bev(image):
 
 def get_road(image):
     """
-    returning black and green 색상 부분만 뽑아 이미지로 만들어 줌.
-    다만, 주변의 녹색을 잘라내야 하니까... 음... 
+    returning black and green 
 
     """
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -105,12 +103,12 @@ def get_road(image):
     black = cv2.bitwise_and(rev, rev, mask = black_mask)
 
     # plt.imshow(black)
-    green_mask = cv2.inRange(hsv, (50, 150, 0), (80, 255, 255))
+    green_mask = cv2.inRange(image, (0, 80, 0), (100, 255, 100))
     green = cv2.bitwise_and(image, image, mask = green_mask)
     
     # plt.imshow(green)
 
-    masked = cv2.addWeighted(black, 1, green, 1, 0)
+    masked = cv2.addWeighted(black, 1, green, 2, 0)
 
     # plt.imshow(masked)
 
@@ -122,14 +120,9 @@ def get_road(image):
     return bev_gray
 
 
-
-
 def get_sliding_window_result(image, init=-1):
     """
-    Sliding window를 자동으로 돌려주기.
-    기존 이미지에 대한 비율로 설정: 높이, 너비, 개수(맨 아래부터)
-
-    얼마나의 픽셀이 채워졌는지에 따라 계산에 넣을지 안 넣을지를 생각함.
+    Sliding window
 
     """
     h, w = np.shape(image)
@@ -137,8 +130,8 @@ def get_sliding_window_result(image, init=-1):
     win_h = 0.05
     win_w = 0.5
     win_n = 10
-    fill_min = 0.05
-    fill_max = 0.6
+    fill_min = 0.3
+    fill_max = 0.7
 
     if init > 0:
         lane_point = init
@@ -198,7 +191,7 @@ def get_sliding_window_result(image, init=-1):
         real_sum = sum(x_hist_around_max)
 
         # print(i, "pos", lane_point, "max", max_pos, "filled area", real_sum, real_sum/(np.shape(roi)[0]*np.shape(roi)[1]*255))
-        if fill_min < real_sum/(np.shape(roi)[0]*np.shape(roi)[1]*255) < fill_max:
+        if fill_min < float(real_sum)/(np.shape(roi)[0]*np.shape(roi)[1]*255) < fill_max:
             lane_point = (x_weigh_sum/real_sum) + l
             x_p = lane_point
             y_p = (t + b) / 2
@@ -212,9 +205,83 @@ def get_sliding_window_result(image, init=-1):
 
 
 
-def get_rect_blur(frame, size_square_mm = 31):
+def get_road_edges(frame, is_left = True):
 
-    size_square_mm = 31 # odd
+    matrix = np.zeros((9, 9))
+    if is_left:
+        matrix[2:7, 5:] = 0.1
+        matrix[2:7, :4] = -0.1
+    else:
+        matrix[2:7, 5:] = -0.1
+        matrix[2:7, :4] = 0.1
+    
+    blurred_frame = cv2.filter2D(frame, -1, matrix)
+
+    ret, binary_edge = cv2.threshold(blurred_frame, 50, 255, cv2.THRESH_BINARY)
+
+    color_frame = cv2.cvtColor(binary_edge, cv2.COLOR_GRAY2BGR)
+    x_list, y_list = [], []
+
+    for i in range(np.shape(binary_edge)[0]):
+        for j in range(np.shape(binary_edge)[0]):
+            if binary_edge[i, j]>0:
+                x_list.append(j)
+                y_list.append(i)
+
+    return color_frame, x_list, y_list
+
+
+def get_road_edge_angle(frame, is_left = True):
+
+    segment_count = 10
+    minimum = 2
+
+    matrix = np.zeros((5, 5))
+    if is_left:
+        matrix[1:4, 3:] = 0.2
+        matrix[1:4, :2] = -0.2
+    else:
+        matrix[1:4, 3:] = -0.2
+        matrix[1:4, :2] = 0.2
+    
+    edge_frame = cv2.filter2D(frame, -1, matrix)
+    ret, binary_edge = cv2.threshold(edge_frame, 100, 255, cv2.THRESH_BINARY)
+    color_frame = cv2.cvtColor(binary_edge, cv2.COLOR_GRAY2BGR)
+
+    angle_list = []
+    roi_height = int(np.shape(binary_edge)[0] / segment_count)
+    for s in range(segment_count):
+        roi = binary_edge[s*roi_height: (s+1)*roi_height]
+
+        x_list, y_list = [], []
+        for i in range(np.shape(roi)[0]):
+            for j in range(np.shape(roi)[1]):
+                if roi[i, j]>0:
+                    x_list.append(j)
+                    y_list.append(i)
+        if len(x_list) > roi_height * 0.5: # depends on the size of the filter...
+            line = Line(x_list, y_list)
+            angle_list.append(line.get_angle())
+            cv2.rectangle(color_frame, (0, s*roi_height), (np.shape(color_frame)[1], (s+1)*roi_height), (0, 255, 0), 1)
+        else:
+            cv2.rectangle(color_frame, (0, s*roi_height), (np.shape(color_frame)[1], (s+1)*roi_height), (50, 50, 50), 1)
+
+    angle_list = sorted(angle_list)
+    print("angle list", angle_list)
+
+    if len(angle_list) > minimum:
+        angle_median = angle_list[int((len(angle_list)-1)/2)]
+    else:
+        angle_median = 180
+
+    x_midpoint = int(np.shape(color_frame)[1] / 2)
+    y_height = np.shape(color_frame)[0]
+    cv2.line(color_frame, (x_midpoint, y_height), (int(x_midpoint + (math.tan((angle_median/180)*math.pi)*y_height)), 0), (0, 0, 255), 3)
+    
+    return color_frame, angle_median
+
+
+def get_rect_blur(frame, size_square_mm = 5):
 
     filter = np.ones((size_square_mm, size_square_mm), dtype=np.float64) / (size_square_mm*size_square_mm)
 
@@ -226,8 +293,6 @@ def get_rect_blur(frame, size_square_mm = 31):
 
 def get_green(image):
     """
-    green 색상 부분만 뽑아 이미지로 만들어 줌.
-    주변의 녹색이 문제가 되지만, 일단 filter 해놓고 생각하기.
 
     """
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -243,8 +308,8 @@ def get_green(image):
 
 
 
-def get_square_pos(green_frame, size_square_mm = 31):
-    blurred_frame = get_rect_blur(green_frame, size_square_mm)
+def get_square_pos(green_frame, size_square = 5):
+    blurred_frame = get_rect_blur(green_frame, size_square)
     color_frame = cv2.cvtColor(blurred_frame, cv2.COLOR_GRAY2BGR)
 
     max_pos = (0, 0)
@@ -260,3 +325,15 @@ def get_square_pos(green_frame, size_square_mm = 31):
     cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(blurred_frame[max_pos]), 0), 5)
 
     return color_frame, max_pos, blurred_frame[max_pos]
+
+
+def get_cm_px_from_mm(frame_mm):
+    """
+        make image size / 10
+    """
+    mm_0 = np.shape(frame_mm)[0]
+    mm_1 = np.shape(frame_mm)[1]
+    cm_0, cm_1 = int(mm_0/10), int(mm_1/10)
+
+    frame_cm = cv2.resize(frame_mm, dsize=(cm_0, cm_1), interpolation=cv2.INTER_LINEAR)
+    return frame_cm

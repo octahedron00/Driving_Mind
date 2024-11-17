@@ -26,7 +26,7 @@ true_green_dist_from_road = 20 #mm
 
 
 
-frame_ignore_level = 2
+frame_ignore_level = 1
 
 
 class bot_mind:
@@ -40,12 +40,16 @@ class bot_mind:
 
         self.mode_list = [
             StartMode(pub),
-            Stanley2GreenMode(pub),
-            Turn2VoidMode(pub, is_left=True),
-            Turn2RoadMode(pub, is_left=True),
-            Stanley2GreenMode(pub),
-            Turn2VoidMode(pub, is_left=True),
-            Turn2RoadMode(pub, is_left=True),
+            Stanley2GreenMode(pub, 1),
+            Turn2VoidMode(pub, 2, is_left=True),
+            Turn2RoadMode(pub, 3, is_left=False),
+            Stanley2GreenMode(pub, 4),
+            Turn2VoidMode(pub, 5, is_left=True),
+            Turn2RoadMode(pub, 6, is_left=False),
+            Stanley2GreenMode(pub, 7),
+            # Stanley2GreenMode(pub, 4),
+            # Turn2VoidMode(pub, is_left=True),
+            # Turn2RoadMode(pub, is_left=True),
         ]
         
         self.mode = StartMode(pub)
