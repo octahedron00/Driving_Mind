@@ -17,12 +17,14 @@ from math import *
 from collections import deque
 
 
-from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_cm_px_from_mm, get_square_pos, get_road_edges, get_road_edge_angle, Line
+from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
+from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_cross_pos, Line
 
 
 bot_from_bev_x = 100
 bot_from_bev_y = 400
 
+speed_x = 0.3
 
 
 def showing_off(image_list):
@@ -50,11 +52,11 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
     pub.publish(speed)
 
 
-def move_stanley(pub, offset_mm, angle_deg)
+def move_stanley(pub, offset_mm, angle_deg):
 
     kp= 0.001
     k = 0.2
-    x = 0.2
+    x = speed_x
 
     z = -(angle_deg + atan(kp*offset_mm)) * k * x
     
@@ -104,7 +106,7 @@ class Stanley2GreenMode(Mode):
 
         self.line_road = None
         self.init_pos_for_sliding_windows = -1
-        self.green_encounter = 0
+        self.green_encounter = -1000
 
         self.index = index
         self.log = str(self.index) + "_Stanley2Green_"
@@ -138,7 +140,7 @@ class Stanley2GreenMode(Mode):
         offset_mm = self.line_road.get_offset(bot_from_bev_x,bot_from_bev_y)
         angle_deg = self.line_road.get_angle()
 
-        z = move_stanley(pub, offset_mm, angle_deg)
+        z = move_stanley(self.pub, offset_mm, angle_deg)
         self.log = str(self.index) + "_Stanley2Green_offset " + str(offset_mm) + " mm / angle " + str(angle_deg) + "deg / z speed " + str(z)
 
 
@@ -166,13 +168,78 @@ class Stanley2GreenMode(Mode):
             showing_off([frame, road_bev, road_sw_bev, bev, green_bev_cm, green_blur_bev])
 
 
+true_cross_confidence = 120
+
+
+class Stanley2CrossMode(Mode):
+
+    def __init__(self, pub, index=0, left_way = True, right_way = True):
+        self.end = False
+        self.pub = pub
+
+        self.line_road = None
+        self.init_pos_for_sliding_windows = -1
+        self.cross_encounter = -1000
+        self.left_way = left_way
+        self.right_way = right_way
+
+        self.index = index
+        self.log = str(self.index) + "_Stanley2Green_"
+
+
+    def set_frame_and_move(self, frame, showoff=True):
+
+        bev, _ = get_bev(frame)
+
+        # slidingwindow
+        road_bev = get_road(bev)
+        road_blur_bev = get_rect_blur(road_bev, 7)
+        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
+
+        if len(x_list) > 2:
+            self.init_pos_for_sliding_windows = x_list[1]
+            self.line_road = Line(x_list, y_list)
+
+        else:
+            self.init_pos_for_sliding_windows = -1
+        
+        if self.line_road == None:
+            # Must find the line here, First!
+            # print("What, No Road? You Real? BRUHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
+            showing_off([frame, road_bev, road_sw_bev, bev])
+            move_robot(self.pub)
+            return
+
+
+        # stanley
+        offset_mm = self.line_road.get_offset(bot_from_bev_x,bot_from_bev_y)
+        angle_deg = self.line_road.get_angle()
+
+        z = move_stanley(self.pub, offset_mm, angle_deg)
+        self.log = str(self.index) + "_Stanley2Green_offset " + str(offset_mm) + " mm / angle " + str(angle_deg) + "deg / z speed " + str(z)
+
+
+        # cross event!
+        cross_bev_cm = get_cm_px_from_mm(road_bev)
+        cross_filt_bev, cross_pos_cm, cross_max = get_cross_pos(cross_bev_cm, 7, self.left_way, self.right_way)
+        cross_pos = [pos*10 for pos in cross_pos_cm]
+
+        if cross_max > true_cross_confidence:
+            print("OK, Now We At the Cross!!!", cross_max, self.line_road.get_distance(cross_pos[1], cross_pos[0]))
+            self.cross_encounter += 1
+        else:
+            self.cross_encounter -= 1
+            self.cross_encounter = max(0, self.cross_encounter)
+        
+        if self.cross_encounter >= 3:
+            self.end = True
+            move_robot(self.pub)
         
 
-class SetFromGreenMode(Mode):
-
-    pass
-
-
+        # showoff now
+        if showoff:
+            cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
+            showing_off([frame, road_bev, road_sw_bev, bev, cross_bev_cm, cross_filt_bev])
 
 
 z_ang_speed = 0.8
@@ -270,9 +337,10 @@ class Turn2VoidMode(Mode):
 
 
 
+
 class Turn2RoadMode(Mode):
 
-    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 2.0):
+    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 2.0, is_curve = False):
         self.end = False
         self.pub = pub
 
@@ -280,6 +348,7 @@ class Turn2RoadMode(Mode):
         self.line_road = None
         self.init_pos_for_sliding_windows = -1
         self.min_turn_sec = min_turn_sec
+        self.is_curve = is_curve
 
         self.stage = -1
         self.time_since_stage = 0
@@ -305,29 +374,23 @@ class Turn2RoadMode(Mode):
         # turning at least certain amount: to ignore post-road
         if self.stage == 0:
             self.log = str(self.index) + "_Turn2Road_"
-            speed = Twist()
-            speed.linear.x = 0
-            if self.is_left:
-                speed.angular.z = 0.5 # move other side a little bit
-            else:
-                speed.angular.z = -0.5
-            self.pub.publish(speed)
+            x = 0
+            if self.is_curve:
+                x = speed_x
+            move_robot(self.pub, x, z_ang_speed, self.is_left)
+
             if time.time() - self.time_since_stage > self.min_turn_sec:
                 self.stage = 1
                 self.time_since_stage = time.time()
-                speed = Twist()
-                self.pub.publish(speed)
+                move_robot(self.pub)
         
         # turning while the line is shown: to estimate time to be exact 90 degrees
         if self.stage == 1:
             self.log = str(self.index) + "_Turn2Road_stage1_linenotshown"
-            speed = Twist()
-            speed.linear.x = 0
-            if self.is_left:
-                speed.angular.z = 0.5 # move other side a little bit
-            else:
-                speed.angular.z = -0.5
-            self.pub.publish(speed)
+            x = 0
+            if self.is_curve:
+                x = speed_x
+            move_robot(self.pub, x, z_ang_speed, self.is_left)
 
             # slidingwindow
             road_bev = get_road(bev)
@@ -347,8 +410,7 @@ class Turn2RoadMode(Mode):
                     self.stage = 2
 
         if self.stage == 2:        
-            speed = Twist()
-            self.pub.publish(speed)
+            move_robot(self.pub)
             self.end = True
 
         if showoff:

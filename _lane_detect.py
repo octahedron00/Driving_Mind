@@ -16,6 +16,14 @@ true_green_dist_from_road = 20 #mm
 bot_from_bev_x = 100
 bot_from_bev_y = 400
 
+
+
+
+
+
+
+
+
 class Line:
     var_1 = 0
     var_0 = 0
@@ -56,6 +64,8 @@ class Line:
         if is_deg:
             return -(angle / math.pi) * 180
         return angle
+
+
 
 
 
@@ -204,33 +214,6 @@ def get_sliding_window_result(image, init=-1):
     return window_frame, x_list, y_list
 
 
-
-def get_road_edges(frame, is_left = True):
-
-    matrix = np.zeros((9, 9))
-    if is_left:
-        matrix[2:7, 5:] = 0.1
-        matrix[2:7, :4] = -0.1
-    else:
-        matrix[2:7, 5:] = -0.1
-        matrix[2:7, :4] = 0.1
-    
-    blurred_frame = cv2.filter2D(frame, -1, matrix)
-
-    ret, binary_edge = cv2.threshold(blurred_frame, 50, 255, cv2.THRESH_BINARY)
-
-    color_frame = cv2.cvtColor(binary_edge, cv2.COLOR_GRAY2BGR)
-    x_list, y_list = [], []
-
-    for i in range(np.shape(binary_edge)[0]):
-        for j in range(np.shape(binary_edge)[0]):
-            if binary_edge[i, j]>0:
-                x_list.append(j)
-                y_list.append(i)
-
-    return color_frame, x_list, y_list
-
-
 def get_road_edge_angle(frame, is_left = True):
 
     segment_count = 10
@@ -325,6 +308,45 @@ def get_square_pos(green_frame, size_square = 5):
     cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(blurred_frame[max_pos]), 0), 5)
 
     return color_frame, max_pos, blurred_frame[max_pos]
+
+
+def get_cross_pos(frame_cm, width_road = 5, left_way = True, right_way = True):
+
+    a = 6
+    b = -2
+    if left_way and right_way:
+        a = 9
+        b = -3
+    matrix = np.ones((width_road*3, width_road*3))/(a*width_road*width_road)
+    matrix[:, :width_road] = 3 / (a*width_road*width_road)
+    matrix[:, width_road*2:] = 3 / (a*width_road*width_road)
+    if not left_way:
+        matrix[:, :width_road] = b / (a*width_road*width_road)
+    if not right_way:
+        matrix[:, width_road*2:] = b / (a*width_road*width_road)
+
+    matrix[:width_road, :width_road] = b / (a*width_road*width_road)
+    matrix[width_road*2:, :width_road] = b / (a*width_road*width_road)
+    matrix[:width_road, width_road*2:] = b / (a*width_road*width_road)
+    matrix[width_road*2:, width_road*2:] = b / (a*width_road*width_road)
+    
+    cross_frame = cv2.filter2D(frame_cm, -1, matrix)
+
+    color_frame = cv2.cvtColor(cross_frame, cv2.COLOR_GRAY2BGR)
+
+    max_pos = (0, 0)
+    max_pos_xy = (0, 0)
+
+    for i in range(np.shape(cross_frame)[0]):
+        for j in range(np.shape(cross_frame)[1]):
+            
+            if cross_frame[max_pos] < cross_frame[i, j]:
+                max_pos = (i, j)
+                max_pos_xy = (j, i)
+
+    cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(cross_frame[max_pos]), 0), 1)
+
+    return color_frame, max_pos, cross_frame[max_pos]
 
 
 def get_cm_px_from_mm(frame_mm):

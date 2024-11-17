@@ -18,7 +18,7 @@ from collections import deque
 
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
-from _mode import StartMode, Stanley2GreenMode, Turn2VoidMode, Turn2RoadMode
+from _mode import StartMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode
 
 
 true_green_confidence = 100
@@ -40,16 +40,29 @@ class bot_mind:
 
         self.mode_list = [
             StartMode(pub),
-            Stanley2GreenMode(pub, 1),
-            Turn2VoidMode(pub, 2, is_left=True),
-            Turn2RoadMode(pub, 3, is_left=False),
-            Stanley2GreenMode(pub, 4),
-            Turn2VoidMode(pub, 5, is_left=True),
-            Turn2RoadMode(pub, 6, is_left=False),
-            Stanley2GreenMode(pub, 7),
-            # Stanley2GreenMode(pub, 4),
-            # Turn2VoidMode(pub, is_left=True),
-            # Turn2RoadMode(pub, is_left=True),
+            Stanley2CrossMode(pub, 1),
+            Turn2RoadMode(pub, 2, is_left=True, is_curve=True),
+            Stanley2GreenMode(pub, 3),
+            Turn2VoidMode(pub, 4, is_left=True),
+            Turn2RoadMode(pub, 5, is_left=False),
+            Stanley2CrossMode(pub, 6),
+            Turn2RoadMode(pub, 7, is_left=True, is_curve=True),
+            Stanley2GreenMode(pub, 8),
+            Stanley2GreenMode(pub, 9),
+            Turn2VoidMode(pub, 10, is_left=True),
+            Turn2RoadMode(pub, 11, is_left=False),
+            Stanley2CrossMode(pub, 12, left_way=False),
+            Turn2RoadMode(pub, 13, is_left=False, is_curve=True),
+            Stanley2GreenMode(pub, 14),
+            Turn2VoidMode(pub, 15, is_left=True),
+            Turn2RoadMode(pub, 16, is_left=False),
+            Stanley2GreenMode(pub, 17),
+            Turn2VoidMode(pub, 30, is_left=True),
+            Turn2RoadMode(pub, 31, is_left=False),
+            Stanley2CrossMode(pub, 32, right_way=False),
+            Turn2RoadMode(pub, 33, is_left=False, is_curve=True),
+            Stanley2GreenMode(pub, 100),
+            Stanley2GreenMode(pub, 900),
         ]
         
         self.mode = StartMode(pub)
