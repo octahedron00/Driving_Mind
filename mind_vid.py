@@ -15,7 +15,7 @@ from math import *
 from collections import deque
 
 
-from src.lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
+from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
 
 
 true_green_confidence = 100

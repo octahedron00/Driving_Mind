@@ -21,12 +21,8 @@ from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green
 from _mode import StartMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode
 
 
-true_green_confidence = 100
-true_green_dist_from_road = 20 #mm
 
-
-
-frame_ignore_level = 2
+frame_ignore_level = 1
 
 
 class bot_mind:
@@ -40,6 +36,8 @@ class bot_mind:
 
         self.mode_list = [
             StartMode(pub),
+
+            # Stanley2GreenMode(pub, 0),
 
             Stanley2CrossMode(pub, 1),
 #            EndMode(pub, 1000),
@@ -89,9 +87,11 @@ class bot_mind:
             self.mode = self.mode_list[self.stage]
         frame = self.image
 
+        time_start = time.time()
         self.mode.set_frame_and_move(frame, showoff = True)
         if len(self.mode.log)>5:
             print(self.mode.log)
+            print("time spent:", round(time.time()-time_start, 3), end="   |  ")
         cv2.waitKey(1)
 
 

@@ -52,13 +52,17 @@ class Line:
         return dist
 
     def get_offset(self, x, y):
-        
+        """
+            offset, left side: + / right side: -
+        """
         dist = -((self.var_1 * y) - x + self.var_0) / math.sqrt(1 + (self.var_1*self.var_1))
 
         return dist
 
     def get_angle(self, is_deg=True):
-
+        """
+            angle, left side: - / right side: +
+        """
         angle = math.atan(self.var_1)
 
         if is_deg:
@@ -109,25 +113,13 @@ def get_road(image):
     
     lower = np.array([150, 150, 150])
     upper = np.array([255, 255, 255])
-    black_mask = cv2.inRange(rev, lower, upper)
-    black = cv2.bitwise_and(rev, rev, mask = black_mask)
+    black = cv2.inRange(rev, lower, upper)
 
-    # plt.imshow(black)
-    green_mask = cv2.inRange(image, (0, 80, 0), (100, 255, 100))
-    green = cv2.bitwise_and(image, image, mask = green_mask)
+    green = get_green(image)
     
-    # plt.imshow(green)
+    road_bin = cv2.add(black, green)
 
-    masked = cv2.addWeighted(black, 1, green, 2, 0)
-
-    # plt.imshow(masked)
-
-    
-    bev_gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
-    # ret, bev_binary = cv2.threshold(bev_gray, 100, 255, cv2.THRESH_BINARY)
-    
-    
-    return bev_gray
+    return road_bin
 
 
 def get_sliding_window_result(image, init=-1):
@@ -137,11 +129,12 @@ def get_sliding_window_result(image, init=-1):
     """
     h, w = np.shape(image)
 
-    win_h = 0.05
-    win_w = 0.5
+    # pixel means mm here
+    win_h = 10
+    win_w = 120
     win_n = 10
     fill_min = 0.2
-    fill_max = 0.7
+    fill_max = 0.8
 
     if init > 0:
         lane_point = init
@@ -151,10 +144,10 @@ def get_sliding_window_result(image, init=-1):
     x_list, y_list = [], []
 
     for i in range(win_n):
-        b = int(h*(1 - (i*win_h)))
-        t = int(h*(1 - ((i+1)*win_h)))
-        l = int(lane_point - (w*win_w/2))
-        r = int(lane_point + (w*win_w/2))
+        b = int(h - (i*win_h))
+        t = int(h - ((i+1)*win_h))
+        l = int(lane_point - (win_w/2))
+        r = int(lane_point + (win_w/2))
 
         if l < 0:
             r -= l
@@ -169,41 +162,24 @@ def get_sliding_window_result(image, init=-1):
 
         x_hist = np.sum(roi, axis=0)
 
-        x_hist_calib = np.zeros(np.shape(x_hist), dtype=np.int32)
-        for i in range(np.shape(x_hist)[0]):
-            x_hist_calib[i] = x_hist[i] * (2 - (abs((np.shape(x_hist)[0]/2)-i) / (np.shape(x_hist)[0]/4)) )
-
-        x_hist_around_max = np.zeros(np.shape(x_hist), dtype=np.int32)
-
-        max_pos = 1
-        for i in range(np.shape(x_hist)[0]):
-            if x_hist[max_pos] < x_hist[i]:
-                max_pos = i
+        max_pos = np.argmax(x_hist)
         
-        try:
-            x_hist_around_max[max_pos] = x_hist[max_pos]
-        except:
-            print(l, r, t, b, roi, x_hist_calib, max_pos)
-        # print(max_pos)
-
-        for i in range(max_pos+1, np.shape(x_hist)[0]):
-            # print(x_hist_around_max, x_hist)
-            x_hist_around_max[i] = min(x_hist_around_max[i-1], x_hist[i])
-
-        for i in range(max_pos-1, -1, -1):
-            x_hist_around_max[i] = min(x_hist_around_max[i+1], x_hist[i])
-
-        # print(x_hist_around_max)
-        x_weigh_sum = 0
-        for i in range(np.shape(x_hist)[0]):
-            x_weigh_sum += i * x_hist_around_max[i]
-
-        real_sum = sum(x_hist_around_max)
+        x_left = 0
+        x_right = 0
+        for i in range(max_pos, 0, -1):
+            if x_hist[i] < 256:
+                x_left = i
+                break
+        for i in range(max_pos, len(x_hist)):
+            if x_hist[i] < 256:
+                x_right = i
+                break
+        
 
         # print(i, "pos", lane_point, "max", max_pos, "filled area", real_sum, real_sum/(np.shape(roi)[0]*np.shape(roi)[1]*255))
-        if fill_min < float(real_sum)/(np.shape(roi)[0]*np.shape(roi)[1]*255) < fill_max:
-            lane_point = (x_weigh_sum/real_sum) + l
-            x_p = lane_point
+        if fill_min < float(x_right-x_left)/len(x_hist) < fill_max:
+            x_p = int((x_left + x_right)/2) + l
+            lane_point = x_p
             y_p = (t + b) / 2
             x_list.append(x_p)
             y_list.append(y_p)
@@ -219,33 +195,42 @@ def get_road_edge_angle(frame, is_left = True):
     segment_count = 8
     minimum = 2
 
-    matrix = np.zeros((5, 5))
+    matrix = np.zeros((3, 3))
     if is_left:
-        matrix[1:4, 3:] = 0.2
-        matrix[1:4, :2] = -0.2
+        matrix[:, 2:] = 0.3
+        matrix[:, :1] = -0.3
     else:
-        matrix[1:4, 3:] = -0.2
-        matrix[1:4, :2] = 0.2
+        matrix[:, 2:] = -0.3
+        matrix[:, :1] = 0.3
     
     edge_frame = cv2.filter2D(frame, -1, matrix)
-    ret, binary_edge = cv2.threshold(edge_frame, 100, 255, cv2.THRESH_BINARY)
+    ret, binary_edge = cv2.threshold(edge_frame, 50, 255, cv2.THRESH_BINARY)
     color_frame = cv2.cvtColor(binary_edge, cv2.COLOR_GRAY2BGR)
 
 
-    lines = cv2.HoughLinesP(binary_edge,1,np.pi/180,50,minLineLength=50,maxLineGap=2)
+    lines = cv2.HoughLinesP(binary_edge,1,np.pi/180,20,minLineLength=50,maxLineGap=4)
 
     if lines is None:
         
         angle_median = 180
     else:
+        for l in lines:
+            xyxy = l[0]
+            line = Line([xyxy[0],xyxy[2]], [xyxy[1],xyxy[3]])
+            cv2.line(color_frame, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (50, 200, 50), 1)
+        
         xyxy = lines[0][0]
         line = Line([xyxy[0],xyxy[2]], [xyxy[1],xyxy[3]])
         angle_median = line.get_angle()
         cv2.line(color_frame, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (0, 255, 0), 2)
 
-    x_midpoint = int(np.shape(color_frame)[1] / 2)
-    y_height = np.shape(color_frame)[0]
-    cv2.line(color_frame, (x_midpoint, y_height), (int(x_midpoint + (math.tan((angle_median/180)*math.pi)*y_height)), 0), (0, 0, 255), 3)
+    
+
+        x_midpoint = int(np.shape(color_frame)[1] / 2)
+        y_height = np.shape(color_frame)[0]
+        print(angle_median)
+        print(line.get_offset(bot_from_bev_x, bot_from_bev_y))
+        cv2.line(color_frame, (x_midpoint, y_height), (int(x_midpoint + (math.tan((angle_median/180)*math.pi)*y_height)), 0), (0, 0, 255), 3)
     
     return color_frame, angle_median
 
@@ -264,20 +249,17 @@ def get_green(image):
     """
 
     """
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
 
-    green_mask = cv2.inRange(image, (0, 80, 0), (80, 255, 80))
-    green = cv2.bitwise_and(image, image, mask = green_mask)
-    
-    
-    green_gray = cv2.cvtColor(green, cv2.COLOR_BGR2GRAY)
-    ret, bev_binary = cv2.threshold(green_gray, 30, 255, cv2.THRESH_BINARY)
+    green_dark = cv2.inRange(image, (0, 70, 0), (50, 90, 50))
+    green_bright = cv2.inRange(image, (50, 90, 50), (100, 255, 100))
 
-    return bev_binary
+    green = cv2.inRange(hls, (45, 40, 45), (95, 200, 255))
+    return green
 
 
 
-def get_square_pos(green_frame, size_square = 5):
+def get_square_pos(green_frame, size_square = 7):
     blurred_frame = get_rect_blur(green_frame, size_square)
     color_frame = cv2.cvtColor(blurred_frame, cv2.COLOR_GRAY2BGR)
 
@@ -296,7 +278,7 @@ def get_square_pos(green_frame, size_square = 5):
     return color_frame, max_pos, blurred_frame[max_pos]
 
 
-def get_cross_pos(image, width_road = 5, left_way = True, right_way = True, init = -1):
+def get_road_and_cross_pos(image, width_road = 5, left_way = True, right_way = True, init = -1):
 
     """
     Sliding window
@@ -304,8 +286,8 @@ def get_cross_pos(image, width_road = 5, left_way = True, right_way = True, init
     """
     h, w = np.shape(image)
 
-    win_h = 0.05
-    win_w = 0.9
+    win_h = 10
+    win_w = 180
     win_n = 14
     fill_min = 0.1
     fill_max = 0.5
@@ -320,10 +302,10 @@ def get_cross_pos(image, width_road = 5, left_way = True, right_way = True, init
     max_position = []
   
     for i in range(win_n):
-        b = int(h*(1 - (i*win_h)))
-        t = int(h*(1 - ((i+1)*win_h)))
-        l = int(lane_point - (w*win_w/2))
-        r = int(lane_point + (w*win_w/2))
+        b = int(h - (i*win_h))
+        t = int(h - ((i+1)*win_h))
+        l = int(lane_point - (win_w/2))
+        r = int(lane_point + (win_w/2))
 
         if l < 0:
             r -= l
@@ -338,36 +320,45 @@ def get_cross_pos(image, width_road = 5, left_way = True, right_way = True, init
 
         x_hist = np.sum(roi, axis=0)
 
-        # print(x_hist_around_max)
-        x_weigh_sum = 0
-        for i in range(np.shape(x_hist)[0]):
-            x_weigh_sum += i * x_hist[i]
-
-        real_sum = sum(x_hist)
+        max_pos = np.argmax(x_hist)
+        
+        x_left = 0
+        x_right = 0
+        for i in range(max_pos, 0, -1):
+            if x_hist[i] < 256:
+                x_left = i
+                break
+        for i in range(max_pos, len(x_hist)):
+            if x_hist[i] < 256:
+                x_right = i
+                break
+        
 
         # print(i, "pos", lane_point, "max", max_pos, "filled area", real_sum, real_sum/(np.shape(roi)[0]*np.shape(roi)[1]*255))
-        if fill_min < float(real_sum)/(np.shape(roi)[0]*np.shape(roi)[1]*255) < fill_max:
-            lane_point = (x_weigh_sum/real_sum) + l
-            x_p = lane_point
+        if fill_min < float(x_right-x_left)/len(x_hist) < fill_max:
+            x_p = int((x_left + x_right)/2) + l
+            lane_point = x_p
             y_p = (t + b) / 2
             x_list.append(x_p)
             y_list.append(y_p)
             cv2.rectangle(window_frame, (l, t), (r, b), (255, 0, 0), 2)
             cv2.rectangle(window_frame, (int(x_p), int(y_p)), (int(x_p), int(y_p)), (255, 0, 0), 5)
 
-        sum_left = sum(x_hist[:int((r-l)/2)])
-        sum_right = sum(x_hist[int((r-l)/2):])
+
+        sum_left = np.sum(x_hist[:int((r-l)/2)])
+        sum_right = np.sum(x_hist[int((r-l)/2):])
         
         if left_way and fill_max > float(sum_left) / (np.shape(roi)[0]*np.shape(roi)[1]*255/2):
             continue
         if right_way and fill_max > float(sum_right) / (np.shape(roi)[0]*np.shape(roi)[1]*255/2):
             continue
         cv2.rectangle(window_frame, (l, t), (r, b), (0, 255, 0), 2)
-        max_position.append(i)
+        max_position.append(int((t+b)/2))
+
 
     if 1 <= len(max_position) <= 10:
-        return window_frame, True, max_position
-    return window_frame, False, max_position
+        return window_frame, x_list, y_list, True, max_position
+    return window_frame, x_list, y_list, False, max_position
 
 
 

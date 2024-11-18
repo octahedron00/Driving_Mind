@@ -18,7 +18,7 @@ from collections import deque
 
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
-from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_cross_pos, Line
+from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_road_and_cross_pos, Line
 
 
 bot_from_bev_x = 100
@@ -115,7 +115,7 @@ true_green_dist_from_road = 30 #mm
 
 class Stanley2GreenMode(Mode):
 
-    def __init__(self, pub, index=0, from_it=False, left_offset = 0):
+    def __init__(self, pub, index=0, from_it=False, left_offset = 0, debug=False):
         self.end = False
         self.pub = pub
 
@@ -128,6 +128,7 @@ class Stanley2GreenMode(Mode):
 
         self.index = index
         self.log = str(self.index) + "_Stanley2Green_"
+        self.debug = debug
 
 
     def set_frame_and_move(self, frame, showoff=True):
@@ -184,6 +185,9 @@ class Stanley2GreenMode(Mode):
         if showoff:
             cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
             showing_off([frame, road_bev, road_sw_bev, bev, green_bev_cm, green_blur_bev])
+        if self.debug:
+            cv2.imwrite("S2G_" + str(self.index) + "_debug_green" + str(self.green_encounter) + ".jpg", green_bev)
+            cv2.imwrite("S2G_" + str(self.index) + "_debug_bev" + str(self.green_encounter) + ".jpg", bev)
 
 
 true_cross_confidence = 200
@@ -215,7 +219,11 @@ class Stanley2CrossMode(Mode):
         # slidingwindow
         road_bev = get_road(bev)
         road_blur_bev = get_rect_blur(road_bev, 5)
-        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
+        # cross event!
+        cross_find_view, x_list, y_list, is_cross, positions = get_road_and_cross_pos(road_blur_bev, 5, self.left_way, self.right_way, self.init_pos_for_sliding_windows)
+        
+        
+        road_sw_bev = cross_find_view
 
         if len(x_list) > 2:
             self.init_pos_for_sliding_windows = x_list[1]
@@ -240,9 +248,6 @@ class Stanley2CrossMode(Mode):
         self.log = str(self.index) + "_Stanley2Cross_offset " + str(offset_mm) + " mm / angle " + str(angle_deg) + "deg / z speed " + str(z)
 
 
-        # cross event!
-        cross_bev_cm = get_cm_px_from_mm(road_bev)
-        cross_find_view, is_cross, positions = get_cross_pos(road_blur_bev, 5, self.left_way, self.right_way, self.init_pos_for_sliding_windows)
         # print(cross_pos, cross_max)
         self.log = self.log + " CROSS::" + str(positions)
 
@@ -256,6 +261,7 @@ class Stanley2CrossMode(Mode):
         if self.cross_encounter >= 3:
             self.end = True
             move_robot(self.pub)
+            self.memory = np.mean(positions)
         
 
         # showoff now
@@ -265,7 +271,9 @@ class Stanley2CrossMode(Mode):
 
 
 z_ang_speed = 1
-default_time = 2.6 / z_ang_speed
+default_time = 2.7 / z_ang_speed
+
+
 
 class Turn2VoidMode(Mode):
 
@@ -283,6 +291,8 @@ class Turn2VoidMode(Mode):
         self.angle_list = []
         self.time_list = []
         self.est_time = 0
+
+        self.waiting_for_next_frame = 2
         
         self.index = index
         self.log = str(self.index) + "_Turn2Void_"
@@ -320,12 +330,15 @@ class Turn2VoidMode(Mode):
             move_robot(self.pub, 0, z_ang_speed, self.is_left)
 
             if abs(angle) < 45:
+                self.waiting_for_next_frame = 2
                 self.time_list.append(time.time() - self.time_since_stage)
                 self.angle_list.append(angle)
                 
                 cv2.imwrite(str(self.index) + "_frame_edge_" + str(len(self.time_list)) + ".jpg", road_edge_bev)
                 cv2.imwrite(str(self.index) + "_frame_original_" + str(len(self.time_list)) + ".jpg", road_bev)
                 self.log = str(self.index) + "_Turn2Void_stage" + str(self.stage) + " " + str(angle)
+            elif self.waiting_for_next_frame > 0:
+                self.waiting_for_next_frame -= 1
             else:
                 self.stage = 2
 
@@ -343,6 +356,9 @@ class Turn2VoidMode(Mode):
                     self.est_time = calc(90)
                 else:  
                     self.est_time = calc(-90)
+                
+                if self.est_time < default_time - 1 or default_time + 1.2 < self.est_time:
+                    self.est_time = default_time
 
 
         if self.stage == 2:
@@ -413,11 +429,6 @@ class Turn2RoadMode(Mode):
             if self.is_curve:
                 x = speed_x
             move_robot(self.pub, x, z_ang_speed, self.is_left)
-
-            # slidingwindow
-            road_bev = get_road(bev)
-            road_blur_bev = get_rect_blur(road_bev, 25)
-            road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
 
             if len(x_list) > 2:
                 self.init_pos_for_sliding_windows = x_list[1]
