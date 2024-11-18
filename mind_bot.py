@@ -15,6 +15,7 @@ from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 from math import *
 from collections import deque
+import datetime
 
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
@@ -33,14 +34,14 @@ class bot_mind:
         rospy.Subscriber('/main_camera/image_raw/compressed', CompressedImage, self.camera_callback)
         self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
         pub = self.pub
+        now = datetime.datetime.now().strftime("%H%M")
+        self.logwriter = cv2.VideoWriter("log_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 20.0, (640, 480))
+        self.logtxt = open("log_" + now + ".txt", 'w')
 
         self.mode_list = [
             StartMode(pub),
 
-            # Stanley2GreenMode(pub, 0),
-
             Stanley2CrossMode(pub, 1),
-#            EndMode(pub, 1000),
             Turn2RoadMode(pub, 2, is_left=False, is_curve=True),
             Stanley2GreenMode(pub, 3, left_offset = -10),
             Turn2VoidMode(pub, 4, is_left=True),
@@ -54,7 +55,7 @@ class bot_mind:
             Turn2RoadMode(pub, 11, is_left=False),
 
             Stanley2CrossMode(pub, 12, left_way=False, from_it=True),
-            Turn2RoadMode(pub, 13, is_left=False, is_curve=True),
+            Turn2RoadMode(pub, 13, is_left=False, left_way=False, is_curve=True),
             Stanley2GreenMode(pub, 14, left_offset = -10),
             Turn2VoidMode(pub, 15, is_left=True),
             Turn2RoadMode(pub, 16, is_left=False),
@@ -62,7 +63,7 @@ class bot_mind:
             Turn2VoidMode(pub, 30, is_left=True),
             Turn2RoadMode(pub, 31, is_left=False),
             Stanley2CrossMode(pub, 32, right_way=False, from_it=True),
-            Turn2RoadMode(pub, 33, is_left=True, is_curve=True),
+            Turn2RoadMode(pub, 33, is_left=True, right_way=False, is_curve=True),
             Stanley2GreenMode(pub, 100),
             EndMode(pub, 1000),
 
@@ -89,9 +90,14 @@ class bot_mind:
 
         time_start = time.time()
         self.mode.set_frame_and_move(frame, showoff = True)
-        if len(self.mode.log)>5:
-            print(self.mode.log)
+        if len(self.mode.log)>0:
+            self.logwriter.write(frame)
             print("time spent:", round(time.time()-time_start, 3), end="   |  ")
+            print(self.mode.log)
+            self.logtxt.write(self.mode.log + "\n")
+        else:
+            self.logwriter.release()
+            a = input("Was it good?")
         cv2.waitKey(1)
 
 

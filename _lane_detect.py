@@ -288,7 +288,7 @@ def get_road_and_cross_pos(image, width_road = 5, left_way = True, right_way = T
 
     win_h = 10
     win_w = 180
-    win_n = 14
+    win_n = 10
     fill_min = 0.1
     fill_max = 0.5
 

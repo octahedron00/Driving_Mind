@@ -24,7 +24,7 @@ from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle,
 bot_from_bev_x = 100
 bot_from_bev_y = 400
 
-speed_x = 0.25
+speed_x = 0.4
 
 
 def showing_off(image_list):
@@ -54,11 +54,12 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
 def move_stanley(pub, offset_mm, angle_deg):
 
-    kp= 0.005
-    k = 0.2
+    kp= 0.03
+    ka= 0.2
+    k = 0.7
     x = speed_x
 
-    z = -(angle_deg - atan(kp*offset_mm)) * k * x
+    z = -(angle_deg*ka - atan(kp*offset_mm)) * x * k
     
     move_robot(pub, x, z)
 
@@ -91,6 +92,20 @@ class StartMode:
             pass
         cv2.waitKey(1)
         pass
+
+class CamMode:
+
+    def __init__(self, pub):
+        self.end = True
+        self.pub = pub
+    
+    def set_frame_and_move(self, frame, showoff=True):
+        
+        if showoff:
+            pass
+        cv2.waitKey(1)
+        pass
+
 
 class EndMode(Mode):
 
@@ -334,14 +349,14 @@ class Turn2VoidMode(Mode):
                 self.time_list.append(time.time() - self.time_since_stage)
                 self.angle_list.append(angle)
                 
-                cv2.imwrite(str(self.index) + "_frame_edge_" + str(len(self.time_list)) + ".jpg", road_edge_bev)
-                cv2.imwrite(str(self.index) + "_frame_original_" + str(len(self.time_list)) + ".jpg", road_bev)
+                #cv2.imwrite(str(self.index) + "_frame_edge_" + str(len(self.time_list)) + ".jpg", road_edge_bev)
+                #cv2.imwrite(str(self.index) + "_frame_original_" + str(len(self.time_list)) + ".jpg", road_bev)
                 self.log = str(self.index) + "_Turn2Void_stage" + str(self.stage) + " " + str(angle)
             elif self.waiting_for_next_frame > 0:
                 self.waiting_for_next_frame -= 1
             else:
                 self.stage = 2
-
+                self.log += str(self.angle_list) + str(self.time_list)
                 if len(self.time_list) > 6:
                     len_ignore = int(len(self.time_list)/2.5)
                     self.time_list = self.time_list[len_ignore:-2]
@@ -375,12 +390,12 @@ class Turn2VoidMode(Mode):
 
 
 
-radius_vx_vz_coefficient = 800 # edit this
+radius_vx_vz_coefficient = 900  # edit this
 
 
 class Turn2RoadMode(Mode):
 
-    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 1.5, is_curve = False):
+    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 1.5, is_curve = False, left_way = True, right_way = True):
         self.end = False
         self.pub = pub
 
@@ -396,18 +411,17 @@ class Turn2RoadMode(Mode):
         self.stage = -1
         self.time_since_stage = 0
         self.est_time = 0
+
         self.rot_z = z_ang_speed
+        self.speed_x = speed_x
+        self.left_way = left_way
+        self.right_way = right_way
 
         self.index = index
         self.log = str(self.index) + "_Turn2Road_"
 
 
     def set_frame_and_move(self, frame, showoff=True):
-
-
-        road_bev = get_road(bev)
-        road_blur_bev = get_rect_blur(road_bev, 5)
-        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
 
 
         bev, _ = get_bev(frame)
@@ -418,28 +432,24 @@ class Turn2RoadMode(Mode):
 
         if self.stage == -1 and self.is_curve:
             road_sw_bev, x_list, y_list, is_cross, positions = get_road_and_cross_pos(road_blur_bev, 5, self.left_way, self.right_way, self.init_pos_for_sliding_windows)
-            self.dist_from_cross = bot_from_bev_y - np.mean(positions)
+            dist_from_cross = bot_from_bev_y - np.mean(positions)
 
-            if len(x_list) > 2:
-                line_road = Line(x_list, y_list)
-                self.line_road = line_road
-
-                self.log = str(self.index) + "_Turn2Road_stage1_line_on_angle_" + str(line_road.get_angle())
-
-                cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
-                self.road_angle = self.line_road.get_angle()
-            else:
-
-                self.road_angle = 0
+            not_right = True
+            if self.is_left:
+                not_right = False
+            road_edge_bev, angle = get_road_edge_angle(road_bev, not_right)
             if abs(self.road_angle) > 10:
                 self.road_angle = 0
 
-            if is_left:
+            if self.is_left:
                 self.road_angle = -self.road_angle
 
-            radius = self.dist_from_cross / (1 - math.sin(self.road_angle))
+            radius = dist_from_cross / (1 + math.sin(self.road_angle*math.pi/180))
 
-            self.rot_z = (speed_x / radius) * radius_vx_vz_coefficient
+            self.speed_x = radius * self.rot_z / radius_vx_vz_coefficient
+            self.log = self.log + " | positions " + str(positions) + " | radius " + str(radius) + " | rot_z " + str(self.rot_z)
+            cv2.imwrite(str(self.index) + "_curve_dist.jpg", road_sw_bev)
+            cv2.imwrite(str(self.index) + "_curve_angle.jpg", road_edge_bev)
 
         else:
             road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
@@ -453,10 +463,9 @@ class Turn2RoadMode(Mode):
 
         # turning at least certain amount: to ignore post-road
         if self.stage == 0:
-            self.log = str(self.index) + "_Turn2Road_"
             x = 0
             if self.is_curve:
-                x = speed_x
+                x = self.speed_x
             move_robot(self.pub, x, self.rot_z, self.is_left)
 
             if time.time() - self.time_since_stage > self.min_turn_sec:
@@ -469,7 +478,7 @@ class Turn2RoadMode(Mode):
             self.log = str(self.index) + "_Turn2Road_stage1_linenotshown"
             x = 0
             if self.is_curve:
-                x = speed_x
+                x = self.speed_x
             move_robot(self.pub, x, self.rot_z, self.is_left)
 
             if len(x_list) > 2:

@@ -18,7 +18,7 @@ from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green
 from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_road_and_cross_pos, Line
 
 
-video_file = "full_0.mp4"
+video_file = "log_1902.avi"
 
 
 def on_click(event, x, y, flags, images):
@@ -40,10 +40,11 @@ def show(frame, frame_before, stop=False):
     green_bev_cm = get_cm_px_from_mm(green_bev)
     green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
     edge_bev, _ = get_road_edge_angle(road_bev)
+    cross_bev, _, _, _, _ = get_road_and_cross_pos(road_bev)
     
 
-    frame_list = [frame, bev, road_bev, green_bev, green_bev_cm, green_blur_bev, edge_bev]
-    name_list = ["origin", 'bev', 'road', 'green', 'green_cm', 'green_pos', 'edge']
+    frame_list = [cross_bev]
+    name_list = ['cross']
     for i, f in enumerate(frame_list):
 
         if i > 8:
@@ -67,7 +68,8 @@ def show(frame, frame_before, stop=False):
             return 1
         return 0
     a = cv2.waitKey(50)
-    if a > 2:
+    print(a)
+    if 120 > a > 30:
         a = cv2.waitKey(0)
         if a in [ord('a'), ord('b')]:
             if len(frame_before) > 0:
@@ -95,7 +97,7 @@ if __name__=="__main__":
         show(frame, frame_before)
  
         frame_before.append(frame)
-        if len(frame_before) > 20:
+        if len(frame_before) > 5:
             frame_before = frame_before[1:]
  
  
