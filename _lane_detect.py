@@ -140,7 +140,7 @@ def get_sliding_window_result(image, init=-1):
     win_h = 0.05
     win_w = 0.5
     win_n = 10
-    fill_min = 0.3
+    fill_min = 0.2
     fill_max = 0.7
 
     if init > 0:
@@ -216,7 +216,7 @@ def get_sliding_window_result(image, init=-1):
 
 def get_road_edge_angle(frame, is_left = True):
 
-    segment_count = 10
+    segment_count = 8
     minimum = 2
 
     matrix = np.zeros((5, 5))
@@ -231,31 +231,17 @@ def get_road_edge_angle(frame, is_left = True):
     ret, binary_edge = cv2.threshold(edge_frame, 100, 255, cv2.THRESH_BINARY)
     color_frame = cv2.cvtColor(binary_edge, cv2.COLOR_GRAY2BGR)
 
-    angle_list = []
-    roi_height = int(np.shape(binary_edge)[0] / segment_count)
-    for s in range(segment_count):
-        roi = binary_edge[s*roi_height: (s+1)*roi_height]
 
-        x_list, y_list = [], []
-        for i in range(np.shape(roi)[0]):
-            for j in range(np.shape(roi)[1]):
-                if roi[i, j]>0:
-                    x_list.append(j)
-                    y_list.append(i)
-        if len(x_list) > roi_height * 0.5: # depends on the size of the filter...
-            line = Line(x_list, y_list)
-            angle_list.append(line.get_angle())
-            cv2.rectangle(color_frame, (0, s*roi_height), (np.shape(color_frame)[1], (s+1)*roi_height), (0, 255, 0), 1)
-        else:
-            cv2.rectangle(color_frame, (0, s*roi_height), (np.shape(color_frame)[1], (s+1)*roi_height), (50, 50, 50), 1)
+    lines = cv2.HoughLinesP(binary_edge,1,np.pi/180,50,minLineLength=50,maxLineGap=2)
 
-    angle_list = sorted(angle_list)
-    print("angle list", angle_list)
-
-    if len(angle_list) > minimum:
-        angle_median = angle_list[int((len(angle_list)-1)/2)]
-    else:
+    if lines is None:
+        
         angle_median = 180
+    else:
+        xyxy = lines[0][0]
+        line = Line([xyxy[0],xyxy[2]], [xyxy[1],xyxy[3]])
+        angle_median = line.get_angle()
+        cv2.line(color_frame, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (0, 255, 0), 2)
 
     x_midpoint = int(np.shape(color_frame)[1] / 2)
     y_height = np.shape(color_frame)[0]
@@ -310,25 +296,102 @@ def get_square_pos(green_frame, size_square = 5):
     return color_frame, max_pos, blurred_frame[max_pos]
 
 
-def get_cross_pos(frame_cm, width_road = 5, left_way = True, right_way = True):
+def get_cross_pos(image, width_road = 5, left_way = True, right_way = True, init = -1):
+
+    """
+    Sliding window
+
+    """
+    h, w = np.shape(image)
+
+    win_h = 0.05
+    win_w = 0.9
+    win_n = 14
+    fill_min = 0.1
+    fill_max = 0.5
+
+    if init > 0:
+        lane_point = init
+    else:
+        lane_point = int(w * 0.5)
+    window_frame = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    x_list, y_list = [], []
+
+    max_position = []
+  
+    for i in range(win_n):
+        b = int(h*(1 - (i*win_h)))
+        t = int(h*(1 - ((i+1)*win_h)))
+        l = int(lane_point - (w*win_w/2))
+        r = int(lane_point + (w*win_w/2))
+
+        if l < 0:
+            r -= l
+            l = 0
+        if r > w:
+            l -= (r-w)
+            r = w
+
+        cv2.rectangle(window_frame, (l, t), (r, b), (0, 130, 0), 2)
+
+        roi = image[t:b, l:r]
+
+        x_hist = np.sum(roi, axis=0)
+
+        # print(x_hist_around_max)
+        x_weigh_sum = 0
+        for i in range(np.shape(x_hist)[0]):
+            x_weigh_sum += i * x_hist[i]
+
+        real_sum = sum(x_hist)
+
+        # print(i, "pos", lane_point, "max", max_pos, "filled area", real_sum, real_sum/(np.shape(roi)[0]*np.shape(roi)[1]*255))
+        if fill_min < float(real_sum)/(np.shape(roi)[0]*np.shape(roi)[1]*255) < fill_max:
+            lane_point = (x_weigh_sum/real_sum) + l
+            x_p = lane_point
+            y_p = (t + b) / 2
+            x_list.append(x_p)
+            y_list.append(y_p)
+            cv2.rectangle(window_frame, (l, t), (r, b), (255, 0, 0), 2)
+            cv2.rectangle(window_frame, (int(x_p), int(y_p)), (int(x_p), int(y_p)), (255, 0, 0), 5)
+
+        sum_left = sum(x_hist[:int((r-l)/2)])
+        sum_right = sum(x_hist[int((r-l)/2):])
+        
+        if left_way and fill_max > float(sum_left) / (np.shape(roi)[0]*np.shape(roi)[1]*255/2):
+            continue
+        if right_way and fill_max > float(sum_right) / (np.shape(roi)[0]*np.shape(roi)[1]*255/2):
+            continue
+        cv2.rectangle(window_frame, (l, t), (r, b), (0, 255, 0), 2)
+        max_position.append(i)
+
+    if 1 <= len(max_position) <= 10:
+        return window_frame, True, max_position
+    return window_frame, False, max_position
+
+
+
+
+
+def get_cross_pos_by_filter(frame_cm, width_road = 5, left_way = True, right_way = True):
 
     a = 6
     b = -2
     if left_way and right_way:
         a = 9
         b = -3
-    matrix = np.ones((width_road*3, width_road*3))/(a*width_road*width_road)
-    matrix[:, :width_road] = 3 / (a*width_road*width_road)
-    matrix[:, width_road*2:] = 3 / (a*width_road*width_road)
+    matrix = np.ones((width_road*3, width_road*3))/float(a*width_road*width_road)
+    matrix[:, :width_road] = 3 / float(a*width_road*width_road)
+    matrix[:, width_road*2:] = 3 / float(a*width_road*width_road)
     if not left_way:
-        matrix[:, :width_road] = b / (a*width_road*width_road)
+        matrix[:, :width_road-1] = b / float(a*width_road*width_road)
     if not right_way:
-        matrix[:, width_road*2:] = b / (a*width_road*width_road)
+        matrix[:, width_road*2+1:] = b / float(a*width_road*width_road)
 
-    matrix[:width_road, :width_road] = b / (a*width_road*width_road)
-    matrix[width_road*2:, :width_road] = b / (a*width_road*width_road)
-    matrix[:width_road, width_road*2:] = b / (a*width_road*width_road)
-    matrix[width_road*2:, width_road*2:] = b / (a*width_road*width_road)
+    matrix[:width_road-1, :width_road-1] = b / float(a*width_road*width_road)
+    matrix[width_road*2+1:, :width_road-1] = b / float(a*width_road*width_road)
+    matrix[:width_road-1, width_road*2+1:] = b / float(a*width_road*width_road)
+    matrix[width_road*2+1:, width_road*2+1:] = b / float(a*width_road*width_road)
     
     cross_frame = cv2.filter2D(frame_cm, -1, matrix)
 
@@ -350,6 +413,17 @@ def get_cross_pos(frame_cm, width_road = 5, left_way = True, right_way = True):
 
 
 def get_cm_px_from_mm(frame_mm):
+    """
+        make image size / 10
+    """
+    mm_0 = np.shape(frame_mm)[0]
+    mm_1 = np.shape(frame_mm)[1]
+    cm_0, cm_1 = int(mm_0/10), int(mm_1/10)
+
+    frame_cm = cv2.resize(frame_mm, dsize=(cm_0, cm_1), interpolation=cv2.INTER_LINEAR)
+    return frame_cm
+
+def get_mm_px_from_cm(frame_mm):
     """
         make image size / 10
     """

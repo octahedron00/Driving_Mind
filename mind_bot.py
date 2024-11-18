@@ -18,7 +18,7 @@ from collections import deque
 
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
-from _mode import StartMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode
+from _mode import StartMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode
 
 
 true_green_confidence = 100
@@ -26,7 +26,7 @@ true_green_dist_from_road = 20 #mm
 
 
 
-frame_ignore_level = 1
+frame_ignore_level = 2
 
 
 class bot_mind:
@@ -40,29 +40,34 @@ class bot_mind:
 
         self.mode_list = [
             StartMode(pub),
+
             Stanley2CrossMode(pub, 1),
-            Turn2RoadMode(pub, 2, is_left=True, is_curve=True),
-            Stanley2GreenMode(pub, 3),
+#            EndMode(pub, 1000),
+            Turn2RoadMode(pub, 2, is_left=False, is_curve=True),
+            Stanley2GreenMode(pub, 3, left_offset = -10),
             Turn2VoidMode(pub, 4, is_left=True),
-            Turn2RoadMode(pub, 5, is_left=False),
+            Turn2RoadMode(pub, 5, is_left=True),
             Stanley2CrossMode(pub, 6),
-            Turn2RoadMode(pub, 7, is_left=True, is_curve=True),
+            Turn2RoadMode(pub, 7, is_left=False, is_curve=True),
             Stanley2GreenMode(pub, 8),
-            Stanley2GreenMode(pub, 9),
+
+            Stanley2GreenMode(pub, 9, from_it=True, left_offset = -10),
             Turn2VoidMode(pub, 10, is_left=True),
             Turn2RoadMode(pub, 11, is_left=False),
-            Stanley2CrossMode(pub, 12, left_way=False),
+
+            Stanley2CrossMode(pub, 12, left_way=False, from_it=True),
             Turn2RoadMode(pub, 13, is_left=False, is_curve=True),
-            Stanley2GreenMode(pub, 14),
+            Stanley2GreenMode(pub, 14, left_offset = -10),
             Turn2VoidMode(pub, 15, is_left=True),
             Turn2RoadMode(pub, 16, is_left=False),
-            Stanley2GreenMode(pub, 17),
+            Stanley2GreenMode(pub, 17, from_it=True, left_offset = -10),
             Turn2VoidMode(pub, 30, is_left=True),
             Turn2RoadMode(pub, 31, is_left=False),
-            Stanley2CrossMode(pub, 32, right_way=False),
-            Turn2RoadMode(pub, 33, is_left=False, is_curve=True),
+            Stanley2CrossMode(pub, 32, right_way=False, from_it=True),
+            Turn2RoadMode(pub, 33, is_left=True, is_curve=True),
             Stanley2GreenMode(pub, 100),
-            Stanley2GreenMode(pub, 900),
+            EndMode(pub, 1000),
+
         ]
         
         self.mode = StartMode(pub)
@@ -85,7 +90,8 @@ class bot_mind:
         frame = self.image
 
         self.mode.set_frame_and_move(frame, showoff = True)
-        print(self.mode.log)
+        if len(self.mode.log)>5:
+            print(self.mode.log)
         cv2.waitKey(1)
 
 
