@@ -390,7 +390,7 @@ class Turn2VoidMode(Mode):
 
 
 
-radius_vx_vz_coefficient = 900  # edit this
+radius_vx_vz_coefficient = 950  # edit this
 
 
 class Turn2RoadMode(Mode):
