@@ -375,6 +375,8 @@ class Turn2VoidMode(Mode):
 
 
 
+radius_vx_vz_coefficient = 800 # edit this
+
 
 class Turn2RoadMode(Mode):
 
@@ -388,9 +390,13 @@ class Turn2RoadMode(Mode):
         self.min_turn_sec = min_turn_sec
         self.is_curve = is_curve
 
+        self.road_angle = -1000
+        self.dist_from_cross = -1
+
         self.stage = -1
         self.time_since_stage = 0
         self.est_time = 0
+        self.rot_z = z_ang_speed
 
         self.index = index
         self.log = str(self.index) + "_Turn2Road_"
@@ -398,16 +404,52 @@ class Turn2RoadMode(Mode):
 
     def set_frame_and_move(self, frame, showoff=True):
 
+
+        road_bev = get_road(bev)
+        road_blur_bev = get_rect_blur(road_bev, 5)
+        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
+
+
         bev, _ = get_bev(frame)
         # slidingwindow
         road_bev = get_road(bev)
         road_blur_bev = get_rect_blur(road_bev, 5)
-        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
+        
+
+        if self.stage == -1 and self.is_curve:
+            road_sw_bev, x_list, y_list, is_cross, positions = get_road_and_cross_pos(road_blur_bev, 5, self.left_way, self.right_way, self.init_pos_for_sliding_windows)
+            self.dist_from_cross = bot_from_bev_y - np.mean(positions)
+
+            if len(x_list) > 2:
+                line_road = Line(x_list, y_list)
+                self.line_road = line_road
+
+                self.log = str(self.index) + "_Turn2Road_stage1_line_on_angle_" + str(line_road.get_angle())
+
+                cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
+                self.road_angle = self.line_road.get_angle()
+            else:
+
+                self.road_angle = 0
+            if abs(self.road_angle) > 10:
+                self.road_angle = 0
+
+            if is_left:
+                self.road_angle = -self.road_angle
+
+            radius = self.dist_from_cross / (1 - math.sin(self.road_angle))
+
+            self.rot_z = (speed_x / radius) * radius_vx_vz_coefficient
+
+        else:
+            road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
+
 
         # starting
         if self.stage == -1:
             self.stage = 0
             self.time_since_stage = time.time()
+       
 
         # turning at least certain amount: to ignore post-road
         if self.stage == 0:
@@ -415,7 +457,7 @@ class Turn2RoadMode(Mode):
             x = 0
             if self.is_curve:
                 x = speed_x
-            move_robot(self.pub, x, z_ang_speed, self.is_left)
+            move_robot(self.pub, x, self.rot_z, self.is_left)
 
             if time.time() - self.time_since_stage > self.min_turn_sec:
                 self.stage = 1
@@ -428,7 +470,7 @@ class Turn2RoadMode(Mode):
             x = 0
             if self.is_curve:
                 x = speed_x
-            move_robot(self.pub, x, z_ang_speed, self.is_left)
+            move_robot(self.pub, x, self.rot_z, self.is_left)
 
             if len(x_list) > 2:
                 self.init_pos_for_sliding_windows = x_list[1]
