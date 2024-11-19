@@ -17,34 +17,49 @@ from math import *
 from collections import deque
 import datetime
 
+from ultralytics import YOLO
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
-from _mode import StartMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode
+from _mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode
 
 
 
 frame_ignore_level = 1
 
 
+yolo_pt = "best.pt"
+
 class bot_mind:
 
     def __init__(self):
+
+        self.model = YOLO(yolo_pt)
+        null_predict_to_turn_on_yolo = self.model.predict(np.zeros((480, 640, 3)))
+
+
+        now = datetime.datetime.now().strftime("%H%M")
+        self.logwriter = cv2.VideoWriter("log_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 20.0, (640, 480))
+        self.logtxt = open("log_" + now + ".txt", 'w')
+
         self.bridge = CvBridge()
         rospy.init_node('lane_detection_node', anonymous=False)
         rospy.Subscriber('/main_camera/image_raw/compressed', CompressedImage, self.camera_callback)
         self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
         pub = self.pub
-        now = datetime.datetime.now().strftime("%H%M")
-        self.logwriter = cv2.VideoWriter("log_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 20.0, (640, 480))
-        self.logtxt = open("log_" + now + ".txt", 'w')
+
+        self.mode = StartMode(pub)
+        self.stage = 0
+
+        self.count_frame = 1
 
         self.mode_list = [
             StartMode(pub),
-
+            # EndMode(pub, 1000),
             Stanley2CrossMode(pub, 1),
             Turn2RoadMode(pub, 2, is_left=False, is_curve=True),
             Stanley2GreenMode(pub, 3, left_offset = -10),
             Turn2VoidMode(pub, 4, is_left=True),
+            EventMode(pub, self.model, 999, n_frame = 5, wait_sec = 5.0),
             Turn2RoadMode(pub, 5, is_left=True),
             Stanley2CrossMode(pub, 6),
             Turn2RoadMode(pub, 7, is_left=False, is_curve=True),
@@ -68,11 +83,8 @@ class bot_mind:
             EndMode(pub, 1000),
 
         ]
-        
-        self.mode = StartMode(pub)
-        self.stage = 0
 
-        self.count_frame = 1
+        
 
     def camera_callback(self, data):
         self.image = self.bridge.compressed_imgmsg_to_cv2(data, desired_encoding="bgr8")

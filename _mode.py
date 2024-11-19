@@ -16,6 +16,8 @@ from geometry_msgs.msg import Twist
 from math import *
 from collections import deque
 
+from ultralytics import YOLO
+
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
 from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_road_and_cross_pos, Line
@@ -33,7 +35,7 @@ def showing_off(image_list):
     px = [0, 600, 1200, 0, 600, 1200, 0, 600, 1200]
     py = [0, 0, 0, 400, 400, 400, 800, 800, 800]
 
-    for i, frame in enumerate(image_list[1:]):
+    for i, frame in enumerate(image_list):
 
         if i > 8:
             break
@@ -71,16 +73,23 @@ class Mode:
 
     end = False
     pub = None
+    log = ""
 
     def __init__(self, pub):
         self.end = False
         self.pub = pub
+        self.log = ""
     
     def set_frame_and_move(self, frame, showoff=True):
         pass
 
+    def log_add(self, a, b, *args):
 
-class StartMode:
+        self.log += "  | " + str(a) + " " + str(b)
+
+
+
+class StartMode(Mode):
 
     def __init__(self, pub):
         self.end = True
@@ -93,17 +102,121 @@ class StartMode:
         cv2.waitKey(1)
         pass
 
-class CamMode:
 
-    def __init__(self, pub):
-        self.end = True
+conf_threshold = 0.1
+
+class EventMode(Mode):
+
+    def __init__(self, pub, model, index = 0, n_frame=5, wait_sec = 2.0):
+        self.end = False
         self.pub = pub
+        self.n_frame = n_frame
+
+        self.wait_sec = wait_sec
+        self.index = index
+        self.log = str(self.index) + "_Event_"
+        self.model = model
+
+        self.time_start = time.time()
+
+        self.count_map_list = []
     
     def set_frame_and_move(self, frame, showoff=True):
         
+        # frame = cv2.imread("2356.jpg")
+
+        predict_frame = frame
+        self.log = str(self.index) + "_Event_"
+
+        self.log_add("mode ", self.n_frame)
+        if self.n_frame > 0:
+
+            self.time_start = time.time()
+            self.n_frame -= 1
+
+            result_list = self.model.predict(frame, device = 'cpu', show=False)
+            # result_list = self.model.predict(frame, device = 'cuda', show=False)
+
+            xyxy_list = list()
+            class_list = list()
+
+            count_map = dict()
+
+            for result in result_list:
+                predict_frame = result.plot()
+                # print(result)
+                if len(result.boxes) < 1:
+                    continue   
+                res = result.boxes[0] 
+                cords = res.xyxy[0].tolist()
+                cords = [round(x) for x in cords]
+                class_id = result.names[res.cls[0].item()]
+                conf = round(res.conf[0].item(), 2)
+
+                if conf > conf_threshold:
+                    xyxy_list.append(cords)
+                    class_list.append(class_id)
+                    if class_id in count_map.keys():
+                        count_map[class_id] += 1
+                    else:
+                        count_map[class_id] = 1
+        
+            for i, xyxy in enumerate(xyxy_list):
+                self.log_add("new ", str(xyxy))
+                self.log_add("with ", class_list[i])
+
+            self.log_add("count: ", str(count_map))
+
+            cv2.imwrite("predict_" + str(self.n_frame) + ".jpg", predict_frame)
+
+
+            self.count_map_list.append(count_map)
+            self.log_add("time: ", time.time() - self.time_start)
+        
+        elif self.n_frame == 0:
+            self.n_frame -= 1
+
+            self.time_start = time.time()
+            count_result_map = {
+                'alli': [], 'enem': [], 'alli_tank': [], 'enem_tank': []
+            }
+            for key in count_result_map.keys():
+                for count_map in self.count_map_list:
+                    if key in count_map.keys():
+                        count_result_map[key] += [count_map[key]]
+                    else:
+                        count_result_map[key] += [0]
+
+                list_n = count_result_map[key]
+
+                max_n = 1
+                max_i = 0
+                for i in range(len(list_n)):
+                    count_n = 0
+                    for j in range(len(list_n)):
+                        if list_n[i] == list_n[j]:
+                            count_n += 1
+                    if count_n > max_n:
+                        max_n, max_i = count_n, i
+                count_result_map[key] = list_n[i]
+
+
+            self.log_add("prediction result: ", str(count_result_map))
+
+
+                
+
+
+        elif time.time() - self.time_start < self.wait_sec:
+
+            self.log_add("holding: ", self.wait_sec)
+            self.log_add("until: ", time.time() - self.time_start)
+
+        else:
+            self.end = True
+
         if showoff:
-            pass
-        cv2.waitKey(1)
+            showing_off([frame, predict_frame])
         pass
 
 
@@ -390,7 +503,7 @@ class Turn2VoidMode(Mode):
 
 
 
-radius_vx_vz_coefficient = 950  # edit this
+radius_vx_vz_coefficient = 900  # edit this
 
 
 class Turn2RoadMode(Mode):

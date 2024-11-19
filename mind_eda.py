@@ -18,7 +18,7 @@ from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green
 from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_road_and_cross_pos, Line
 
 
-video_file = "log_1902.avi"
+video_file = "log_2125.avi"
 
 
 def on_click(event, x, y, flags, images):
@@ -43,8 +43,20 @@ def show(frame, frame_before, stop=False):
     cross_bev, _, _, _, _ = get_road_and_cross_pos(road_bev)
     
 
-    frame_list = [cross_bev]
-    name_list = ['cross']
+    frame_list = [
+        bev,
+        road_bev,
+        green_bev,
+        green_blur_bev,
+        edge_bev,
+        cross_bev,]
+    name_list = [
+        'bev',
+        'road',
+        'green',
+        'green_pos',
+        'road_edge',
+        'cross',]
     for i, f in enumerate(frame_list):
 
         if i > 8:
