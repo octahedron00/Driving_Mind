@@ -167,7 +167,7 @@ class EventMode(Mode):
 
             self.log_add("count: ", str(count_map))
 
-            cv2.imwrite("predict_" + str(self.n_frame) + ".jpg", predict_frame)
+            cv2.imwrite("predict_" + str(self.index) + "_" + str(self.n_frame) + ".jpg", predict_frame)
 
 
             self.count_map_list.append(count_map)
