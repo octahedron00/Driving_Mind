@@ -33,7 +33,7 @@ class bot_mind:
 
     def __init__(self):
 
-        self.model = YOLO(yolo_pt)
+        self.model = YOLO(yolo_pt) 
         null_predict_to_turn_on_yolo = self.model.predict(np.zeros((480, 640, 3)))
 
 
@@ -58,29 +58,29 @@ class bot_mind:
             Stanley2CrossMode(pub, 1),
             Turn2RoadMode(pub, 2, is_left=False, is_curve=True),
             Stanley2GreenMode(pub, 3, left_offset = -10),
-            Turn2VoidMode(pub, 4, is_left=True),
-            EventMode(pub, self.model, 1, n_frame = 5, wait_sec = 5.0),
-            Turn2RoadMode(pub, 5, is_left=True),
+            Turn2VoidMode(pub, 4, is_left=False),
+            EventMode(pub, self.model, 1, n_frame = 5, wait_sec = 2.0),
+            Turn2RoadMode(pub, 5, is_left=False, min_turn_sec=1.5),
             Stanley2CrossMode(pub, 6),
             Turn2RoadMode(pub, 7, is_left=False, is_curve=True),
             Stanley2GreenMode(pub, 8),
 
-            Stanley2GreenMode(pub, 9, from_it=True, left_offset = -10),
+            # Stanley2GreenMode(pub, 9, from_it=True, left_offset = -10),
             Turn2VoidMode(pub, 10, is_left=True),
-            EventMode(pub, self.model, 2, n_frame = 5, wait_sec = 5.0),
-            Turn2RoadMode(pub, 11, is_left=False),
+            EventMode(pub, self.model, 2, n_frame = 5, wait_sec = 2.0),
+            Turn2RoadMode(pub, 11, is_left=False, min_turn_sec=1.5),
 
-            Stanley2CrossMode(pub, 12, left_way=False, from_it=True),
+            Stanley2CrossMode(pub, 12, left_way=False, from_it=True, left_offset=0),
             Turn2RoadMode(pub, 13, is_left=False, left_way=False, is_curve=True),
             Stanley2GreenMode(pub, 14, left_offset = -10),
             Turn2VoidMode(pub, 15, is_left=True),
-            EventMode(pub, self.model, 3, n_frame = 5, wait_sec = 5.0),
-            Turn2RoadMode(pub, 16, is_left=False),
+            EventMode(pub, self.model, 3, n_frame = 5, wait_sec = 2.0),
+            Turn2RoadMode(pub, 16, is_left=False, min_turn_sec=1.5),
             Stanley2GreenMode(pub, 17, from_it=True, left_offset = -10),
             Turn2VoidMode(pub, 30, is_left=True),
-            EventMode(pub, self.model, 4, n_frame = 5, wait_sec = 5.0),
-            Turn2RoadMode(pub, 31, is_left=False),
-            Stanley2CrossMode(pub, 32, right_way=False, from_it=True),
+            EventMode(pub, self.model, 4, n_frame = 5, wait_sec = 2.0),
+            Turn2RoadMode(pub, 31, is_left=False, min_turn_sec=1.5),
+            Stanley2CrossMode(pub, 32, right_way=False),
             Turn2RoadMode(pub, 33, is_left=True, right_way=False, is_curve=True),
             Stanley2GreenMode(pub, 100),
             EndMode(pub, 1000),
@@ -106,6 +106,7 @@ class bot_mind:
         time_start = time.time()
         self.mode.set_frame_and_move(frame, showoff = True)
         if len(self.mode.log)>0:
+            self.mode.log_add("time: ", time.time() - time_start)
             self.logwriter.write(frame)
             print("time spent:", round(time.time()-time_start, 3), end="   |  ")
             print(self.mode.log)
