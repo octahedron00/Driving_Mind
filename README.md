@@ -1,7 +1,7 @@
 # driving_mind
 AI driving mind uploaded on github:
 
-
+[https://drive.google.com/file/d/1Vl1SgV8VoHQgWE8x0zETEKAes9rvTUzS/view?usp=drivesdk]
 
 
 ### TODO
@@ -15,3 +15,6 @@ AI driving mind uploaded on github:
 - 전체적으로 속도가 제한됨: Frame 단위 현재 2, 이걸 1로 맞출 수 있다면 2배속까지 쉽게 해결되는 문제. 
 
 | 연산량이 많은 게 아니라 그냥 iteration을 python이 아니라 C에서 최대한 굴리도록 해야 함: Numpy의 함수들을 최대한 많이 활용할 것.
+
+
+
