@@ -35,6 +35,18 @@ default_time_90deg = 2.5 / z_ang_speed
 
 radius_vx_vz_coefficient = 900  # edit this
 
+true_green_confidence = 140
+true_green_dist_from_road = 30 #mm
+
+
+# for event:
+conf_threshold = 0.6
+iou_threshold = 0.6
+sleep_frame = 5
+
+key_predict = ("ally", "enem", "ally_tank", "enem_tank")
+
+
 
 def showing_off(image_list):
 #    return
@@ -162,12 +174,6 @@ class EndMode(Mode):
         pass
 
 
-conf_threshold = 0.6
-iou_threshold = 0.6
-sleep_frame = 5
-
-key_predict = ("ally", "enem", "ally_tank", "enem_tank")
-
 
 class EventMode(Mode):
 
@@ -202,7 +208,9 @@ class EventMode(Mode):
             stage 1: getting prediction for n_frame for every sleep_frame
             stage 2: /end: vote by each prediction! + get enem_tank position and rotational angle, time start
             stage 3: rotate to the tank position /end: shot! time start
-            stage 4: wait for time ends: filling frames at once
+            stage 4: rotate back to the original angle
+            stage 5: wait for time ends: filling frames at once
+            
         '''
         # frame = cv2.imread("2356.jpg")
 
@@ -288,7 +296,19 @@ class EventMode(Mode):
                 move_robot(self.pub)
                 # BANG!!!
 
-        # stage 4  
+        elif self.stage == 4:
+            if self.rot_time > time.time() - self.time_start:
+                self.log_add("speed: ", -self.rot_speed)
+                self.log_add("rotating_back: ", self.wait_sec)
+                self.log_add("until: ", time.time() - self.time_start)
+                move_robot(self.pub, 0, -self.rot_speed)
+            else:
+                self.stage = 5
+                self.time_start = time.time()
+                move_robot(self.pub)
+                # BANG!!!
+
+        # stage 5  
         elif time.time() - self.time_start < self.wait_sec:
             self.log_add("holding: ", self.wait_sec)
             self.log_add("until: ", time.time() - self.time_start)
@@ -297,10 +317,6 @@ class EventMode(Mode):
 
         if showoff:
             showing_off([frame, predict_frame])
-
-
-true_green_confidence = 140
-true_green_dist_from_road = 30 #mm
 
 
 class Stanley2GreenMode(Mode):
@@ -686,9 +702,8 @@ class Turn2RoadMode(Mode):
                 self.log = str(self.index) + "_Turn2Road_stage1_line_on_angle_" + str(line_road.get_angle())
 
                 cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
-
+                
                 if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
-                     
                     # move_robot(self.pub)
                     self.end = True
  

@@ -336,10 +336,11 @@ def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, 
                 x_right = i
                 break
         
+        x_mid = int((x_left + x_right)/2)
 
         # print(i, "pos", lane_point, "max", max_pos, "filled area", real_sum, real_sum/(np.shape(roi)[0]*np.shape(roi)[1]*255))
         if fill_min < float(x_right-x_left)/len(x_hist) < fill_max:
-            x_p = int((x_left + x_right)/2) + l
+            x_p = x_mid + l
             lane_point = x_p
             y_p = (t + b) / 2
             x_list.append(x_p)
@@ -348,9 +349,10 @@ def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, 
             cv2.rectangle(window_frame, (int(x_p), int(y_p)), (int(x_p), int(y_p)), (255, 0, 0), 3)
 
 
-        sum_left = np.sum(x_hist[:int((r-l)/2)])
-        sum_right = np.sum(x_hist[int((r-l)/2):])
+        sum_left = np.sum(x_hist[:x_mid])
+        sum_right = np.sum(x_hist[x_mid:])
         
+        # sum from actual mid of road / sum must be bigger than total half * fill_max
         if left_way and fill_max > float(sum_left) / (np.shape(roi)[0]*np.shape(roi)[1]*255/2):
             continue
         if right_way and fill_max > float(sum_right) / (np.shape(roi)[0]*np.shape(roi)[1]*255/2):
