@@ -15,7 +15,7 @@ from math import *
 from collections import deque
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
-from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_road_and_cross_pos, Line
+from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
 
 
 video_file = "log_1457.avi"
@@ -40,7 +40,7 @@ def show(frame, frame_before, stop=False):
     green_bev_cm = get_cm_px_from_mm(green_bev)
     green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
     edge_bev, _ = get_road_edge_angle(road_bev)
-    cross_bev, _, _, _, _ = get_road_and_cross_pos(road_bev)
+    cross_bev, _, _, _, _ = get_sliding_window_and_cross_result(road_bev)
     
 
     frame_list = [

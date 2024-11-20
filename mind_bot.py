@@ -26,6 +26,9 @@ from _mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Tu
 
 frame_ignore_level = 1
 
+log_vid = False
+log_txt = True
+
 
 yolo_pt = "best.pt"
 
@@ -38,8 +41,10 @@ class bot_mind:
 
 
         now = datetime.datetime.now().strftime("%H%M")
-        self.logwriter = cv2.VideoWriter("log_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 20.0, (640, 480))
-        self.logtxt = open("log_" + now + ".txt", 'w')
+        if log_vid:
+            self.logwriter = cv2.VideoWriter("log_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
+        if log_txt:
+            self.logtxt = open("log_" + now + ".txt", 'w')
 
         self.bridge = CvBridge()
         rospy.init_node('lane_detection_node', anonymous=False)
@@ -59,31 +64,34 @@ class bot_mind:
             Turn2RoadMode(pub, 2, is_left=False, is_curve=True),
             Stanley2GreenMode(pub, 3, left_offset = -10),
             Turn2VoidMode(pub, 4, is_left=False),
-            EventMode(pub, self.model, 1, n_frame = 5, wait_sec = 2.0),
-            Turn2RoadMode(pub, 5, is_left=False, min_turn_sec=1.5),
-            Stanley2CrossMode(pub, 6),
-            Turn2RoadMode(pub, 7, is_left=False, is_curve=True),
-            Stanley2GreenMode(pub, 8),
 
-            # Stanley2GreenMode(pub, 9, from_it=True, left_offset = -10),
-            Turn2VoidMode(pub, 10, is_left=True),
-            EventMode(pub, self.model, 2, n_frame = 5, wait_sec = 2.0),
+            # EventMode(pub, self.model, 10, n_frame = 5, wait_sec = 2.0),
             Turn2RoadMode(pub, 11, is_left=False, min_turn_sec=1.5),
-
-            Stanley2CrossMode(pub, 12, left_way=False, from_it=True, left_offset=0),
-            Turn2RoadMode(pub, 13, is_left=False, left_way=False, is_curve=True),
-            Stanley2GreenMode(pub, 14, left_offset = -10),
+            Stanley2CrossMode(pub, 12),
+            Turn2RoadMode(pub, 13, is_left=False, is_curve=True),
+            Stanley2GreenMode(pub, 14),
+            # Stanley2GreenMode(pub, 14.5, from_it=True),
             Turn2VoidMode(pub, 15, is_left=True),
-            EventMode(pub, self.model, 3, n_frame = 5, wait_sec = 2.0),
-            Turn2RoadMode(pub, 16, is_left=False, min_turn_sec=1.5),
-            Stanley2GreenMode(pub, 17, from_it=True, left_offset = -10),
-            Turn2VoidMode(pub, 30, is_left=True),
-            EventMode(pub, self.model, 4, n_frame = 5, wait_sec = 2.0),
+
+            # EventMode(pub, self.model, 20, n_frame = 5, wait_sec = 2.0),
+            Turn2RoadMode(pub, 21, is_left=False, min_turn_sec=1.5),
+            Stanley2CrossMode(pub, 22, left_way=False, from_it=True, left_offset=0),
+            Turn2RoadMode(pub, 23, is_left=False, left_way=False, is_curve=True),
+            Stanley2GreenMode(pub, 24, left_offset = -10),
+            Turn2VoidMode(pub, 25, is_left=True),
+
+            # EventMode(pub, self.model, 30, n_frame = 5, wait_sec = 2.0),
             Turn2RoadMode(pub, 31, is_left=False, min_turn_sec=1.5),
-            Stanley2CrossMode(pub, 32, right_way=False),
-            Turn2RoadMode(pub, 33, is_left=True, right_way=False, is_curve=True),
-            Stanley2GreenMode(pub, 100),
-            EndMode(pub, 1000),
+            Stanley2GreenMode(pub, 32, from_it=True, left_offset = -10),
+            Turn2VoidMode(pub, 33, is_left=True),
+
+
+            # EventMode(pub, self.model, 40, n_frame = 5, wait_sec = 2.0),
+            Turn2RoadMode(pub, 41, is_left=False, min_turn_sec=1.5),
+            Stanley2CrossMode(pub, 42, right_way=False),
+            Turn2RoadMode(pub, 43, is_left=True, right_way=False, is_curve=True),
+            Stanley2GreenMode(pub, 44),
+            EndMode(pub, 100),
 
         ]
 
@@ -105,14 +113,15 @@ class bot_mind:
 
         time_start = time.time()
         self.mode.set_frame_and_move(frame, showoff = True)
-        if len(self.mode.log)>0:
+
+        if self.mode.running:
             self.mode.log_add("time: ", time.time() - time_start)
-            self.logwriter.write(frame)
-            print("time spent:", round(time.time()-time_start, 3), end="   |  ")
             print(self.mode.log)
-            self.logtxt.write(self.mode.log + "\n")
+            if log_vid:
+                self.logwriter.write(frame)
+            if log_txt:
+                self.logtxt.write(self.mode.log + "\n")
         else:
-            self.logwriter.release()
             a = input("Was it good?")
         cv2.waitKey(1)
 

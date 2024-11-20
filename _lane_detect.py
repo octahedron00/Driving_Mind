@@ -75,9 +75,8 @@ class Line:
 
 def get_bev(image):
     """
+        get image and return bev frame only.
         rt: right top, lt: left top, rd: right down, ld: left down
-
-
         Return
         1) _image : BEV result image
         2) minv : inverse matrix of BEV conversion matrix
@@ -99,27 +98,29 @@ def get_bev(image):
     
     warp_image = cv2.warpPerspective(image, M, (h, w), flags=cv2.INTER_LINEAR)
 
-    return warp_image, Minv
+    return warp_image
 
 
 
 def get_road(image):
     """
-    returning black and green 
+    returning black and green in binary
 
     """
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    rev = 255 - image
-    
-    lower = np.array([150, 150, 150])
-    upper = np.array([255, 255, 255])
-    black = cv2.inRange(rev, lower, upper)
+    # rev = 255 - image
 
+    black_max = 105
+    black_min = 0
+
+    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    black = cv2.inRange(image_gray, black_min, black_max)
     green = get_green(image)
     
     road_bin = cv2.add(black, green)
 
     return road_bin
+
 
 
 def get_sliding_window_result(image, init=-1):
@@ -204,7 +205,7 @@ def get_road_edge_angle(frame, is_left = True):
         matrix[:, :1] = 0.3
     
     edge_frame = cv2.filter2D(frame, -1, matrix)
-    ret, binary_edge = cv2.threshold(edge_frame, 50, 255, cv2.THRESH_BINARY)
+    ret, binary_edge = cv2.threshold(edge_frame, 100, 255, cv2.THRESH_BINARY)
     color_frame = cv2.cvtColor(binary_edge, cv2.COLOR_GRAY2BGR)
 
 
@@ -235,6 +236,7 @@ def get_road_edge_angle(frame, is_left = True):
     return color_frame, angle_median
 
 
+
 def get_rect_blur(frame, size_square_mm = 5):
 
     filter = np.ones((size_square_mm, size_square_mm), dtype=np.float64) / (size_square_mm*size_square_mm)
@@ -247,12 +249,9 @@ def get_rect_blur(frame, size_square_mm = 5):
 
 def get_green(image):
     """
-
+        getting green(255) with using hls value filter.
     """
     hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
-
-    green_dark = cv2.inRange(image, (0, 70, 0), (50, 90, 50))
-    green_bright = cv2.inRange(image, (50, 90, 50), (100, 255, 100))
 
     green = cv2.inRange(hls, (45, 40, 45), (95, 200, 255))
     return green
@@ -260,6 +259,9 @@ def get_green(image):
 
 
 def get_square_pos(green_frame, size_square = 7):
+    """
+        getting blurred frame, position of max value by using filter, max_value
+    """
     blurred_frame = get_rect_blur(green_frame, size_square)
     color_frame = cv2.cvtColor(blurred_frame, cv2.COLOR_GRAY2BGR)
 
@@ -278,7 +280,8 @@ def get_square_pos(green_frame, size_square = 7):
     return color_frame, max_pos, blurred_frame[max_pos]
 
 
-def get_road_and_cross_pos(image, width_road = 5, left_way = True, right_way = True, init = -1):
+
+def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, right_way = True, init = -1):
 
     """
     Sliding window
@@ -290,7 +293,7 @@ def get_road_and_cross_pos(image, width_road = 5, left_way = True, right_way = T
     win_w = 180
     win_n = 10
     fill_min = 0.1
-    fill_max = 0.5
+    fill_max = 0.6
 
     if init > 0:
         lane_point = init
@@ -342,7 +345,7 @@ def get_road_and_cross_pos(image, width_road = 5, left_way = True, right_way = T
             x_list.append(x_p)
             y_list.append(y_p)
             cv2.rectangle(window_frame, (l, t), (r, b), (255, 0, 0), 2)
-            cv2.rectangle(window_frame, (int(x_p), int(y_p)), (int(x_p), int(y_p)), (255, 0, 0), 5)
+            cv2.rectangle(window_frame, (int(x_p), int(y_p)), (int(x_p), int(y_p)), (255, 0, 0), 3)
 
 
         sum_left = np.sum(x_hist[:int((r-l)/2)])
@@ -363,46 +366,6 @@ def get_road_and_cross_pos(image, width_road = 5, left_way = True, right_way = T
 
 
 
-
-def get_cross_pos_by_filter(frame_cm, width_road = 5, left_way = True, right_way = True):
-
-    a = 6
-    b = -2
-    if left_way and right_way:
-        a = 9
-        b = -3
-    matrix = np.ones((width_road*3, width_road*3))/float(a*width_road*width_road)
-    matrix[:, :width_road] = 3 / float(a*width_road*width_road)
-    matrix[:, width_road*2:] = 3 / float(a*width_road*width_road)
-    if not left_way:
-        matrix[:, :width_road-1] = b / float(a*width_road*width_road)
-    if not right_way:
-        matrix[:, width_road*2+1:] = b / float(a*width_road*width_road)
-
-    matrix[:width_road-1, :width_road-1] = b / float(a*width_road*width_road)
-    matrix[width_road*2+1:, :width_road-1] = b / float(a*width_road*width_road)
-    matrix[:width_road-1, width_road*2+1:] = b / float(a*width_road*width_road)
-    matrix[width_road*2+1:, width_road*2+1:] = b / float(a*width_road*width_road)
-    
-    cross_frame = cv2.filter2D(frame_cm, -1, matrix)
-
-    color_frame = cv2.cvtColor(cross_frame, cv2.COLOR_GRAY2BGR)
-
-    max_pos = (0, 0)
-    max_pos_xy = (0, 0)
-
-    for i in range(np.shape(cross_frame)[0]):
-        for j in range(np.shape(cross_frame)[1]):
-            
-            if cross_frame[max_pos] < cross_frame[i, j]:
-                max_pos = (i, j)
-                max_pos_xy = (j, i)
-
-    cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(cross_frame[max_pos]), 0), 1)
-
-    return color_frame, max_pos, cross_frame[max_pos]
-
-
 def get_cm_px_from_mm(frame_mm):
     """
         make image size / 10
@@ -414,13 +377,56 @@ def get_cm_px_from_mm(frame_mm):
     frame_cm = cv2.resize(frame_mm, dsize=(cm_0, cm_1), interpolation=cv2.INTER_LINEAR)
     return frame_cm
 
-def get_mm_px_from_cm(frame_mm):
+
+
+def get_mm_px_from_cm(frame_cm):
     """
         make image size / 10
     """
-    mm_0 = np.shape(frame_mm)[0]
-    mm_1 = np.shape(frame_mm)[1]
-    cm_0, cm_1 = int(mm_0/10), int(mm_1/10)
+    cm_0 = np.shape(frame_mm)[0]
+    cm_1 = np.shape(frame_mm)[1]
+    mm_0, mm_1 = cm_0*10, cm_1*10
 
-    frame_cm = cv2.resize(frame_mm, dsize=(cm_0, cm_1), interpolation=cv2.INTER_LINEAR)
-    return frame_cm
+    frame_mm = cv2.resize(frame_cm, dsize=(mm_0, mm_1), interpolation=cv2.INTER_LINEAR)
+    return frame_mm
+
+
+# Not using Code:
+# def get_cross_pos_by_filter(frame_cm, width_road = 5, left_way = True, right_way = True):
+
+#     a = 6
+#     b = -2
+#     if left_way and right_way:
+#         a = 9
+#         b = -3
+#     matrix = np.ones((width_road*3, width_road*3))/float(a*width_road*width_road)
+#     matrix[:, :width_road] = 3 / float(a*width_road*width_road)
+#     matrix[:, width_road*2:] = 3 / float(a*width_road*width_road)
+#     if not left_way:
+#         matrix[:, :width_road-1] = b / float(a*width_road*width_road)
+#     if not right_way:
+#         matrix[:, width_road*2+1:] = b / float(a*width_road*width_road)
+
+#     matrix[:width_road-1, :width_road-1] = b / float(a*width_road*width_road)
+#     matrix[width_road*2+1:, :width_road-1] = b / float(a*width_road*width_road)
+#     matrix[:width_road-1, width_road*2+1:] = b / float(a*width_road*width_road)
+#     matrix[width_road*2+1:, width_road*2+1:] = b / float(a*width_road*width_road)
+    
+#     cross_frame = cv2.filter2D(frame_cm, -1, matrix)
+
+#     color_frame = cv2.cvtColor(cross_frame, cv2.COLOR_GRAY2BGR)
+
+#     max_pos = (0, 0)
+#     max_pos_xy = (0, 0)
+
+#     for i in range(np.shape(cross_frame)[0]):
+#         for j in range(np.shape(cross_frame)[1]):
+            
+#             if cross_frame[max_pos] < cross_frame[i, j]:
+#                 max_pos = (i, j)
+#                 max_pos_xy = (j, i)
+
+#     cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(cross_frame[max_pos]), 0), 1)
+
+#     return color_frame, max_pos, cross_frame[max_pos]
+
