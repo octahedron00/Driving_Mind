@@ -19,7 +19,7 @@ from collections import deque
 from std_msgs.msg import String
 
 
-from ultralytics import YOLO
+# from ultralytics import YOLO
 
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
@@ -30,12 +30,12 @@ bot_from_bev_x = 100 # edit this
 bot_from_bev_y = 400 # edit this
 
 speed_x = 0.4
-z_ang_speed = 1
-default_time_90deg = 2.5 / z_ang_speed
+z_ang_speed = 0.9
+default_time_90deg = 1.5 / z_ang_speed
 
-radius_vx_vz_coefficient = 900  # edit this
+radius_vx_vz_coefficient = 1100  # edit this
 
-true_green_confidence = 140
+true_green_confidence = 100
 true_green_dist_from_road = 30 #mm
 
 
@@ -81,7 +81,7 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
 def move_stanley(pub, offset_mm, angle_deg):
 
-    kp= 0.03
+    kp= 0.05
     ka= 0.10
     k = 1.5
     x = speed_x
@@ -541,6 +541,9 @@ class Turn2VoidMode(Mode):
                 self.est_time = self.est_time_angle_calc
                 if abs(angle) > 45:
                     self.est_time = default_time_90deg
+                
+                self.log_add("angle", angle)
+                self.log_add("time", self.est_time)
 
         
 
@@ -558,7 +561,6 @@ class Turn2VoidMode(Mode):
                 
                 # cv2.imwrite(str(self.index) + "_frame_edge_" + str(len(self.time_list)) + ".jpg", road_edge_bev)
                 # cv2.imwrite(str(self.index) + "_frame_original_" + str(len(self.time_list)) + ".jpg", road_bev)
-                self.log = str(self.index) + "_Turn2Void_stage" + str(self.stage) + " " + str(angle)
             elif self.waiting_for_next_frame > 0:
                 self.waiting_for_next_frame -= 1
             else:
@@ -584,12 +586,11 @@ class Turn2VoidMode(Mode):
 
                     
         if self.stage == 3:
-            self.log = str(self.index) + "_Turn2Void_stage" + str(self.stage) + " " + str(self.est_time)
 
             if time.time() < self.time_since_stage + self.est_time:
                 move_robot(self.pub, 0, z_ang_speed, self.is_left)
             else:
-                # move_robot(self.pub)
+                move_robot(self.pub)
                 self.end = True
 
         if showoff:
@@ -706,6 +707,7 @@ class Turn2RoadMode(Mode):
                 if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
                     # move_robot(self.pub)
                     self.end = True
+            # cv2.imwrite(str(self.index) + "_T2R_" + str(round((time.time() - self.time_since_stage)*1000, 0)) + ".jpg", road_sw_bev)
  
 
         if showoff:

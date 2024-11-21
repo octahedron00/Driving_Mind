@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import time
 import math
+import sys
 
 from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge
@@ -18,7 +19,7 @@ from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green
 from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
 
 
-video_file = "log_1457.avi"
+video_file = "log_1818.avi"
 
 
 def on_click(event, x, y, flags, images):
@@ -34,7 +35,7 @@ def on_click(event, x, y, flags, images):
 
 def show(frame, frame_before, stop=False):
 
-    bev, Minv = get_bev(frame)
+    bev = get_bev(frame)
     road_bev = get_road(bev)
     green_bev = get_green(bev)
     green_bev_cm = get_cm_px_from_mm(green_bev)
@@ -46,19 +47,11 @@ def show(frame, frame_before, stop=False):
     frame_list = [
         frame,
         bev,
-        road_bev,
-        green_bev,
-        green_blur_bev,
-        edge_bev,
-        cross_bev,]
+        road_bev,]
     name_list = [
         'ori',
         'bev',
-        'road',
-        'green',
-        'green_pos',
-        'road_edge',
-        'cross',]
+        'road',]
     for i, f in enumerate(frame_list):
 
         if i > 8:
@@ -82,7 +75,7 @@ def show(frame, frame_before, stop=False):
             return 1
         return 0
     a = cv2.waitKey(50)
-    print(a)
+#    print(a)
     if 120 > a > 30:
         a = cv2.waitKey(0)
         if a in [ord('a'), ord('b')]:
@@ -92,7 +85,9 @@ def show(frame, frame_before, stop=False):
                 print("No More Data Available")
 
 if __name__=="__main__":
- 
+    
+    video_file = sys.argv[1]
+     
     print("Start of Video?")
     cap = cv2.VideoCapture(video_file)
     print(cap)

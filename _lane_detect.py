@@ -81,10 +81,10 @@ def get_bev(image):
         1) _image : BEV result image
         2) minv : inverse matrix of BEV conversion matrix
     """
-    lt = (147, 104)
-    ld = (0, 343)
-    rt = (487, 113)
-    rd = (636, 355)
+    lt = (170, 175)
+    ld = (0, 412)
+    rt = (501, 188)
+    rd = (638, 435)
 
     h = 200
     w = 200
@@ -291,9 +291,9 @@ def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, 
 
     win_h = 10
     win_w = 180
-    win_n = 10
+    win_n = 8
     fill_min = 0.1
-    fill_max = 0.6
+    fill_max = 0.5
 
     if init > 0:
         lane_point = init
@@ -328,12 +328,14 @@ def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, 
         x_left = 0
         x_right = 0
         for i in range(max_pos, 0, -1):
-            if x_hist[i] < 256:
+            if x_hist[i] > 256:
                 x_left = i
+            else:
                 break
         for i in range(max_pos, len(x_hist)):
-            if x_hist[i] < 256:
+            if x_hist[i] > 256:
                 x_right = i
+            else:
                 break
         
         x_mid = int((x_left + x_right)/2)
@@ -351,7 +353,8 @@ def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, 
 
         sum_left = np.sum(x_hist[:x_mid])
         sum_right = np.sum(x_hist[x_mid:])
-        
+        # print(sum_left, sum_right, (np.shape(roi)[0]*np.shape(roi)[1]*255/2))        
+
         # sum from actual mid of road / sum must be bigger than total half * fill_max
         if left_way and fill_max > float(sum_left) / (np.shape(roi)[0]*np.shape(roi)[1]*255/2):
             continue
