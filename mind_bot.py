@@ -183,8 +183,10 @@ class bot_mind:
     def action(self):
         
         if self.mode.end:
+            capsule = self.mode.capsule
             self.mode_pos += 1
             self.mode = self.mode_list[self.mode_pos]
+            self.mode.capsule = capsule
         frame = self.image
 
         time_start = time.time()
