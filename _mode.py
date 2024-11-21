@@ -41,6 +41,8 @@ true_green_dist_from_road = 30 #mm
 
 bev_shape = (200, 200)
 
+bev_shape = (200, 200)
+
 # for event:
 conf_threshold = 0.6
 iou_threshold = 0.6
@@ -135,6 +137,7 @@ class Mode:
     log = ""
     running = True
     phase = 0
+    capsule = dict()
     capsule = dict()
 
     def __init__(self, pub):
@@ -441,12 +444,14 @@ class Stanley2CrossMode(Mode):
         self.line_road = None
         self.init_pos_for_sliding_windows = -1
         self.green_encounter = -2
+        self.green_encounter = -2
         self.cross_encounter = -2
         if from_it:
             self.cross_encounter = -1000
         self.left_way = left_way
         self.right_way = right_way
         self.left_offset = left_offset
+        self.phase = 1
         self.phase = 1
 
         self.index = index
@@ -469,6 +474,11 @@ class Stanley2CrossMode(Mode):
         cross_find_view, x_list, y_list, is_cross, positions = get_sliding_window_and_cross_result(road_blur_bev, 5, self.left_way, self.right_way, self.init_pos_for_sliding_windows)
         road_sw_bev = cross_find_view
 
+        # green event!
+        green_bev = get_green(bev)
+        green_bev_cm = get_cm_px_from_mm(green_bev)
+        green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
+        green_pos = [pos*10 for pos in green_pos_cm]
         # green event!
         green_bev = get_green(bev)
         green_bev_cm = get_cm_px_from_mm(green_bev)
@@ -710,6 +720,8 @@ class Turn2RoadMode(Mode):
 
         self.capsule = {"dist_from_cross": bot_from_bev_y - bev_shape[0]}
 
+        self.capsule = {"dist_from_cross": bot_from_bev_y - bev_shape[0]}
+
 
     def set_frame_and_move(self, frame, showoff=True):
         '''
@@ -724,6 +736,8 @@ class Turn2RoadMode(Mode):
         bev = get_bev(frame)
         road_bev = get_road(bev)
         road_blur_bev = get_rect_blur(road_bev, 5)
+        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
+
         road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
 
 
@@ -752,6 +766,7 @@ class Turn2RoadMode(Mode):
             # cv2.imwrite(str(self.index) + "_curve_angle.jpg", road_edge_bev)
         elif self.phase == 0 and not self.is_curve:
             self.speed_x = 0
+        
         
 
         # starting
