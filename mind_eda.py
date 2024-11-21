@@ -2,24 +2,17 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import rospy
 import cv2
 import numpy as np
 import time
 import math
 import sys
 
-from sensor_msgs.msg import CompressedImage
-from cv_bridge import CvBridge
-from geometry_msgs.msg import Twist
 from math import *
-from collections import deque
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
 from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
 
-
-video_file = "log_1818.avi"
 
 
 def on_click(event, x, y, flags, images):

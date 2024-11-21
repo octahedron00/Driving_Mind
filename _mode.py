@@ -261,9 +261,11 @@ class EventMode(Mode):
 
             count_result_map = get_vote_count_result(self.count_map_list, key_predict)
             
-            if self.enem_tank_xy[0] >= 0:
+            if len(self.enem_tank_x_list) > 0:
+                n_xy = len(self.enem_tank_x_list)
+                enem_tank_xy = sorted(self.enem_tank_x_list)[int((n_xy-0.5)/2)], sorted(self.enem_tank_y_list)[int((n_xy-0.5)/2)],                  
                 angle_frame = np.zeros_like(frame)
-                cv2.line(angle_frame, self.enem_tank_xy, (int(np.shape(angle_frame)[1]/2), np.shape(angle_frame)[0]), 255, 2)
+                cv2.line(angle_frame, enem_tank_xy, (int(np.shape(angle_frame)[1]/2), np.shape(angle_frame)[0]), 255, 2)
 
                 angle_bev = get_bev(angle_frame)
                 angle_show_bev, angle = get_road_edge_angle(angle_bev, ignore_canny=True)
