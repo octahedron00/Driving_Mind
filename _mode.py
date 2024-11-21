@@ -33,7 +33,7 @@ speed_x = 0.4
 speed_z = 0.9
 default_time_90deg = 1.5 / speed_z
 
-radius_vx_vz_coefficient = 900  # edit this
+radius_vx_vz_coefficient = 1100  # edit this
 
 true_green_confidence = 100
 true_green_dist_from_road = 30 #mm
