@@ -26,29 +26,33 @@ from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green
 from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
 
 
-bot_from_bev_x = 100 # edit this
-bot_from_bev_y = 400 # edit this
+BOT_FROM_BEV_X = 100 # edit this
+BOT_FROM_BEV_Y = 400 # edit this
 
-speed_x = 0.4
-speed_z = 0.9
-default_time_90deg = 1.5 / speed_z
+SPEED_X = 0.4
+SPEED_Z = 0.9
+TIME_90DEG = 1.5 / SPEED_Z
 
-radius_vx_vz_coefficient = 1200  # edit this
+RADIUS_VZ_OVER_VX_CONST = 1200  # edit this
 
-true_green_confidence = 100
-true_green_dist_from_road = 30 #mm
+TRUE_GREEN_CONF = 100
+TRUE_GREEN_DIST_FROM_ROAD = 30 #mm
 
 
-bev_shape = (200, 200)
-
-bev_shape = (200, 200)
+BEV_SHAPE = (200, 200)
 
 # for event:
-conf_threshold = 0.6
-iou_threshold = 0.6
-sleep_frame = 5
+CONF_THRESHOLD = 0.6
+IOU_THRESHOLD = 0.6
+WAIT_FRAME_4_YOLO = 5
 
-key_predict = ("ally", "enem", "ally_tank", "enem_tank")
+KEY_PREDICT = ("ally", "enem", "ally_tank", "enem_tank")
+
+PREFER_ERR_DEG = 5
+
+PREFER_DIST = 300
+PREFER_ERR_RATIO = 0.1
+
 
 
 
@@ -83,12 +87,12 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
     '''
 
-def move_stanley(pub, offset_mm, angle_deg, speed_x_ratio = 1):
+def move_stanley(pub, offset_mm, angle_deg, SPEED_X_ratio = 1):
 
     kp= 0.04
     ka= 0.10
     k = 1.5
-    x = speed_x * speed_x_ratio
+    x = SPEED_X * SPEED_X_ratio
 
     z = -(angle_deg*ka - atan(kp*offset_mm)) * x * k
     
@@ -98,14 +102,14 @@ def move_stanley(pub, offset_mm, angle_deg, speed_x_ratio = 1):
 
 
 
-def get_vote_count_result(count_map_list, key_predict):
+def get_vote_count_result(count_map_list, KEY_PREDICT):
     '''
         getting the most shown value for each key
     '''
 
 
     result = dict()
-    for key in key_predict:
+    for key in KEY_PREDICT:
         list_count = []
         for count_map in count_map_list:
             list_count.append(count_map.get(key, 0))
@@ -139,11 +143,11 @@ class Mode:
     phase = 0
     capsule = dict()
     capsule = dict()
+    index = 0
 
     def __init__(self, pub):
         self.end = False
         self.pub = pub
-        self.log = ""
     
     def set_frame_and_move(self, frame, showoff=True):
         pass
@@ -151,6 +155,8 @@ class Mode:
     def log_add(self, a, b=""):
         self.log += "  | " + str(a) + " " + str(b)
 
+    def log_set(self, id, name):
+        self.log = str(id) + " " + str(name)
 
 class StartMode(Mode):
 
@@ -172,7 +178,6 @@ class EndMode(Mode):
         self.end = False
         self.pub = pub
         move_robot(pub)
-        self.log = ""
         self.running = False
     
     def set_frame_and_move(self, frame, showoff=True):
@@ -195,11 +200,10 @@ class EventMode(Mode):
         
         self.phase = 1
         self.n_frame = n_frame
-        self.sleep_frame = sleep_frame * 2
+        self.WAIT_FRAME_4_YOLO = WAIT_FRAME_4_YOLO * 2
 
         self.wait_sec = wait_sec
         self.index = index
-        self.log = str(self.index) + "_Event_"
         self.model = model
         self.enem_tank_x_list = []
         self.enem_tank_y_list = []
@@ -207,6 +211,7 @@ class EventMode(Mode):
         
         self.rot_time = 0
         self.rot_speed = 0
+        self.rot_total_angle = 0
 
         self.time_start = time.time()
 
@@ -214,7 +219,7 @@ class EventMode(Mode):
     
     def set_frame_and_move(self, frame, showoff=True):
         '''
-            phase 1: getting prediction for n_frame for every sleep_frame
+            phase 1: getting prediction for n_frame for every WAIT_FRAME_4_YOLO
             phase 2: /end: vote by each prediction! + get enem_tank position and rotational angle, time start
             phase 3: rotate to the tank position /end: shot! time start
             phase 4: rotate back to the original angle
@@ -224,18 +229,19 @@ class EventMode(Mode):
         # frame = cv2.imread("2356.jpg")
 
         predict_frame = frame
-        self.log = str(self.index) + "_Event_"
+        self.log_set(self.index, "Event") 
+
 
         if self.phase == 1:
             self.log_add("mode ", self.n_frame)
-            if self.sleep_frame > 0:
-                self.sleep_frame -= 1
+            if self.WAIT_FRAME_4_YOLO > 0:
+                self.WAIT_FRAME_4_YOLO -= 1
                 return
             self.n_frame -= 1
-            self.sleep_frame = sleep_frame
+            self.WAIT_FRAME_4_YOLO = WAIT_FRAME_4_YOLO
 
-            result_list = self.model.predict(frame, device = 'cpu', show=False, conf=conf_threshold, iou=iou_threshold)
-            # result_list = self.model.predict(frame, device = 'cuda', show=False, conf=conf_threshold, iou=iou_threshold)
+            result_list = self.model.predict(frame, device = 'cpu', show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+            # result_list = self.model.predict(frame, device = 'cuda', show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
             
             count_map = dict()
             # print(result_list)
@@ -252,7 +258,7 @@ class EventMode(Mode):
 
                     count_map[class_id] = 1 + count_map.get(class_id, 0)
             
-                    if class_id == 'enem_tank': # key_predict[-1]
+                    if class_id == 'enem_tank': # KEY_PREDICT[-1]
                         self.enem_tank_x_list.append(int((cords[0]+cords[2])/2))
                         self.enem_tank_y_list.append(int((cords[1]+cords[3])/2))
         
@@ -268,7 +274,7 @@ class EventMode(Mode):
             self.phase = 3
             self.time_start = time.time()
 
-            count_result_map = get_vote_count_result(self.count_map_list, key_predict)
+            count_result_map = get_vote_count_result(self.count_map_list, KEY_PREDICT)
             
             if len(self.enem_tank_x_list) > 0:
                 n_xy = len(self.enem_tank_x_list)
@@ -279,12 +285,12 @@ class EventMode(Mode):
                 angle_bev = get_bev(angle_frame)
                 angle_show_bev, angle = get_road_edge_angle(angle_bev, ignore_canny=True)
 
-                k = speed_z
+                k = SPEED_Z
                 if angle > 0:
                     k = -k
                 angle = abs(angle)
 
-                self.rot_time = default_time_90deg * angle / 90
+                self.rot_time = TIME_90DEG * angle / 90
                 self.rot_speed = k
 
                 self.log_add("Enem tank angle", angle)
@@ -332,7 +338,7 @@ class EventMode(Mode):
 
 class Stanley2GreenMode(Mode):
 
-    def __init__(self, pub, index=0, from_it=False, left_offset = 0, debug=False, profer_dist = 300, profer_err = 0.1):
+    def __init__(self, pub, index=0, from_it=False, left_offset = 0, debug=False):
         self.end = False
         self.pub = pub
 
@@ -346,16 +352,12 @@ class Stanley2GreenMode(Mode):
         self.phase = 1
 
         self.index = index
-        self.log = str(self.index) + "_Stanley2Green_"
         self.debug = debug
-
-        self.profer_dist = profer_dist
-        self.profer_err = profer_err
 
 
     def set_frame_and_move(self, frame, showoff=True):
 
-        self.log = str(self.index) + "_Stanley2Green_"
+        self.log_set(self.index, "Stanley2Green") 
         bev = get_bev(frame)
         self.log_add("phase ", self.phase)
 
@@ -385,7 +387,7 @@ class Stanley2GreenMode(Mode):
         green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
         green_pos = [pos*10 for pos in green_pos_cm]
 
-        offset_mm = self.line_road.get_offset(bot_from_bev_x+self.left_offset,bot_from_bev_y)
+        offset_mm = self.line_road.get_offset(BOT_FROM_BEV_X+self.left_offset,BOT_FROM_BEV_Y)
         angle_deg = self.line_road.get_angle()
         self.log_add("offset", offset_mm)
         self.log_add("angle", angle_deg)
@@ -396,7 +398,7 @@ class Stanley2GreenMode(Mode):
             z = move_stanley(self.pub, offset_mm, angle_deg)
             self.log_add("z speed ", str(z))
 
-            if green_max > true_green_confidence and self.line_road.get_distance(green_pos[1], green_pos[0]) < true_green_dist_from_road:
+            if green_max > TRUE_GREEN_CONF and self.line_road.get_distance(green_pos[1], green_pos[0]) < TRUE_GREEN_DIST_FROM_ROAD:
                 self.log_add("true green?", green_max)
                 self.log_add("true green at", green_pos)
                 self.log_add("true green from line", self.line_road.get_distance(green_pos[1], green_pos[0]))
@@ -411,15 +413,15 @@ class Stanley2GreenMode(Mode):
         
         elif self.phase == 2:
                 
-            if green_max < true_green_confidence:
+            if green_max < TRUE_GREEN_CONF:
                 self.end = True
                 self.log_add("Green is Gone! ", green_max)
                 return
 
-            dist_ratio = 1 - (get_2_point_dist((green_pos[1], green_pos[0]), (bot_from_bev_x, bot_from_bev_y)) / self.profer_dist)
+            dist_ratio = (get_2_point_dist((green_pos[1], green_pos[0]), (BOT_FROM_BEV_X, BOT_FROM_BEV_Y)) / PREFER_DIST) - 1
             self.log_add("Dist ratio ", dist_ratio)
             
-            if dist_ratio > self.profer_err:
+            if dist_ratio > PREFER_ERR_RATIO:
                 z = move_stanley(self.pub, offset_mm, angle_deg, dist_ratio) # slow down a lot
             else:
                 z = move_robot(self.pub) # stop
@@ -437,7 +439,7 @@ class Stanley2GreenMode(Mode):
 
 class Stanley2CrossMode(Mode):
 
-    def __init__(self, pub, index=0, left_way = True, right_way = True, from_it=False, left_offset = 0, use_green = False,  profer_dist = 300, profer_err = 0.1):
+    def __init__(self, pub, index=0, left_way = True, right_way = True, from_it=False, left_offset = 0, use_green = False):
         self.end = False
         self.pub = pub
 
@@ -455,17 +457,14 @@ class Stanley2CrossMode(Mode):
         self.phase = 1
 
         self.index = index
-        self.log = str(self.index) + "_Stanley2Cross_"
         
         self.capsule = dict()
         self.use_green = use_green
-        self.profer_dist = profer_dist
-        self.profer_err = profer_err
 
 
     def set_frame_and_move(self, frame, showoff=True):
 
-        self.log = str(self.index) + "_Stanley2Cross_"
+        self.log_set(self.index, "Stanley2Cross") 
         bev = get_bev(frame)
 
         # slidingwindow & cross position!
@@ -500,18 +499,20 @@ class Stanley2CrossMode(Mode):
 
 
         # stanley
-        offset_mm = self.line_road.get_offset(bot_from_bev_x+self.left_offset,bot_from_bev_y)
+        offset_mm = self.line_road.get_offset(BOT_FROM_BEV_X+self.left_offset,BOT_FROM_BEV_Y)
         angle_deg = self.line_road.get_angle()
 
         z = move_stanley(self.pub, offset_mm, angle_deg)
-        self.log = str(self.index) + "_Stanley2Cross_offset " + str(offset_mm) + " mm / angle " + str(angle_deg) + "deg / z speed " + str(z)
+
+        self.log_add("offset", offset_mm)
+        self.log_add("angle", angle_deg)
+        self.log_add("SPEED_Z", z)
 
 
         # print(cross_pos, cross_max)
-        self.log = self.log + " CROSS:" + str(positions)
+        self.log_add("Cross position", positions)
 
         if is_cross:
-            print("OK, Now We At the Cross!!!", positions)
             self.cross_encounter += 1
         else:
             self.cross_encounter -= 1
@@ -520,13 +521,13 @@ class Stanley2CrossMode(Mode):
         if self.cross_encounter >= 3:
             self.end = True
             move_robot(self.pub)
-            self.capsule["dist_from_cross"] = bot_from_bev_y - np.mean(positions)
+            self.capsule["dist_from_cross"] = BOT_FROM_BEV_Y - np.mean(positions)
 
         
         if self.use_green and self.phase == 1:
 
 
-            if green_max > true_green_confidence and self.line_road.get_distance(green_pos[1], green_pos[0]) < true_green_dist_from_road:
+            if green_max > TRUE_GREEN_CONF and self.line_road.get_distance(green_pos[1], green_pos[0]) < TRUE_GREEN_DIST_FROM_ROAD:
                 self.log_add("true green?", green_max)
                 self.log_add("true green at", green_pos)
                 self.log_add("true green from line", self.line_road.get_distance(green_pos[1], green_pos[0]))
@@ -540,15 +541,15 @@ class Stanley2CrossMode(Mode):
         
         elif self.use_green and self.phase == 2:
                 
-            if green_max < true_green_confidence:
+            if green_max < TRUE_GREEN_CONF:
                 self.end = True
                 self.log_add("Green is Gone! ", green_max)
                 return
 
-            dist_ratio = 1 - (get_2_point_dist((green_pos[1], green_pos[0]), (bot_from_bev_x, bot_from_bev_y)) / self.profer_dist)
+            dist_ratio = 1 - (get_2_point_dist((green_pos[1], green_pos[0]), (BOT_FROM_BEV_X, BOT_FROM_BEV_Y)) / PREFER_DIST)
             self.log_add("Dist ratio ", dist_ratio)
             
-            if dist_ratio > self.profer_err:
+            if dist_ratio > PREFER_ERR_RATIO:
                 z = move_stanley(self.pub, offset_mm, angle_deg, dist_ratio) # slow down a lot
             else:
                 z = move_robot(self.pub) # stop
@@ -588,7 +589,6 @@ class Turn2VoidMode(Mode):
         self.waiting_for_next_frame = 2
         
         self.index = index
-        self.log = str(self.index) + "_Turn2Void_"
 
 
     def set_frame_and_move(self, frame, showoff=True):
@@ -598,7 +598,7 @@ class Turn2VoidMode(Mode):
             phase 2: getting all angle data while rotating : Now ignored
             phase 3: waiting / end: stop
         '''
-        self.log = str(self.index) + "_Turn2Void_"
+        self.log_set(self.index, "Turn2Void") 
         self.log_add("phase", self.phase)
 
         bev = get_bev(frame)
@@ -616,7 +616,7 @@ class Turn2VoidMode(Mode):
 
         # phase 1: rotating to other side a little bit: to get max data and right angle.
         if self.phase == 1:
-            move_robot(self.pub, 0, -speed_z, self.is_left)
+            move_robot(self.pub, 0, -SPEED_Z, self.is_left)
 
             if time.time() - self.time_since_phase > self.other_turn_sec:
                 self.phase = 2  
@@ -626,12 +626,12 @@ class Turn2VoidMode(Mode):
                 angle_at_start = angle
 
                 if self.is_left:  
-                    self.est_time_angle_calc = (default_time_90deg / 90) * (90 - angle_at_start)
+                    self.est_time_angle_calc = (TIME_90DEG / 90) * (90 - angle_at_start)
                 else:
-                    self.est_time_angle_calc = (default_time_90deg / 90) * (90 + angle_at_start)
+                    self.est_time_angle_calc = (TIME_90DEG / 90) * (90 + angle_at_start)
                 self.est_time = self.est_time_angle_calc
                 if abs(angle) > 45:
-                    self.est_time = default_time_90deg
+                    self.est_time = TIME_90DEG
                 
                 self.log_add("angle", angle)
                 self.log_add("time", self.est_time)
@@ -640,11 +640,12 @@ class Turn2VoidMode(Mode):
 
         # turning while the line is shown: to estimate time to be exact 90 degrees
         if self.phase == 2:
-            move_robot(self.pub, 0, speed_z, self.is_left)
+            move_robot(self.pub, 0, SPEED_Z, self.is_left)
 
             # to skip the image using phase...
             self.phase = 3
 
+            '''
             if abs(angle) < 45:
                 self.waiting_for_next_frame = 2
                 self.time_list.append(time.time() - self.time_since_phase)
@@ -673,13 +674,13 @@ class Turn2VoidMode(Mode):
                 
                 if self.est_time - 0.1 < self.est_time_regression < self.est_time + 0.1 :
                     self.est_time = self.est_time_regression
-
+            '''
 
                     
         if self.phase == 3:
 
             if time.time() < self.time_since_phase + self.est_time:
-                move_robot(self.pub, 0, speed_z, self.is_left)
+                move_robot(self.pub, 0, SPEED_Z, self.is_left)
             else:
                 move_robot(self.pub)
                 self.end = True
@@ -710,27 +711,23 @@ class Turn2RoadMode(Mode):
         self.time_since_phase = 0
         self.est_time = 0
 
-        self.rot_z = speed_z
-        self.speed_x = speed_x
+        self.rot_z = SPEED_Z
+        self.SPEED_X = SPEED_X
         self.left_way = left_way
         self.right_way = right_way
 
         self.index = index
-        self.log = str(self.index) + "_Turn2Road_"
 
-        self.capsule = {"dist_from_cross": bot_from_bev_y - bev_shape[0]}
-
-        self.capsule = {"dist_from_cross": bot_from_bev_y - bev_shape[0]}
+        self.capsule = {"dist_from_cross": BOT_FROM_BEV_Y - BEV_SHAPE[0]}
 
 
     def set_frame_and_move(self, frame, showoff=True):
         '''
-            phase 0: / time starting + getting angle and est_time, speed_x, rot_z
+            phase 0: / time starting + getting angle and est_time, SPEED_X, rot_z
             phase 1: rotating at least min_turn_sec 
             phase 2: rotate until you see the line
         '''
-
-        self.log = str(self.index) + "_Turn2Road_"
+        self.log_set(self.index, "Turn2Road") 
         self.log_add("phase", self.phase)
 
         bev = get_bev(frame)
@@ -745,10 +742,8 @@ class Turn2RoadMode(Mode):
             dist_from_cross = self.capsule["dist_from_cross"]
             self.log_add(self.capsule)
 
-            not_right = True
-            if self.is_left:
-                not_right = False
-            road_edge_bev, angle = get_road_edge_angle(road_bev, not_right)
+
+            road_edge_bev, angle = get_road_edge_angle(road_bev, self.is_left)
             self.road_angle = angle
             if abs(self.road_angle) > 20:
                 self.road_angle = 0
@@ -758,14 +753,14 @@ class Turn2RoadMode(Mode):
 
             radius = dist_from_cross / (1 + math.sin(self.road_angle*math.pi/180))
 
-            self.speed_x = radius * self.rot_z / radius_vx_vz_coefficient
+            self.SPEED_X = radius * self.rot_z / RADIUS_VZ_OVER_VX_CONST
             self.log_add("radius", radius)
             self.log_add("rot_z", self.rot_z)
-            self.log_add("speed_x", self.speed_x)
+            self.log_add("SPEED_X", self.SPEED_X)
             # cv2.imwrite(str(self.index) + "_curve_dist.jpg", road_sw_bev)
             # cv2.imwrite(str(self.index) + "_curve_angle.jpg", road_edge_bev)
         elif self.phase == 0 and not self.is_curve:
-            self.speed_x = 0
+            self.SPEED_X = 0
         
         
 
@@ -777,7 +772,7 @@ class Turn2RoadMode(Mode):
 
         # turning at least certain amount: to ignore post-road
         if self.phase == 1:
-            move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
+            move_robot(self.pub, self.SPEED_X, self.rot_z, self.is_left)
 
             if time.time() - self.time_since_phase > self.min_turn_sec:
                 self.phase = 2
@@ -788,14 +783,14 @@ class Turn2RoadMode(Mode):
         if self.phase == 2:
             self.log_add("line_not_shown")
 
-            move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
+            move_robot(self.pub, self.SPEED_X, self.rot_z, self.is_left)
 
             if len(x_list) > 2:
                 self.init_pos_for_sliding_windows = x_list[1]
                 line_road = Line(x_list, y_list)
                 self.line_road = line_road
 
-                self.log = str(self.index) + "_Turn2Road_phase1_line_on_angle_" + str(line_road.get_angle())
+                self.log_add("line_on_angle", line_road.get_angle())
 
                 cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
                 

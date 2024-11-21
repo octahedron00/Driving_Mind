@@ -1,8 +1,18 @@
-# driving_mind
+# Driving_Mind
 
 AI driving mind uploaded on github:
 
 for Team AI-FORCE
+
+## Basic Shape
+
+mind_bot.py 실행: 각각의 Mode들이 만들어짐.
+
+매 frame마다 Mode의 set_frame_and_move 함수를 호출: frame만 넣어줌, 각 mode에 맞게 움직임
+
+mode가 end 되면, 다음 mode를 꺼내서 씀
+
+: mode 사이에 전해져야 하는 정보는 capsule (dict) 안에 넣어서 전달
 
 ## Mode classes
 
@@ -52,6 +62,6 @@ T2R(Turn2Road)
 
 - 연산량이 많은 게 아니라 그냥 iteration을 python이 아니라 C에서 최대한 굴리도록 해야 함: Numpy의 함수들을 최대한 많이 활용할 것.
 
-- Cam 왜곡이 상당히 심해보인다. 이거를 거기서 chessboard 같은 걸로 보정할 수 있나? 태블릿 이미지 띄워야 하나?
+
 
 

@@ -10,13 +10,8 @@ from geometry_msgs.msg import Twist
 from math import *
 from collections import deque
 
-true_green_confidence = 100
-true_green_dist_from_road = 20 #mm
-
-bot_from_bev_x = 100
-bot_from_bev_y = 400
-
-
+BOT_FROM_BEV_X = 100 # edit this
+BOT_FROM_BEV_Y = 400 # edit this
 
 
 
@@ -230,7 +225,7 @@ def get_road_edge_angle(frame, is_left = True):
         x_midpoint = int(np.shape(color_frame)[1] / 2)
         y_height = np.shape(color_frame)[0]
         print(angle_median)
-        print(line.get_offset(bot_from_bev_x, bot_from_bev_y))
+        print(line.get_offset(BOT_FROM_BEV_X, BOT_FROM_BEV_Y))
         cv2.line(color_frame, (x_midpoint, y_height), (int(x_midpoint + (math.tan((angle_median/180)*math.pi)*y_height)), 0), (0, 0, 255), 3)
     
     return color_frame, angle_median

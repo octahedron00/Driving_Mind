@@ -24,26 +24,26 @@ from _mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Tu
 
 
 
-frame_ignore_level = 1
+FRAME_IGNORE_LEVEL = 1
 
-log_vid = False
-log_txt = True
+IS_LOG = True
+IS_LOG_VID = False
 
 
-yolo_pt = "best.pt"
+FILE_YOLO = "best.pt"
 
 class bot_mind:
 
     def __init__(self):
 
-#        self.model = YOLO(yolo_pt) 
-#        null_predict_to_turn_on_yolo = self.model.predict(np.zeros((480, 640, 3)))
+        self.model = YOLO(FILE_YOLO) 
+        null_predict_to_turn_on_yolo = self.model.predict(np.zeros((480, 640, 3)))
 
 
         now = datetime.datetime.now().strftime("%H%M")
-        if log_vid:
+        if IS_LOG_VID:
             self.logwriter = cv2.VideoWriter("log_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
-        if log_txt:
+        if IS_LOG:
             self.logtxt = open("log_" + now + ".txt", 'w')
 
         self.bridge = CvBridge()
@@ -60,22 +60,22 @@ class bot_mind:
         self.mode_list = [
             StartMode(pub),
 
-            Stanley2GreenMode(pub, 1, left_offset = -20, from_it = True),
-            Stanley2GreenMode(pub, 2, left_offset = -20, from_it = True),
-            Stanley2GreenMode(pub, 3, left_offset = -20, from_it = True),
-            Turn2RoadMode(pub, 4, is_left=True, min_turn_sec=1),
+            Stanley2GreenMode(pub, -1, left_offset = -20, from_it = True),
+            Stanley2GreenMode(pub, -2, left_offset = -20, from_it = True),
+            Stanley2GreenMode(pub, -3, left_offset = -20, from_it = True),
+            Turn2RoadMode(pub, -4, is_left=True, min_turn_sec=1),
 
-            Stanley2GreenMode(pub, 11, left_offset = 20, from_it = True),
-            Stanley2GreenMode(pub, 12, left_offset = 20, from_it = True),
-            Stanley2GreenMode(pub, 13, left_offset = 20, from_it = True),
-            Turn2RoadMode(pub, 14, is_left=True, min_turn_sec=1),
+            Stanley2GreenMode(pub, -11, left_offset = 20, from_it = True),
+            Stanley2GreenMode(pub, -12, left_offset = 20, from_it = True),
+            Stanley2GreenMode(pub, -13, left_offset = 20, from_it = True),
+            Turn2RoadMode(pub, -14, is_left=True, min_turn_sec=1),
             # EndMode(pub, 1000),
 
 
             Stanley2CrossMode(pub, 1, use_green = True),
             Turn2RoadMode(pub, 2, is_left=False, is_curve=True),
-#            Stanley2GreenMode(pub, 1, left_offset = 0),
-#            Turn2RoadMode(pub, 2, is_left=False, min_turn_sec = 1.),
+            # Stanley2GreenMode(pub, 1, left_offset = 0),
+            # Turn2RoadMode(pub, 2, is_left=False, min_turn_sec = 1.),
             Stanley2GreenMode(pub, 3, left_offset = -10),
             Turn2VoidMode(pub, 4, is_left=True, other_turn_sec=0),
 
@@ -188,7 +188,7 @@ class bot_mind:
     def camera_callback(self, data):
         self.image = self.bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
         self.count_frame += 1
-        if self.count_frame % frame_ignore_level == 0:
+        if self.count_frame % FRAME_IGNORE_LEVEL == 0:
             self.action()
 
 
@@ -207,9 +207,9 @@ class bot_mind:
         if self.mode.running:
             self.mode.log_add("time: ", time.time() - time_start)
             print(self.mode.log)
-            if log_vid:
+            if IS_LOG_VID:
                 self.logwriter.write(frame)
-            if log_txt:
+            if IS_LOG:
                 self.logtxt.write(self.mode.log + "\n")
         else:
             a = input("Was it good?")
