@@ -59,11 +59,23 @@ class bot_mind:
 
         self.mode_list = [
             StartMode(pub),
+
+            Stanley2GreenMode(pub, 1, left_offset = -20, from_it = True),
+            Stanley2GreenMode(pub, 2, left_offset = -20, from_it = True),
+            Stanley2GreenMode(pub, 3, left_offset = -20, from_it = True),
+            Turn2RoadMode(pub, 4, is_left=True, min_turn_sec=1),
+
+            Stanley2GreenMode(pub, 11, left_offset = 20, from_it = True),
+            Stanley2GreenMode(pub, 12, left_offset = 20, from_it = True),
+            Stanley2GreenMode(pub, 13, left_offset = 20, from_it = True),
+            Turn2RoadMode(pub, 14, is_left=True, min_turn_sec=1),
             # EndMode(pub, 1000),
-#            Stanley2CrossMode(pub, 1),
-#            Turn2RoadMode(pub, 2, is_left=False, is_curve=True),
-            Stanley2GreenMode(pub, 1, left_offset = 0),
-            Turn2RoadMode(pub, 2, is_left=False, min_turn_sec = 1.),
+
+
+            Stanley2CrossMode(pub, 1, use_green = True),
+            Turn2RoadMode(pub, 2, is_left=False, is_curve=True),
+#            Stanley2GreenMode(pub, 1, left_offset = 0),
+#            Turn2RoadMode(pub, 2, is_left=False, min_turn_sec = 1.),
             Stanley2GreenMode(pub, 3, left_offset = -10),
             Turn2VoidMode(pub, 4, is_left=True, other_turn_sec=0),
 
@@ -71,7 +83,7 @@ class bot_mind:
             Turn2RoadMode(pub, 11, is_left=True, min_turn_sec=1),
             Stanley2CrossMode(pub, 12),
             Turn2RoadMode(pub, 13, is_left=False, is_curve=True, min_turn_sec=1.),
-            Stanley2GreenMode(pub, 14),
+            Stanley2GreenMode(pub, 14, from_it = True),
             # Stanley2GreenMode(pub, 14.5, from_it=True),
             Turn2VoidMode(pub, 15, is_left=True, other_turn_sec=0),
 
@@ -183,8 +195,10 @@ class bot_mind:
     def action(self):
         
         if self.mode.end:
+            capsule = self.mode.capsule
             self.mode_pos += 1
             self.mode = self.mode_list[self.mode_pos]
+            self.mode.capsule = capsule
         frame = self.image
 
         time_start = time.time()
