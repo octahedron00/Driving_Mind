@@ -25,16 +25,16 @@ import datetime
 
 from _mode import move_robot, showing_off
 
-frame_ignore_level = 1
+FRAME_IGNORE_LEVEL = 1
 
-log_vid = True
+IS_LOG_VID = True
 
 class bot_mind:
 
     def __init__(self):
 
         now = datetime.datetime.now().strftime("%H%M")
-        if log_vid:
+        if IS_LOG_VID:
             self.logwriter = cv2.VideoWriter("log_control_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
 
         self.bridge = CvBridge()
@@ -48,11 +48,14 @@ class bot_mind:
         self.speed_x = 0
         self.speed_z = 0
 
+        self.image_name = "image_" + now + "_"
+        self.image_count = 1
+
 
     def camera_callback(self, data):
         self.image = self.bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
         self.count_frame += 1
-        if self.count_frame % frame_ignore_level == 0:
+        if self.count_frame % FRAME_IGNORE_LEVEL == 0:
             self.action()
 
 
@@ -61,10 +64,10 @@ class bot_mind:
         frame = self.image
 
         showing_off([frame])
-        if log_vid:
+        if IS_LOG_VID:
             self.logwriter.write(frame)
         
-        k = cv2.waitKey(25)
+        k = cv2.waitKey(1)
 
         if k == ord('w'):
             move_robot(pub, 0.5, 0)
@@ -74,6 +77,12 @@ class bot_mind:
             move_robot(pub, 0, 0.5)
         elif k == ord('d'):
             move_robot(pub, 0, -0.5)
+        elif k == ord('c'):
+            cv2.imwrite(self.image_name + f"{self.image_count:04d}.jpg", frame)
+            self.image_count += 1
+        elif k == ord('n'):
+            self.image_name = input("new dataset name:")
+            self.image_count = 1
         else:
             move_robot(pub)
 
