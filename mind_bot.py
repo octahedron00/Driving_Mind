@@ -17,7 +17,7 @@ from math import *
 from collections import deque
 import datetime
 
-# from ultralytics import YOLO
+from ultralytics import YOLO
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
 from _mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode
@@ -60,18 +60,6 @@ class bot_mind:
         self.mode_list = [
             StartMode(pub),
 
-            Stanley2GreenMode(pub, -1, left_offset = -20, from_it = True),
-            Stanley2GreenMode(pub, -2, left_offset = -20, from_it = True),
-            Stanley2GreenMode(pub, -3, left_offset = -20, from_it = True),
-            Turn2RoadMode(pub, -4, is_left=True, min_turn_sec=1),
-
-            Stanley2GreenMode(pub, -11, left_offset = 20, from_it = True),
-            Stanley2GreenMode(pub, -12, left_offset = 20, from_it = True),
-            Stanley2GreenMode(pub, -13, left_offset = 20, from_it = True),
-            Turn2RoadMode(pub, -14, is_left=True, min_turn_sec=1),
-            # EndMode(pub, 1000),
-
-
             Stanley2CrossMode(pub, 1, use_green = True),
             Turn2RoadMode(pub, 2, is_left=False, is_curve=True),
             # Stanley2GreenMode(pub, 1, left_offset = 0),
@@ -90,7 +78,7 @@ class bot_mind:
             # EventMode(pub, self.model, 20, n_frame = 5, wait_sec = 2.0),
             Turn2RoadMode(pub, 21, is_left=False, min_turn_sec=1.),
             Stanley2CrossMode(pub, 22, left_way=False, from_it=True, left_offset=0),
-            Turn2RoadMode(pub, 23, is_left=False, left_way=False, is_curve=True, min_turn_sec=1.),
+            Turn2RoadMode(pub, 23, is_left=False, is_curve=True, min_turn_sec=1.),
             Stanley2GreenMode(pub, 24, left_offset = -10),
             Turn2VoidMode(pub, 25, is_left=True, other_turn_sec=0),
 
@@ -103,10 +91,11 @@ class bot_mind:
             # EventMode(pub, self.model, 40, n_frame = 5, wait_sec = 2.0),
             Turn2RoadMode(pub, 41, is_left=False, min_turn_sec=1.),
             Stanley2CrossMode(pub, 42, right_way=False),
-            Turn2RoadMode(pub, 43, is_left=True, right_way=False, min_turn_sec=1., is_curve=True),
+            Turn2RoadMode(pub, 43, is_left=True, min_turn_sec=1., is_curve=True),
             Stanley2GreenMode(pub, 44),
 
-            # EndMode(pub, 100),
+            EndMode(pub, 100),
+
 
             Turn2RoadMode(pub, 101, is_left=False),
             Stanley2CrossMode(pub, 102),
@@ -126,58 +115,6 @@ class bot_mind:
             Stanley2GreenMode(pub, 114, from_it=True),
             Turn2RoadMode(pub, 115, is_left=True),
 
-
-            Stanley2GreenMode(pub, 1, left_offset = 0),
-            Turn2RoadMode(pub, 2, is_left=False, min_turn_sec = 1.),
-            Stanley2GreenMode(pub, 3, left_offset = -10),
-            Turn2VoidMode(pub, 4, is_left=True, other_turn_sec=0),
-
-            # EventMode(pub, self.model, 10, n_frame = 5, wait_sec = 2.0),
-            Turn2RoadMode(pub, 11, is_left=True, min_turn_sec=1),
-            Stanley2CrossMode(pub, 12),
-            Turn2RoadMode(pub, 13, is_left=False, is_curve=True, min_turn_sec=1.),
-            Stanley2GreenMode(pub, 14),
-            # Stanley2GreenMode(pub, 14.5, from_it=True),
-            Turn2VoidMode(pub, 15, is_left=True, other_turn_sec=0),
-
-            # EventMode(pub, self.model, 20, n_frame = 5, wait_sec = 2.0),
-            Turn2RoadMode(pub, 21, is_left=False, min_turn_sec=1.),
-            Stanley2CrossMode(pub, 22, left_way=False, from_it=True, left_offset=0),
-            Turn2RoadMode(pub, 23, is_left=False, left_way=False, is_curve=True, min_turn_sec=1.),
-            Stanley2GreenMode(pub, 24, left_offset = -10),
-            Turn2VoidMode(pub, 25, is_left=True, other_turn_sec=0),
-
-            # EventMode(pub, self.model, 30, n_frame = 5, wait_sec = 2.0),
-            Turn2RoadMode(pub, 31, is_left=False, min_turn_sec=1.),
-            Stanley2GreenMode(pub, 32, from_it=True, left_offset = -10),
-            Turn2VoidMode(pub, 33, is_left=True, other_turn_sec=0),
-
-
-            # EventMode(pub, self.model, 40, n_frame = 5, wait_sec = 2.0),
-            Turn2RoadMode(pub, 41, is_left=False, min_turn_sec=1.),
-            Stanley2CrossMode(pub, 42, right_way=False),
-            Turn2RoadMode(pub, 43, is_left=True, right_way=False, min_turn_sec=1., is_curve=True),
-            Stanley2GreenMode(pub, 44),
-
-            # EndMode(pub, 100),
-
-            Turn2RoadMode(pub, 101, is_left=False),
-            Stanley2CrossMode(pub, 102),
-            Turn2RoadMode(pub, 103, is_left=False, min_turn_sec=1., is_curve=True),
-            Stanley2GreenMode(pub, 104),
-            Stanley2CrossMode(pub, 105),
-            Turn2RoadMode(pub, 106, is_left=True, min_turn_sec=1., is_curve=True),
-            Stanley2CrossMode(pub, 107),
-            Turn2RoadMode(pub, 108, is_left=True, is_curve=True),
-            Stanley2GreenMode(pub, 109, left_offset = -10),
-            Turn2VoidMode(pub, 110, is_left=True, other_turn_sec=0),
-
-            # EventMode(pub, self.model, 10, n_frame = 5, wait_sec = 2.0),
-            Turn2RoadMode(pub, 111, is_left=True, min_turn_sec=1),
-            Stanley2CrossMode(pub, 112),
-            Turn2RoadMode(pub, 113, is_left=True, is_curve=True, min_turn_sec=1.),
-            Stanley2GreenMode(pub, 114, from_it=True),
-            Turn2RoadMode(pub, 115, is_left=True),
 
             EndMode(pub, 200),
 
@@ -199,6 +136,8 @@ class bot_mind:
             self.mode_pos += 1
             self.mode = self.mode_list[self.mode_pos]
             self.mode.capsule = capsule
+            if IS_LOG:
+                self.logtxt.write(f">>>-------   -------\n>>>Capsule Passed: {capsule}\n>>>-------   -------\n")
         frame = self.image
 
         time_start = time.time()

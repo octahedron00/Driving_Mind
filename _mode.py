@@ -19,7 +19,7 @@ from collections import deque
 from std_msgs.msg import String
 
 
-# from ultralytics import YOLO
+from ultralytics import YOLO
 
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
@@ -87,12 +87,12 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
     '''
 
-def move_stanley(pub, offset_mm, angle_deg, SPEED_X_ratio = 1):
+def move_stanley(pub, offset_mm, angle_deg, x_ratio = 1):
 
     kp= 0.04
     ka= 0.10
     k = 1.5
-    x = SPEED_X * SPEED_X_ratio
+    x = SPEED_X * x_ratio
 
     z = -(angle_deg*ka - atan(kp*offset_mm)) * x * k
     
@@ -506,7 +506,7 @@ class Stanley2CrossMode(Mode):
 
         self.log_add("offset", offset_mm)
         self.log_add("angle", angle_deg)
-        self.log_add("SPEED_Z", z)
+        self.log_add("speed_z", z)
 
 
         # print(cross_pos, cross_max)
@@ -691,7 +691,7 @@ class Turn2VoidMode(Mode):
 
 class Turn2RoadMode(Mode):
 
-    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 1.2, is_curve = False, left_way = True, right_way = True):
+    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 1.2, is_curve = False):
         self.end = False
         self.pub = pub
 
@@ -712,9 +712,7 @@ class Turn2RoadMode(Mode):
         self.est_time = 0
 
         self.rot_z = SPEED_Z
-        self.SPEED_X = SPEED_X
-        self.left_way = left_way
-        self.right_way = right_way
+        self.speed_x = 0
 
         self.index = index
 
@@ -753,14 +751,12 @@ class Turn2RoadMode(Mode):
 
             radius = dist_from_cross / (1 + math.sin(self.road_angle*math.pi/180))
 
-            self.SPEED_X = radius * self.rot_z / RADIUS_VZ_OVER_VX_CONST
+            self.speed_x = radius * self.rot_z / RADIUS_VZ_OVER_VX_CONST
             self.log_add("radius", radius)
             self.log_add("rot_z", self.rot_z)
             self.log_add("SPEED_X", self.SPEED_X)
             # cv2.imwrite(str(self.index) + "_curve_dist.jpg", road_sw_bev)
             # cv2.imwrite(str(self.index) + "_curve_angle.jpg", road_edge_bev)
-        elif self.phase == 0 and not self.is_curve:
-            self.SPEED_X = 0
         
         
 
