@@ -53,7 +53,7 @@ class bot_mind:
         pub = self.pub
 
         self.mode = StartMode(pub)
-        self.stage = 0
+        self.mode_pos = 0
 
         self.count_frame = 1
 
@@ -183,8 +183,8 @@ class bot_mind:
     def action(self):
         
         if self.mode.end:
-            self.stage += 1
-            self.mode = self.mode_list[self.stage]
+            self.mode_pos += 1
+            self.mode = self.mode_list[self.mode_pos]
         frame = self.image
 
         time_start = time.time()

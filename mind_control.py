@@ -43,8 +43,6 @@ class bot_mind:
         self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
         pub = self.pub
 
-        self.stage = 0
-
         self.count_frame = 1
 
         self.speed_x = 0

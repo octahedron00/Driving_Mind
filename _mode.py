@@ -132,7 +132,7 @@ class Mode:
     pub = None
     log = ""
     running = True
-    stage = 0
+    phase = 0
 
     def __init__(self, pub):
         self.end = False
@@ -187,7 +187,7 @@ class EventMode(Mode):
         self.end = False
         self.pub = pub
         
-        self.stage = 1
+        self.phase = 1
         self.n_frame = n_frame
         self.sleep_frame = sleep_frame * 2
 
@@ -208,11 +208,11 @@ class EventMode(Mode):
     
     def set_frame_and_move(self, frame, showoff=True):
         '''
-            stage 1: getting prediction for n_frame for every sleep_frame
-            stage 2: /end: vote by each prediction! + get enem_tank position and rotational angle, time start
-            stage 3: rotate to the tank position /end: shot! time start
-            stage 4: rotate back to the original angle
-            stage 5: wait for time ends: filling frames at once
+            phase 1: getting prediction for n_frame for every sleep_frame
+            phase 2: /end: vote by each prediction! + get enem_tank position and rotational angle, time start
+            phase 3: rotate to the tank position /end: shot! time start
+            phase 4: rotate back to the original angle
+            phase 5: wait for time ends: filling frames at once
             
         '''
         # frame = cv2.imread("2356.jpg")
@@ -220,7 +220,7 @@ class EventMode(Mode):
         predict_frame = frame
         self.log = str(self.index) + "_Event_"
 
-        if self.stage == 1:
+        if self.phase == 1:
             self.log_add("mode ", self.n_frame)
             if self.sleep_frame > 0:
                 self.sleep_frame -= 1
@@ -256,10 +256,10 @@ class EventMode(Mode):
             self.count_map_list.append(count_map)
 
             if self.n_frame < 1:
-                self.stage = 2
+                self.phase = 2
         
-        elif self.stage == 2:
-            self.stage = 3
+        elif self.phase == 2:
+            self.phase = 3
             self.time_start = time.time()
 
             count_result_map = get_vote_count_result(self.count_map_list, key_predict)
@@ -289,31 +289,31 @@ class EventMode(Mode):
             # self.lcd_pub_1.publish(self.str_msg_1)
             self.log_add("prediction result: ", str(count_result_map))  
 
-        elif self.stage == 3:
+        elif self.phase == 3:
             if self.rot_time > time.time() - self.time_start:
                 self.log_add("speed: ", self.rot_speed)
                 self.log_add("rotating: ", self.wait_sec)
                 self.log_add("until: ", time.time() - self.time_start)
                 move_robot(self.pub, 0, self.rot_speed)
             else:
-                self.stage = 4
+                self.phase = 4
                 self.time_start = time.time()
                 move_robot(self.pub)
                 # BANG!!!
 
-        elif self.stage == 4:
+        elif self.phase == 4:
             if self.rot_time > time.time() - self.time_start:
                 self.log_add("speed: ", -self.rot_speed)
                 self.log_add("rotating_back: ", self.wait_sec)
                 self.log_add("until: ", time.time() - self.time_start)
                 move_robot(self.pub, 0, -self.rot_speed)
             else:
-                self.stage = 5
+                self.phase = 5
                 self.time_start = time.time()
                 move_robot(self.pub)
                 # BANG!!!
 
-        # stage 5  
+        # phase 5  
         elif time.time() - self.time_start < self.wait_sec:
             self.log_add("holding: ", self.wait_sec)
             self.log_add("until: ", time.time() - self.time_start)
@@ -337,7 +337,7 @@ class Stanley2GreenMode(Mode):
             self.green_encounter = -100
         self.left_offset = left_offset
 
-        self.stage = 1
+        self.phase = 1
 
         self.index = index
         self.log = str(self.index) + "_Stanley2Green_"
@@ -351,7 +351,7 @@ class Stanley2GreenMode(Mode):
 
         self.log = str(self.index) + "_Stanley2Green_"
         bev = get_bev(frame)
-        self.log_add("stage ", self.stage)
+        self.log_add("phase ", self.phase)
 
 
         # slidingwindow
@@ -384,7 +384,7 @@ class Stanley2GreenMode(Mode):
         self.log_add("offset", offset_mm)
         self.log_add("angle", angle_deg)
 
-        if self.stage == 1:
+        if self.phase == 1:
             # stanley
 
             z = move_stanley(self.pub, offset_mm, angle_deg)
@@ -400,10 +400,10 @@ class Stanley2GreenMode(Mode):
                 self.green_encounter = max(int(self.green_encounter/2.1), self.green_encounter)
             
             if self.green_encounter >= 3:
-                self.stage = 2
+                self.phase = 2
                 # move_robot(self.pub)
         
-        elif self.stage == 2:
+        elif self.phase == 2:
                 
             if green_max < true_green_confidence:
                 self.end = True
@@ -517,8 +517,8 @@ class Turn2VoidMode(Mode):
         self.init_pos_for_sliding_windows = -1
         self.other_turn_sec = other_turn_sec
 
-        self.stage = 0
-        self.time_since_stage = 0
+        self.phase = 0
+        self.time_since_phase = 0
         self.angle_at_start = -90
         self.angle_list = []
         self.time_list = []
@@ -534,13 +534,13 @@ class Turn2VoidMode(Mode):
 
     def set_frame_and_move(self, frame, showoff=True):
         '''
-            stage 0: time starting
-            stage 1: rotating to other side a little bit / end: get angle and est_time
-            stage 2: getting all angle data while rotating : Now ignored
-            stage 3: waiting / end: stop
+            phase 0: time starting
+            phase 1: rotating to other side a little bit / end: get angle and est_time
+            phase 2: getting all angle data while rotating : Now ignored
+            phase 3: waiting / end: stop
         '''
         self.log = str(self.index) + "_Turn2Void_"
-        self.log_add("stage", self.stage)
+        self.log_add("phase", self.phase)
 
         bev = get_bev(frame)
 
@@ -549,19 +549,19 @@ class Turn2VoidMode(Mode):
         road_edge_bev, angle = get_road_edge_angle(road_bev, self.is_left)
 
 
-        # stage 0: time starting
-        if self.stage == 0:
-            self.stage = 1
-            self.time_since_stage = time.time()
+        # phase 0: time starting
+        if self.phase == 0:
+            self.phase = 1
+            self.time_since_phase = time.time()
 
 
-        # stage 1: rotating to other side a little bit: to get max data and right angle.
-        if self.stage == 1:
+        # phase 1: rotating to other side a little bit: to get max data and right angle.
+        if self.phase == 1:
             move_robot(self.pub, 0, -speed_z, self.is_left)
 
-            if time.time() - self.time_since_stage > self.other_turn_sec:
-                self.stage = 2  
-                self.time_since_stage = time.time()  
+            if time.time() - self.time_since_phase > self.other_turn_sec:
+                self.phase = 2  
+                self.time_since_phase = time.time()  
                 move_robot(self.pub)
 
                 angle_at_start = angle
@@ -580,15 +580,15 @@ class Turn2VoidMode(Mode):
         
 
         # turning while the line is shown: to estimate time to be exact 90 degrees
-        if self.stage == 2:
+        if self.phase == 2:
             move_robot(self.pub, 0, speed_z, self.is_left)
 
-            # to skip the image using stage...
-            self.stage = 3
+            # to skip the image using phase...
+            self.phase = 3
 
             if abs(angle) < 45:
                 self.waiting_for_next_frame = 2
-                self.time_list.append(time.time() - self.time_since_stage)
+                self.time_list.append(time.time() - self.time_since_phase)
                 self.angle_list.append(angle)
                 
                 # cv2.imwrite(str(self.index) + "_frame_edge_" + str(len(self.time_list)) + ".jpg", road_edge_bev)
@@ -596,7 +596,7 @@ class Turn2VoidMode(Mode):
             elif self.waiting_for_next_frame > 0:
                 self.waiting_for_next_frame -= 1
             else:
-                self.stage = 3
+                self.phase = 3
                 self.log += str(self.angle_list) + str(self.time_list)
                 if len(self.time_list) > 6:
                     len_ignore = int(len(self.time_list)/2.5)
@@ -617,9 +617,9 @@ class Turn2VoidMode(Mode):
 
 
                     
-        if self.stage == 3:
+        if self.phase == 3:
 
-            if time.time() < self.time_since_stage + self.est_time:
+            if time.time() < self.time_since_phase + self.est_time:
                 move_robot(self.pub, 0, speed_z, self.is_left)
             else:
                 move_robot(self.pub)
@@ -644,8 +644,8 @@ class Turn2RoadMode(Mode):
         self.road_angle = -1000
         self.dist_from_cross = -1
 
-        self.stage = 0
-        self.time_since_stage = 0
+        self.phase = 0
+        self.time_since_phase = 0
         self.est_time = 0
 
         self.rot_z = speed_z
@@ -659,20 +659,20 @@ class Turn2RoadMode(Mode):
 
     def set_frame_and_move(self, frame, showoff=True):
         '''
-            stage 0: / time starting + getting angle and est_time, speed_x, rot_z
-            stage 1: rotating at least min_turn_sec 
-            stage 2: rotate until you see the line
+            phase 0: / time starting + getting angle and est_time, speed_x, rot_z
+            phase 1: rotating at least min_turn_sec 
+            phase 2: rotate until you see the line
         '''
 
         self.log = str(self.index) + "_Turn2Road_"
-        self.log_add("stage", self.stage)
+        self.log_add("phase", self.phase)
 
         bev = get_bev(frame)
         road_bev = get_road(bev)
         road_blur_bev = get_rect_blur(road_bev, 5)
         
 
-        if self.stage == 0 and self.is_curve:
+        if self.phase == 0 and self.is_curve:
             road_sw_bev, x_list, y_list, is_cross, positions = get_sliding_window_and_cross_result(road_blur_bev, 5, self.left_way, self.right_way, self.init_pos_for_sliding_windows)
             if len(positions) > 0:
                 dist_from_cross = bot_from_bev_y - np.mean(positions)
@@ -699,7 +699,7 @@ class Turn2RoadMode(Mode):
             self.log_add("speed_x", self.speed_x)
             # cv2.imwrite(str(self.index) + "_curve_dist.jpg", road_sw_bev)
             # cv2.imwrite(str(self.index) + "_curve_angle.jpg", road_edge_bev)
-        elif self.stage == 0 and not self.is_curve:
+        elif self.phase == 0 and not self.is_curve:
             self.speed_x = 0
             road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
         else:   
@@ -707,22 +707,22 @@ class Turn2RoadMode(Mode):
 
 
         # starting
-        if self.stage == 0:
-            self.stage = 1
-            self.time_since_stage = time.time()
+        if self.phase == 0:
+            self.phase = 1
+            self.time_since_phase = time.time()
        
 
         # turning at least certain amount: to ignore post-road
-        if self.stage == 1:
+        if self.phase == 1:
             move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
 
-            if time.time() - self.time_since_stage > self.min_turn_sec:
-                self.stage = 2
-                self.time_since_stage = time.time()
+            if time.time() - self.time_since_phase > self.min_turn_sec:
+                self.phase = 2
+                self.time_since_phase = time.time()
                 # move_robot(self.pub)
         
         # turning while the line is shown: to estimate time to be exact 90 degrees
-        if self.stage == 2:
+        if self.phase == 2:
             self.log_add("line_not_shown")
 
             move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
@@ -732,14 +732,14 @@ class Turn2RoadMode(Mode):
                 line_road = Line(x_list, y_list)
                 self.line_road = line_road
 
-                self.log = str(self.index) + "_Turn2Road_stage1_line_on_angle_" + str(line_road.get_angle())
+                self.log = str(self.index) + "_Turn2Road_phase1_line_on_angle_" + str(line_road.get_angle())
 
                 cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
                 
                 if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
                     # move_robot(self.pub)
                     self.end = True
-            # cv2.imwrite(str(self.index) + "_T2R_" + str(round((time.time() - self.time_since_stage)*1000, 0)) + ".jpg", road_sw_bev)
+            # cv2.imwrite(str(self.index) + "_T2R_" + str(round((time.time() - self.time_since_phase)*1000, 0)) + ".jpg", road_sw_bev)
  
 
         if showoff:
