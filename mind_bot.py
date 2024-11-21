@@ -13,7 +13,6 @@ import math
 from sensor_msgs.msg import CompressedImage, Image
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
-from math import *
 from collections import deque
 import datetime
 
