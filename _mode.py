@@ -276,7 +276,7 @@ class EventMode(Mode):
 
             count_result_map = get_vote_count_result(self.count_map_list, KEY_PREDICT)
             
-            if len(self.enem_tank_x_list) > 0:
+            if count_result_map['enem_tank'] > 0:
                 n_xy = len(self.enem_tank_x_list)
                 enem_tank_xy = sorted(self.enem_tank_x_list)[int((n_xy-0.5)/2)], sorted(self.enem_tank_y_list)[int((n_xy-0.5)/2)],                  
                 angle_frame = np.zeros_like(frame)
