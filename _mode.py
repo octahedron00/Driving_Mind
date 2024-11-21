@@ -30,8 +30,8 @@ bot_from_bev_x = 100 # edit this
 bot_from_bev_y = 400 # edit this
 
 speed_x = 0.4
-z_ang_speed = 0.9
-default_time_90deg = 1.5 / z_ang_speed
+speed_z = 0.9
+default_time_90deg = 1.5 / speed_z
 
 radius_vx_vz_coefficient = 1100  # edit this
 
@@ -79,12 +79,12 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
     '''
 
-def move_stanley(pub, offset_mm, angle_deg):
+def move_stanley(pub, offset_mm, angle_deg, speed_x_ratio = 1):
 
     kp= 0.05
     ka= 0.10
     k = 1.5
-    x = speed_x
+    x = speed_x * speed_x_ratio
 
     z = -(angle_deg*ka - atan(kp*offset_mm)) * x * k
     
@@ -120,7 +120,10 @@ def get_vote_count_result(count_map_list, key_predict):
     return result
 
                 
+def get_2_point_dist(p1, p2):
 
+    dist = math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+    return dist
 
 
 class Mode:
@@ -270,7 +273,7 @@ class EventMode(Mode):
                 angle_bev = get_bev(angle_frame)
                 angle_show_bev, angle = get_road_edge_angle(angle_bev, ignore_canny=True)
 
-                k = z_ang_speed
+                k = speed_z
                 if angle > 0:
                     k = -k
                 angle = abs(angle)
@@ -323,7 +326,7 @@ class EventMode(Mode):
 
 class Stanley2GreenMode(Mode):
 
-    def __init__(self, pub, index=0, from_it=False, left_offset = 0, debug=False):
+    def __init__(self, pub, index=0, from_it=False, left_offset = 0, debug=False, profer_dist = 300, profer_err = 0.1):
         self.end = False
         self.pub = pub
 
@@ -334,15 +337,22 @@ class Stanley2GreenMode(Mode):
             self.green_encounter = -100
         self.left_offset = left_offset
 
+        self.stage = 1
+
         self.index = index
         self.log = str(self.index) + "_Stanley2Green_"
         self.debug = debug
+
+        self.profer_dist = profer_dist
+        self.profer_err = profer_err
 
 
     def set_frame_and_move(self, frame, showoff=True):
 
         self.log = str(self.index) + "_Stanley2Green_"
         bev = get_bev(frame)
+        self.log_add("stage ", self.stage)
+
 
         # slidingwindow
         road_bev = get_road(bev)
@@ -363,32 +373,52 @@ class Stanley2GreenMode(Mode):
             move_robot(self.pub)
             return
 
-
-        # stanley
-        offset_mm = self.line_road.get_offset(bot_from_bev_x+self.left_offset,bot_from_bev_y)
-        angle_deg = self.line_road.get_angle()
-
-        z = move_stanley(self.pub, offset_mm, angle_deg)
-        self.log = str(self.index) + "_Stanley2Green_offset " + str(offset_mm) + " mm / angle " + str(angle_deg) + "deg / z speed " + str(z)
-
-
         # green event!
         green_bev = get_green(bev)
         green_bev_cm = get_cm_px_from_mm(green_bev)
         green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
         green_pos = [pos*10 for pos in green_pos_cm]
 
-        if green_max > true_green_confidence and self.line_road.get_distance(green_pos[1], green_pos[0]) < true_green_dist_from_road:
-            print("What, the true Green!!!", green_max, self.line_road.get_distance(green_pos[1], green_pos[0]))
-            self.green_encounter += 1
-        else:
-            self.green_encounter -= 1
-            self.green_encounter = max(int(self.green_encounter/2.1), self.green_encounter)
+        offset_mm = self.line_road.get_offset(bot_from_bev_x+self.left_offset,bot_from_bev_y)
+        angle_deg = self.line_road.get_angle()
+        self.log_add("offset", offset_mm)
+        self.log_add("angle", angle_deg)
+
+        if self.stage == 1:
+            # stanley
+
+            z = move_stanley(self.pub, offset_mm, angle_deg)
+            self.log_add("z speed ", str(z))
+
+            if green_max > true_green_confidence and self.line_road.get_distance(green_pos[1], green_pos[0]) < true_green_dist_from_road:
+                self.log_add("true green?", green_max)
+                self.log_add("true green at", green_pos)
+                self.log_add("true green from line", self.line_road.get_distance(green_pos[1], green_pos[0]))
+                self.green_encounter += 1
+            else:
+                self.green_encounter -= 1
+                self.green_encounter = max(int(self.green_encounter/2.1), self.green_encounter)
+            
+            if self.green_encounter >= 3:
+                self.stage = 2
+                # move_robot(self.pub)
         
-        if self.green_encounter >= 3:
-            self.end = True
-            # move_robot(self.pub)
-        
+        elif self.stage == 2:
+                
+            if green_max < true_green_confidence:
+                self.end = True
+                self.log_add("Green is Gone! ", green_max)
+                return
+
+            dist_ratio = 1 - (get_2_point_dist((green_pos[1], green_pos[0]), (bot_from_bev_x, bot_from_bev_y)) / self.profer_dist)
+            self.log_add("Dist ratio ", dist_ratio)
+            
+            if dist_ratio > self.profer_err:
+                z = move_stanley(self.pub, offset_mm, angle_deg, dist_ratio) # slow down a lot
+            else:
+                z = move_robot(self.pub) # stop
+                self.end = True
+
 
         # showoff now
         if showoff:
@@ -527,7 +557,7 @@ class Turn2VoidMode(Mode):
 
         # stage 1: rotating to other side a little bit: to get max data and right angle.
         if self.stage == 1:
-            move_robot(self.pub, 0, -z_ang_speed, self.is_left)
+            move_robot(self.pub, 0, -speed_z, self.is_left)
 
             if time.time() - self.time_since_stage > self.other_turn_sec:
                 self.stage = 2  
@@ -551,7 +581,7 @@ class Turn2VoidMode(Mode):
 
         # turning while the line is shown: to estimate time to be exact 90 degrees
         if self.stage == 2:
-            move_robot(self.pub, 0, z_ang_speed, self.is_left)
+            move_robot(self.pub, 0, speed_z, self.is_left)
 
             # to skip the image using stage...
             self.stage = 3
@@ -590,7 +620,7 @@ class Turn2VoidMode(Mode):
         if self.stage == 3:
 
             if time.time() < self.time_since_stage + self.est_time:
-                move_robot(self.pub, 0, z_ang_speed, self.is_left)
+                move_robot(self.pub, 0, speed_z, self.is_left)
             else:
                 move_robot(self.pub)
                 self.end = True
@@ -601,7 +631,7 @@ class Turn2VoidMode(Mode):
 
 class Turn2RoadMode(Mode):
 
-    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 1.5, is_curve = False, left_way = True, right_way = True):
+    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 1.2, is_curve = False, left_way = True, right_way = True):
         self.end = False
         self.pub = pub
 
@@ -618,7 +648,7 @@ class Turn2RoadMode(Mode):
         self.time_since_stage = 0
         self.est_time = 0
 
-        self.rot_z = z_ang_speed
+        self.rot_z = speed_z
         self.speed_x = speed_x
         self.left_way = left_way
         self.right_way = right_way
