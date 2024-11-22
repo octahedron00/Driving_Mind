@@ -28,7 +28,7 @@ FRAME_IGNORE_LEVEL = 1
 
 IS_LOG_VID = True
 
-class bot_mind:
+class control_mind:
 
     def __init__(self):
 
@@ -36,18 +36,10 @@ class bot_mind:
         if IS_LOG_VID:
             self.logwriter = cv2.VideoWriter("log_control_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
 
-        # self.bridge = CvBridge()
-        # rospy.init_node('lane_detection_node', anonymous=False)
-        # rospy.Subscriber('/main_camera/image_raw', Image, self.camera_callback)
-        # self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
-
-        self.pub = tiki.Tiki()
+        self.pub = TikiMini()
         pub = self.pub
 
         self.count_frame = 1
-
-        self.speed_x = 0
-        self.speed_z = 0
 
         self.image_name = "image_" + now + "_"
         self.image_count = 1
@@ -63,13 +55,8 @@ class bot_mind:
 
 
 
-    def camera_callback(self, data):
-        self.image = self.bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
-
-
     def action(self, frame):
         pub = self.pub
-        frame
 
         showing_off([frame])
         if IS_LOG_VID:
@@ -78,9 +65,9 @@ class bot_mind:
         k = cv2.waitKey(1)
         print(k)
         if k == ord('w'):
-            move_robot(pub, 0.5, 0)
+            move_robot(pub, 0.2, 0)
         elif k == ord('s'):
-            move_robot(pub, -0.5, 0)
+            move_robot(pub, -0.2, 0)
         elif k == ord('a'):
             move_robot(pub, 0, 0.5)
         elif k == ord('d'):
@@ -99,5 +86,5 @@ class bot_mind:
 if __name__ == "__main__":
 
     if not rospy.is_shutdown():
-        bot_mind()
+        control_mind()
         rospy.spin()

@@ -80,8 +80,19 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
     if not is_left:
         speed.angular.z = -rot_z
     pub.publish(speed)
+
+    x_max = 140
+    z_max = 40
+
     '''
-    pub.set_motor_power(motor, value)
+
+    x_real = int(x_max * vel_x)
+    z_real = int(z_max * rot_z)
+    speed_left  = x_real - z_real
+    speed_right = x_real + z_real
+
+    pub.set_motor_power(pub.MOTOR_LEFT , speed_left)
+    pub.set_motor_power(pub.MOTOR_RIGHT, speed_right)
     
 
     '''
