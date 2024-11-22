@@ -16,6 +16,8 @@ from _mode import move_robot, showing_off
 
 
 FRAME_IGNORE_LEVEL = 1
+VID_CONNECT_CMD = "log_2125.avi"
+
 
 IS_LOG_VID = True
 
@@ -28,13 +30,14 @@ class control_mind:
             self.logwriter = cv2.VideoWriter("log_control_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
 
         self.pub = TikiMini()
+        self.pub.set_motor_mode(self.pub.MOTOR_MODE_PID)
 
         self.count_frame = 1
 
         self.image_name = "image_" + now + "_"
         self.image_count = 1
 
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture(VID_CONNECT_CMD)
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -52,7 +55,7 @@ class control_mind:
         if IS_LOG_VID:
             self.logwriter.write(frame)
         
-        k = cv2.waitKey(1)
+        k = cv2.waitKey(25)
         print(k)
         if k == ord('w'):
             move_robot(pub, 0.2, 0)

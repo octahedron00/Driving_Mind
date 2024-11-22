@@ -29,7 +29,13 @@ class TikiMini:
 
     def log(self, log: str):
         self.log_list.append(log)
-        self.log_list = self.log_list[:min(5, len(self.log_list))]
+        self.log_list = self.log_list[max(0, len(self.log_list)-5):]
+        
+        print("^--------- LOG ---------^")
+        for log in self.log_list:
+            print(log)
+        print("|--------- LOG ---------|")
+
     
     def log_clear(self):
         self.log_list = list()
@@ -51,7 +57,8 @@ class TikiMini:
 
     def set_motor_power(self, motor: int, value: int):
         if self.motor_mode > 1:
-            print("motor goes now", motor, value)
+            # print("motor goes now", motor, value)
+            pass
         else:
             raise Exception
     

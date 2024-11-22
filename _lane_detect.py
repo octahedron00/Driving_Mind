@@ -10,6 +10,13 @@ BOT_FROM_BEV_Y = 400 # edit this
 
 
 
+LT_BEV = (147, 104)
+LD_BEV = (0, 343)
+RT_BEV = (487, 113)
+RD_BEV = (636, 355)
+
+H_BEV = 200
+W_BEV = 200
 
 
 class Line:
@@ -69,22 +76,15 @@ def get_bev(image):
         1) _image : BEV result image
         2) minv : inverse matrix of BEV conversion matrix
     """
-    lt = (170, 175)
-    ld = (0, 412)
-    rt = (501, 188)
-    rd = (638, 435)
 
-    h = 200
-    w = 200
-
-    source = np.float32([[lt], [rt], [ld], [rd]])
-    destination = np.float32([[0, 0], [w, 0], [0, h], [w, h]])
+    source = np.float32([[LT_BEV], [RT_BEV], [LD_BEV], [RD_BEV]])
+    destination = np.float32([[0, 0], [W_BEV, 0], [0, H_BEV], [W_BEV, H_BEV]])
     
-    M = cv2.getPerspectiveTransform(source, destination)
+    M_BEV = cv2.getPerspectiveTransform(source, destination)
     Minv = cv2.getPerspectiveTransform(destination, source)
     
     
-    warp_image = cv2.warpPerspective(image, M, (h, w), flags=cv2.INTER_LINEAR)
+    warp_image = cv2.warpPerspective(image, M_BEV, (H_BEV, W_BEV), flags=cv2.INTER_LINEAR)
 
     return warp_image
 
@@ -165,7 +165,6 @@ def get_sliding_window_result(image, init=-1):
                 break
         
 
-        # print(i, "pos", lane_point, "max", max_pos, "filled area", real_sum, real_sum/(np.shape(roi)[0]*np.shape(roi)[1]*255))
         if fill_min < float(x_right-x_left)/len(x_hist) < fill_max:
             x_p = int((x_left + x_right)/2) + l
             lane_point = x_p
@@ -181,8 +180,6 @@ def get_sliding_window_result(image, init=-1):
 
 def get_road_edge_angle(frame, is_left = True):
 
-    segment_count = 8
-    minimum = 2
 
     matrix = np.zeros((3, 3))
     if is_left:
@@ -213,12 +210,8 @@ def get_road_edge_angle(frame, is_left = True):
         angle_median = line.get_angle()
         cv2.line(color_frame, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (0, 255, 0), 2)
 
-    
-
         x_midpoint = int(np.shape(color_frame)[1] / 2)
         y_height = np.shape(color_frame)[0]
-        print(angle_median)
-        print(line.get_offset(BOT_FROM_BEV_X, BOT_FROM_BEV_Y))
         cv2.line(color_frame, (x_midpoint, y_height), (int(x_midpoint + (math.tan((angle_median/180)*math.pi)*y_height)), 0), (0, 0, 255), 3)
     
     return color_frame, angle_median
@@ -269,7 +262,7 @@ def get_square_pos(green_frame, size_square = 7):
 
 
 
-def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, right_way = True, init = -1):
+def get_sliding_window_and_cross_result(image, left_way = True, right_way = True, init = -1):
 
     """
     Sliding window
@@ -281,7 +274,7 @@ def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, 
     win_w = 180
     win_n = 8
     fill_min = 0.1
-    fill_max = 0.5
+    fill_max = 0.7
 
     if init > 0:
         lane_point = init
@@ -326,7 +319,6 @@ def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, 
             else:
                 break
 
-        # print(i, "pos", lane_point, "max", max_pos, "filled area", real_sum, real_sum/(np.shape(roi)[0]*np.shape(roi)[1]*255))
         if fill_min < float(x_right-x_left)/len(x_hist) < fill_max:
             x_mid = int((x_left + x_right)/2)
             x_p = x_mid + l
@@ -340,7 +332,6 @@ def get_sliding_window_and_cross_result(image, width_road = 5, left_way = True, 
 
         sum_left = np.sum(x_hist[:x_mid])
         sum_right = np.sum(x_hist[x_mid:])
-        print(sum_left, sum_right, (np.shape(roi)[0]*np.shape(roi)[1]*255/2))        
 
         # sum from actual mid of road / sum must be bigger than total half * fill_max
         if left_way and fill_max > float(sum_left) / (np.shape(roi)[0]*np.shape(roi)[1]*255/2):

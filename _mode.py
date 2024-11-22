@@ -33,7 +33,7 @@ BEV_SHAPE = (200, 200)
 # for event:
 CONF_THRESHOLD = 0.6
 IOU_THRESHOLD = 0.6
-WAIT_FRAME_4_YOLO = 5
+WAIT_FRAME_4_MODEL = 0
 
 KEY_PREDICT = ("ally", "enem", "ally_tank", "enem_tank")
 
@@ -99,7 +99,7 @@ def move_stanley(pub, offset_mm, angle_deg, x_ratio = 1):
 
 
 
-def get_vote_count_result(count_map_list, KEY_PREDICT):
+def get_vote_count_result(count_map_list):
     '''
         getting the most shown value for each key
     '''
@@ -110,6 +110,7 @@ def get_vote_count_result(count_map_list, KEY_PREDICT):
         list_count = []
         for count_map in count_map_list:
             list_count.append(count_map.get(key, 0))
+        print(key, list_count, count_map_list)
 
         max_n = 1
         max_i = 0
@@ -171,31 +172,61 @@ class StartMode(Mode):
 
 class EndMode(Mode):
 
-    def __init__(self, pub, index=0):
+    def __init__(self, pub, model_all, index=0, predict_all = True):
         self.end = False
         self.pub = pub
+        self.model = model_all
         move_robot(pub)
-        self.running = False
+        self.running = True
+        self.predict_all = predict_all
     
     def set_frame_and_move(self, frame, showoff=True):
         
+        if self.running and self.predict_all:
+            self.pub.log_clear()
+            for index in range(10, 41, 10):
+                event_image_list = self.capsule[f"event_{index}_frame_list"]
+
+                result_list = self.model.predict(event_image_list, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+                # result_list = self.model.predict(frame, device = 'cuda', show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+                
+                count_map_list = []
+                # print(result_list)
+                for k, result in enumerate(result_list):
+                    count_map = dict()      
+                    predict_frame = result.plot()
+
+                    for i in range(len(result.boxes)):
+                        res = result.boxes[i] 
+                        class_id = result.names[res.cls[0].item()]
+
+                        count_map[class_id] = 1 + count_map.get(class_id, 0)
+                
+                    self.log_add("count: ", str(count_map))
+
+                    cv2.imwrite("predict_" + str(index) + "_final_" + str(k+1) + ".jpg", predict_frame)
+                    count_map_list.append(count_map)
+                
+                count_result = get_vote_count_result(count_map_list=count_map_list)
+                self.pub.log(str(count_result))    
+        
+        if self.running:
+            self.running = False
+
         if showoff:
             pass
-        cv2.waitKey(1)
-        pass
-
 
 
 class EventMode(Mode):
 
-    def __init__(self, pub, model, index = 0, n_frame=5, wait_sec = 2.0):
+    def __init__(self, pub, model, index = 0, n_frame=5, wait_sec = 2.0, predict_each = True):
         
         self.end = False
         self.pub = pub
         
         self.phase = 1
         self.n_frame = n_frame
-        self.WAIT_FRAME_4_YOLO = WAIT_FRAME_4_YOLO * 2
+        self.wait_frame_4_predict = WAIT_FRAME_4_MODEL * 2
 
         self.wait_sec = wait_sec
         self.index = index
@@ -203,6 +234,7 @@ class EventMode(Mode):
         self.enem_tank_x_list = []
         self.enem_tank_y_list = []
 
+        self.predict_each = predict_each
         
         self.rot_time = 0
         self.rot_speed = 0
@@ -214,7 +246,7 @@ class EventMode(Mode):
     
     def set_frame_and_move(self, frame, showoff=True):
         '''
-            phase 1: getting prediction for n_frame for every WAIT_FRAME_4_YOLO
+            phase 1: getting prediction for n_frame for every WAIT_FRAME_4_MODEL
             phase 2: /end: vote by each prediction! + get enem_tank position and rotational angle, time start
             phase 3: rotate to the tank position /end: shot! time start
             phase 4: rotate back to the original angle
@@ -226,24 +258,23 @@ class EventMode(Mode):
         predict_frame = frame
         self.log_set(self.index, "Event") 
 
-
         if self.phase == 1:
             self.log_add("mode ", self.n_frame)
-            if self.WAIT_FRAME_4_YOLO > 0:
-                self.WAIT_FRAME_4_YOLO -= 1
+            if self.wait_frame_4_predict > 0:
+                self.wait_frame_4_predict -= 1
                 return
             self.n_frame -= 1
-            self.WAIT_FRAME_4_YOLO = WAIT_FRAME_4_YOLO
+            self.wait_frame_4_predict = WAIT_FRAME_4_MODEL
 
-            result_list = self.model.predict(frame, device = 'cpu', show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+            self.capsule[f"event_{self.index}_frame_list"] = self.capsule.get(f"event_{self.index}_frame_list", list()) + [frame]
+
+            result_list = self.model.predict(frame, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
             # result_list = self.model.predict(frame, device = 'cuda', show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
             
             count_map = dict()
             # print(result_list)
             for result in result_list:
                 predict_frame = result.plot()
-                if len(result.boxes) < 1:
-                    continue   
 
                 for i in range(len(result.boxes)):
                     res = result.boxes[i] 
@@ -259,7 +290,7 @@ class EventMode(Mode):
         
             self.log_add("count: ", str(count_map))
 
-            cv2.imwrite("predict_" + str(self.index) + "_" + str(self.n_frame) + ".jpg", predict_frame)
+            cv2.imwrite("predict_" + str(self.index) + "_" + str(5 - self.n_frame) + ".jpg", predict_frame)
             self.count_map_list.append(count_map)
 
             if self.n_frame < 1:
@@ -269,7 +300,7 @@ class EventMode(Mode):
             self.phase = 3
             self.time_start = time.time()
 
-            count_result_map = get_vote_count_result(self.count_map_list, KEY_PREDICT)
+            count_result_map = get_vote_count_result(self.count_map_list)
             
             if count_result_map['enem_tank'] > 0:
                 n_xy = len(self.enem_tank_x_list)
@@ -293,6 +324,10 @@ class EventMode(Mode):
                 self.log_add("rot time", self.rot_time)
 
             self.log_add("prediction result: ", str(count_result_map))  
+
+
+            if self.predict_each:
+                self.pub.log(str(count_result_map))    
 
         elif self.phase == 3:
             if self.rot_time > time.time() - self.time_start:
@@ -339,7 +374,7 @@ class Stanley2GreenMode(Mode):
         self.init_pos_for_sliding_windows = -1
         self.green_encounter = -2
         if from_it:
-            self.green_encounter = -100
+            self.green_encounter = -1000
         self.left_offset = left_offset
 
         self.phase = 1
@@ -463,14 +498,9 @@ class Stanley2CrossMode(Mode):
         # slidingwindow & cross position!
         road_bev = get_road(bev)
         road_blur_bev = get_rect_blur(road_bev, 5)
-        cross_find_view, x_list, y_list, is_cross, positions = get_sliding_window_and_cross_result(road_blur_bev, 5, self.left_way, self.right_way, self.init_pos_for_sliding_windows)
+        cross_find_view, x_list, y_list, is_cross, positions = get_sliding_window_and_cross_result(road_blur_bev, self.left_way, self.right_way, self.init_pos_for_sliding_windows)
         road_sw_bev = cross_find_view
 
-        # green event!
-        green_bev = get_green(bev)
-        green_bev_cm = get_cm_px_from_mm(green_bev)
-        green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
-        green_pos = [pos*10 for pos in green_pos_cm]
         # green event!
         green_bev = get_green(bev)
         green_bev_cm = get_cm_px_from_mm(green_bev)
@@ -555,6 +585,122 @@ class Stanley2CrossMode(Mode):
         if showoff:
             cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
             showing_off([frame, road_bev, road_sw_bev, bev, cross_find_view])
+
+
+
+
+class Turn2RoadMode(Mode):
+
+    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 1.2, is_curve = False):
+        self.end = False
+        self.pub = pub
+
+        self.is_left = is_left
+        self.line_road = None
+        self.init_pos_for_sliding_windows = -1
+        self.min_turn_sec = min_turn_sec
+        self.is_curve = is_curve
+
+
+        self.road_encounter = 0
+
+        self.road_angle = -1000
+        self.dist_from_cross = -1
+
+        self.phase = 0
+        self.time_since_phase = 0
+        self.est_time = 0
+
+        self.rot_z = SPEED_Z
+        self.speed_x = 0
+
+        self.index = index
+
+        self.capsule = {"dist_from_cross": BOT_FROM_BEV_Y - BEV_SHAPE[0]}
+
+
+    def set_frame_and_move(self, frame, showoff=True):
+        '''
+            phase 0: / time starting + getting angle and est_time, SPEED_X, rot_z
+            phase 1: rotating at least min_turn_sec 
+            phase 2: rotate until you see the line
+        '''
+        self.log_set(self.index, "Turn2Road") 
+        self.log_add("phase", self.phase)
+
+        bev = get_bev(frame)
+        road_bev = get_road(bev)
+        road_blur_bev = get_rect_blur(road_bev, 5)
+        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
+
+        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
+
+
+        if self.phase == 0 and self.is_curve:
+            dist_from_cross = self.capsule["dist_from_cross"]
+            self.log_add(self.capsule)
+
+
+            road_edge_bev, angle = get_road_edge_angle(road_bev, self.is_left)
+            self.road_angle = angle
+            if abs(self.road_angle) > 20:
+                self.road_angle = 0
+
+            if self.is_left:
+                self.road_angle = -self.road_angle
+
+            radius = dist_from_cross / (1 + math.sin(self.road_angle*math.pi/180))
+
+            self.speed_x = radius * self.rot_z / RADIUS_VZ_OVER_VX_CONST
+            self.log_add("radius", radius)
+            self.log_add("rot_z", self.rot_z)
+            self.log_add("SPEED_X", self.speed_x)
+            # cv2.imwrite(str(self.index) + "_curve_dist.jpg", road_sw_bev)
+            # cv2.imwrite(str(self.index) + "_curve_angle.jpg", road_edge_bev)
+        
+        
+
+        # starting
+        if self.phase == 0:
+            self.phase = 1
+            self.time_since_phase = time.time()
+       
+
+        # turning at least certain amount: to ignore post-road
+        if self.phase == 1:
+            move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
+
+            if time.time() - self.time_since_phase > self.min_turn_sec:
+                self.phase = 2
+                self.time_since_phase = time.time()
+                # move_robot(self.pub)
+        
+        # turning while the line is shown: to estimate time to be exact 90 degrees
+        if self.phase == 2:
+            self.log_add("line_not_shown")
+
+            move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
+
+            if len(x_list) > 2:
+                self.init_pos_for_sliding_windows = x_list[1]
+                line_road = Line(x_list, y_list)
+                self.line_road = line_road
+
+                self.log_add("line_on_angle", line_road.get_angle())
+
+                cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
+                
+                if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
+                    # move_robot(self.pub)
+                    self.road_encounter += 1
+                if self.road_encounter > 1:
+                    self.end = True
+            # cv2.imwrite(str(self.index) + "_T2R_" + str(round((time.time() - self.time_since_phase)*1000, 0)) + ".jpg", road_sw_bev)
+ 
+
+        if showoff:
+            showing_off([frame, road_bev, road_sw_bev, bev])
+
 
 
 
@@ -680,120 +826,3 @@ class Turn2VoidMode(Mode):
 
         if showoff:
             showing_off([frame, road_bev, road_edge_bev, bev])
-
-
-class Turn2RoadMode(Mode):
-
-    def __init__(self, pub, index = 0, is_left = True, min_turn_sec = 1.2, is_curve = False):
-        self.end = False
-        self.pub = pub
-
-        self.is_left = is_left
-        self.line_road = None
-        self.init_pos_for_sliding_windows = -1
-        self.min_turn_sec = min_turn_sec
-        self.is_curve = is_curve
-
-
-        self.road_encounter = 0
-
-        self.road_angle = -1000
-        self.dist_from_cross = -1
-
-        self.phase = 0
-        self.time_since_phase = 0
-        self.est_time = 0
-
-        self.rot_z = SPEED_Z
-        self.speed_x = 0
-
-        self.index = index
-
-        self.capsule = {"dist_from_cross": BOT_FROM_BEV_Y - BEV_SHAPE[0]}
-
-
-    def set_frame_and_move(self, frame, showoff=True):
-        '''
-            phase 0: / time starting + getting angle and est_time, SPEED_X, rot_z
-            phase 1: rotating at least min_turn_sec 
-            phase 2: rotate until you see the line
-        '''
-        self.log_set(self.index, "Turn2Road") 
-        self.log_add("phase", self.phase)
-
-        bev = get_bev(frame)
-        road_bev = get_road(bev)
-        road_blur_bev = get_rect_blur(road_bev, 5)
-        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
-
-        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
-
-
-        if self.phase == 0 and self.is_curve:
-            dist_from_cross = self.capsule["dist_from_cross"]
-            self.log_add(self.capsule)
-
-
-            road_edge_bev, angle = get_road_edge_angle(road_bev, self.is_left)
-            self.road_angle = angle
-            if abs(self.road_angle) > 20:
-                self.road_angle = 0
-
-            if self.is_left:
-                self.road_angle = -self.road_angle
-
-            radius = dist_from_cross / (1 + math.sin(self.road_angle*math.pi/180))
-
-            self.speed_x = radius * self.rot_z / RADIUS_VZ_OVER_VX_CONST
-            self.log_add("radius", radius)
-            self.log_add("rot_z", self.rot_z)
-            self.log_add("SPEED_X", self.SPEED_X)
-            # cv2.imwrite(str(self.index) + "_curve_dist.jpg", road_sw_bev)
-            # cv2.imwrite(str(self.index) + "_curve_angle.jpg", road_edge_bev)
-        
-        
-
-        # starting
-        if self.phase == 0:
-            self.phase = 1
-            self.time_since_phase = time.time()
-       
-
-        # turning at least certain amount: to ignore post-road
-        if self.phase == 1:
-            move_robot(self.pub, self.SPEED_X, self.rot_z, self.is_left)
-
-            if time.time() - self.time_since_phase > self.min_turn_sec:
-                self.phase = 2
-                self.time_since_phase = time.time()
-                # move_robot(self.pub)
-        
-        # turning while the line is shown: to estimate time to be exact 90 degrees
-        if self.phase == 2:
-            self.log_add("line_not_shown")
-
-            move_robot(self.pub, self.SPEED_X, self.rot_z, self.is_left)
-
-            if len(x_list) > 2:
-                self.init_pos_for_sliding_windows = x_list[1]
-                line_road = Line(x_list, y_list)
-                self.line_road = line_road
-
-                self.log_add("line_on_angle", line_road.get_angle())
-
-                cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
-                
-                if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
-                    # move_robot(self.pub)
-                    self.road_encounter += 1
-                if self.road_encounter > 1:
-                    self.end = True
-            # cv2.imwrite(str(self.index) + "_T2R_" + str(round((time.time() - self.time_since_phase)*1000, 0)) + ".jpg", road_sw_bev)
- 
-
-        if showoff:
-            showing_off([frame, road_bev, road_sw_bev, bev])
-
-
-
-
