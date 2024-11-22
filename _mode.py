@@ -74,17 +74,15 @@ def showing_off(image_list):
 
 def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
-    speed = Twist()
-    speed.linear.x = vel_x
-    speed.angular.z = rot_z
-    if not is_left:
-        speed.angular.z = -rot_z
-    pub.publish(speed)
+    # speed = Twist()
+    # speed.linear.x = vel_x
+    # speed.angular.z = rot_z
+    # if not is_left:
+    #     speed.angular.z = -rot_z
+    # pub.publish(speed)
 
     x_max = 140
     z_max = 40
-
-    '''
 
     x_real = int(x_max * vel_x)
     z_real = int(z_max * rot_z)
@@ -95,7 +93,6 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
     pub.set_motor_power(pub.MOTOR_RIGHT, speed_right)
     
 
-    '''
 
 def move_stanley(pub, offset_mm, angle_deg, x_ratio = 1):
 
