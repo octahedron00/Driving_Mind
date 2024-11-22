@@ -1,28 +1,19 @@
-
-
-
-
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, division
 
-
-import rospy
 import cv2
 import numpy as np
 import time
 import math
-
-from sensor_msgs.msg import CompressedImage, Image
-from cv_bridge import CvBridge
-from geometry_msgs.msg import Twist
-from collections import deque
 import datetime
 
-# from ultralytics import YOLO
+from ultralytics import YOLO, RTDETR
+
+from fake_tiki import TikiMini
 
 from _mode import move_robot, showing_off
+
 
 FRAME_IGNORE_LEVEL = 1
 
@@ -37,7 +28,6 @@ class control_mind:
             self.logwriter = cv2.VideoWriter("log_control_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
 
         self.pub = TikiMini()
-        pub = self.pub
 
         self.count_frame = 1
 
@@ -85,6 +75,4 @@ class control_mind:
 
 if __name__ == "__main__":
 
-    if not rospy.is_shutdown():
-        control_mind()
-        rospy.spin()
+    control_mind()

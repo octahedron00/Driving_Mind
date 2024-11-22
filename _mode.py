@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 # %matplotlib inline
 
-from __future__ import print_function, division
 
-
-import rospy
 import cv2
 import numpy as np
 import time
 import math
 
-from sensor_msgs.msg import CompressedImage
-from cv_bridge import CvBridge
-from geometry_msgs.msg import Twist
-from collections import deque
-from std_msgs.msg import String
-
-
-from ultralytics import YOLO
+from ultralytics import YOLO, RTDETR
 
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
@@ -101,7 +91,7 @@ def move_stanley(pub, offset_mm, angle_deg, x_ratio = 1):
     k = 1.5
     x = SPEED_X * x_ratio
 
-    z = -(angle_deg*ka - atan(kp*offset_mm)) * x * k
+    z = -(angle_deg*ka - math.atan(kp*offset_mm)) * x * k
     
     move_robot(pub, x, z)
 
@@ -199,8 +189,6 @@ class EndMode(Mode):
 class EventMode(Mode):
 
     def __init__(self, pub, model, index = 0, n_frame=5, wait_sec = 2.0):
-        self.lcd_pub_1 = rospy.Publisher("/lcd_str_1", String, queue_size=1)
-        self.str_msg_1 = String()
         
         self.end = False
         self.pub = pub
@@ -304,8 +292,6 @@ class EventMode(Mode):
                 self.log_add("rot speed", k)
                 self.log_add("rot time", self.rot_time)
 
-            # self.str_msg_1.data = f"alli: {count_result_map['ally']}/{count_result_map['ally_tank']},enem: {count_result_map['enem']}/{count_result_map['enem_tank']}"
-            # self.lcd_pub_1.publish(self.str_msg_1)
             self.log_add("prediction result: ", str(count_result_map))  
 
         elif self.phase == 3:
