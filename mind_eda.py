@@ -12,6 +12,7 @@ from math import *
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
 from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
+from _lane_detect import LT_BEV, LD_BEV, RD_BEV, RT_BEV, H_BEV, W_BEV
 
 
 
@@ -36,15 +37,25 @@ def show(frame, frame_before, stop=False):
     edge_bev, _ = get_road_edge_angle(road_bev)
     cross_bev, _, _, _, _ = get_sliding_window_and_cross_result(road_bev)
     
+    polypoint = np.array([LT_BEV, LD_BEV, RD_BEV, RT_BEV], dtype=np.int32)
+    # print(polypoint)
+
+    cv2.polylines(frame, [polypoint], isClosed=True, color=(0, 255, 0), thickness=2)
 
     frame_list = [
         frame,
         bev,
-        road_bev,]
+        road_bev,
+        green_bev,
+        edge_bev,
+        cross_bev,]
     name_list = [
         'ori',
         'bev',
-        'road',]
+        'road',
+        'green',
+        'edge',
+        'cross',]
     for i, f in enumerate(frame_list):
 
         if i > 8:
@@ -99,7 +110,7 @@ if __name__=="__main__":
         show(frame, frame_before)
  
         frame_before.append(frame)
-        if len(frame_before) > 5:
+        if len(frame_before) > 20:
             frame_before = frame_before[1:]
  
  

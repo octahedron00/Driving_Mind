@@ -15,7 +15,7 @@ from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle,
 
 
 BOT_FROM_BEV_X = 100 # edit this
-BOT_FROM_BEV_Y = 400 # edit this
+BOT_FROM_BEV_Y = 500 # edit this
 
 SPEED_X = 1.0
 SPEED_Z = 1.0
@@ -27,7 +27,7 @@ TRUE_GREEN_CONF = 100
 TRUE_GREEN_DIST_FROM_ROAD = 30 #mm
 
 
-BEV_SHAPE = (200, 200)
+BEV_SHAPE = (300, 200)
 
 # for event:
 CONF_THRESHOLD = 0.6
@@ -38,7 +38,7 @@ KEY_PREDICT = ("ally", "enem", "ally_tank", "enem_tank")
 
 PREFER_ERR_DEG = 5
 
-PREFER_DIST = 300
+PREFER_DIST = 400
 PREFER_ERR_RATIO = 0.1
 
 
@@ -408,7 +408,7 @@ class Stanley2GreenMode(Mode):
         # green event!
         green_bev = get_green(bev)
         green_bev_cm = get_cm_px_from_mm(green_bev)
-        green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
+        green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 5)
         green_pos = [pos*10 for pos in green_pos_cm]
 
         offset_mm = self.line_road.get_offset(BOT_FROM_BEV_X+self.left_offset,BOT_FROM_BEV_Y)
@@ -501,7 +501,7 @@ class Stanley2CrossMode(Mode):
         # green event!
         green_bev = get_green(bev)
         green_bev_cm = get_cm_px_from_mm(green_bev)
-        green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
+        green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 5)
         green_pos = [pos*10 for pos in green_pos_cm]
 
         if len(x_list) > 2:

@@ -6,16 +6,16 @@ import math
 
 
 BOT_FROM_BEV_X = 100 # edit this
-BOT_FROM_BEV_Y = 400 # edit this
+BOT_FROM_BEV_Y = 500 # edit this
 
 
 
-LT_BEV = (147, 104)
+LT_BEV = (192, 23)
 LD_BEV = (0, 343)
-RT_BEV = (487, 113)
+RT_BEV = (443, 21)
 RD_BEV = (636, 355)
 
-H_BEV = 200
+H_BEV = 300
 W_BEV = 200
 
 
@@ -84,7 +84,7 @@ def get_bev(image):
     Minv = cv2.getPerspectiveTransform(destination, source)
     
     
-    warp_image = cv2.warpPerspective(image, M_BEV, (H_BEV, W_BEV), flags=cv2.INTER_LINEAR)
+    warp_image = cv2.warpPerspective(image, M_BEV, (W_BEV, H_BEV), flags=cv2.INTER_LINEAR)
 
     return warp_image
 
@@ -239,7 +239,7 @@ def get_green(image):
 
 
 
-def get_square_pos(green_frame, size_square = 7):
+def get_square_pos(green_frame, size_square = 5):
     """
         getting blurred frame, position of max value by using filter, max_value
     """

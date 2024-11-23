@@ -21,8 +21,8 @@ VID_CONNECT_CMD = "log_2125.avi"
 
 
 IS_LOG = True
-IS_LOG_VID = False
-IS_LOG_SIGHT = False
+IS_LOG_VID = True
+IS_LOG_SIGHT = True
 
 IS_SHOW = True
 
@@ -33,7 +33,7 @@ FILE_ALL = "best.pt"
 
 def showing_off(image_list, log="", get_image = False):
 
-    canvas = np.zeros((900, 1200, 3), dtype=np.uint8) + 255
+    canvas = np.zeros((1000, 1200, 3), dtype=np.uint8) + 255
 
     pos_x = [0, 740, 0, 300, 600, 900, 0, 0, 0]
     pos_y = [0, 0, 580, 580, 580, 580, 0, 0, 0] 
@@ -52,7 +52,7 @@ def showing_off(image_list, log="", get_image = False):
 
         canvas[y_i:y_f, x_i:x_f] = image
 
-    cv2.putText(canvas, log, (20, 860), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
+    cv2.putText(canvas, log, (20, 960), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
 
     if not get_image:
         cv2.imshow("canvas", canvas)
@@ -74,7 +74,7 @@ class Bot_Mind:
 
         now = datetime.datetime.now().strftime("%H%M")
         if IS_LOG_SIGHT:
-            self.log_sight_writer = cv2.VideoWriter(f"vlog_sight_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (1200, 900))
+            self.log_sight_writer = cv2.VideoWriter(f"vlog_sight_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (1200, 1000))
         if IS_LOG_VID:
             self.logwriter = cv2.VideoWriter(f"vlog_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
         if IS_LOG:
@@ -103,7 +103,7 @@ class Bot_Mind:
             Turn2RoadMode(pub, 11,      is_left=True,   min_turn_sec=1),
             Stanley2CrossMode(pub, 12),
             Turn2RoadMode(pub, 13,      is_left=False,  is_curve=True,  min_turn_sec=1.),
-            Stanley2GreenMode(pub, 14,  from_it = True),
+            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1.3),
             Turn2VoidMode(pub, 15,      is_left=True,   other_turn_sec=0),
 
             EventMode(pub, self.model_each, 20, n_frame = 7, wait_sec = 2.0),
@@ -123,7 +123,7 @@ class Bot_Mind:
             Turn2RoadMode(pub, 41,      is_left=False,  min_turn_sec=1.),
             Stanley2CrossMode(pub, 42,  right_way=False),
             Turn2RoadMode(pub, 43,      is_left=True,   min_turn_sec=1., is_curve=True),
-            # Stanley2GreenMode(pub, 44),
+            # Stanley2GreenMode(pub, 44, speed_weight = 1.5),
 
             EndMode(pub, self.model_all, 100),
 
@@ -169,6 +169,8 @@ class Bot_Mind:
             self.mode.log_add("time: ", time.time() - time_start)
             print(self.mode.log)
             if IS_LOG_VID:
+                
+                cv2.putText(frame, f"{self.count_frame:04d}", (20, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
                 self.logwriter.write(frame)
             if IS_LOG:
                 self.logtxt.write(self.mode.log + "\n")
