@@ -22,7 +22,7 @@ VID_CONNECT_CMD = "log_2125.avi"
 
 IS_LOG = True
 IS_LOG_VID = False
-IS_LOG_SIGHT = True
+IS_LOG_SIGHT = False
 
 IS_SHOW = True
 
@@ -32,7 +32,6 @@ FILE_ALL = "best.pt"
 
 
 def showing_off(image_list, log="", get_image = False):
-    print(len(image_list))
 
     canvas = np.zeros((900, 1200, 3), dtype=np.uint8) + 255
 
@@ -107,14 +106,14 @@ class Bot_Mind:
             Stanley2GreenMode(pub, 14,  from_it = True),
             Turn2VoidMode(pub, 15,      is_left=True,   other_turn_sec=0),
 
-            EventMode(pub, self.model_each, 20, n_frame = 5, wait_sec = 2.0),
+            EventMode(pub, self.model_each, 20, n_frame = 7, wait_sec = 2.0),
             Turn2RoadMode(pub, 21,      is_left=False,  min_turn_sec=1.),
             Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True, min_turn_sec=1.),
             Stanley2GreenMode(pub, 24,  left_offset = -10),
             Turn2VoidMode(pub, 25,      is_left=True,   other_turn_sec=0),
 
-            EventMode(pub, self.model_each, 30, n_frame = 5, wait_sec = 2.0),
+            EventMode(pub, self.model_each, 30, n_frame = 10, wait_sec = 2.0),
             Turn2RoadMode(pub, 31,      is_left=False, min_turn_sec=1.),
             Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10),
             Turn2VoidMode(pub, 33,      is_left=True, other_turn_sec=0),
@@ -151,12 +150,12 @@ class Bot_Mind:
             self.mode = self.mode_list[self.mode_pos]
             self.mode.capsule = capsule
             if IS_LOG:
-                self.logtxt.write(f">>> -------   -------\n>>> Capsule Passed: {capsule.keys()}\n>>> -------   -------\n")
+                self.logtxt.write(f"   / -------   -------\n  *  Capsule Passed: {capsule.keys()}\n   \\ -------   -------\n")
 
         time_start = time.time()
         self.mode.set_frame_and_move(frame, showoff = IS_SHOW)
 
-        self.mode.log = f"{self.count_frame:04d} > {self.mode.log}"
+        self.mode.log = f"{self.count_frame:04d} : {self.mode.log}"
 
 
         if IS_SHOW:

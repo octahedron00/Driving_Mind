@@ -17,11 +17,11 @@ from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle,
 BOT_FROM_BEV_X = 100 # edit this
 BOT_FROM_BEV_Y = 400 # edit this
 
-SPEED_X = 0.4
-SPEED_Z = 0.9
+SPEED_X = 1.0
+SPEED_Z = 1.0
 TIME_90DEG = 1.5 / SPEED_Z
 
-RADIUS_VZ_OVER_VX_CONST = 1200  # edit this
+RADIUS_VZ_OVER_VX_CONST = 240  # edit this
 
 TRUE_GREEN_CONF = 100
 TRUE_GREEN_DIST_FROM_ROAD = 30 #mm
@@ -45,20 +45,24 @@ PREFER_ERR_RATIO = 0.1
 
 def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
-    # speed = Twist()
-    # speed.linear.x = vel_x
-    # speed.angular.z = rot_z
-    # if not is_left:
-    #     speed.angular.z = -rot_z
-    # pub.publish(speed)
-
-    x_max = 140
+    x_max = 120
     z_max = 40
 
-    x_real = int(x_max * vel_x)
-    z_real = int(z_max * rot_z)
+    x_real = (x_max * vel_x)
+    z_real = (z_max * rot_z)
+
+    if not is_left:
+        z_real *= -1
+    
     speed_left  = x_real - z_real
     speed_right = x_real + z_real
+
+    speed_max = max(speed_left, speed_right)
+    if speed_max > 180:
+        speed_left *= (180/speed_max)
+        speed_right *= (180/speed_max)
+
+    speed_left, speed_right = int(speed_left), int(speed_right)
 
     pub.set_motor_power(pub.MOTOR_LEFT , speed_left)
     pub.set_motor_power(pub.MOTOR_RIGHT, speed_right)
@@ -67,7 +71,7 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
 def move_stanley(pub, offset_mm, angle_deg, x_ratio = 1):
 
-    kp= 0.04
+    kp= 0.035
     ka= 0.10
     k = 1.5
     x = SPEED_X * x_ratio
@@ -122,7 +126,6 @@ class Mode:
     log = ""
     running = True
     phase = 0
-    capsule = dict()
     capsule = dict()
     index = 0
     show_list = []
@@ -198,7 +201,7 @@ class EndMode(Mode):
                 
                     self.log_add("count: ", str(count_map))
 
-                    cv2.imwrite("predict_" + str(index) + "_final_" + str(k+1) + ".jpg", predict_frame)
+                    cv2.imwrite(f"predict_{index}_final_{k+1}.jpg", predict_frame)
                     count_map_list.append(count_map)
                 
                 count_result = get_vote_count_result(count_map_list=count_map_list)
@@ -358,7 +361,7 @@ class EventMode(Mode):
 
 class Stanley2GreenMode(Mode):
 
-    def __init__(self, pub, index=0, from_it=False, left_offset = 0, debug=False):
+    def __init__(self, pub, index=0, from_it=False, left_offset = 0, speed_weight = 1.0):
         self.end = False
         self.pub = pub
 
@@ -372,7 +375,8 @@ class Stanley2GreenMode(Mode):
         self.phase = 1
 
         self.index = index
-        self.debug = debug
+
+        self.speed_weight = speed_weight
 
 
     def set_frame_and_move(self, frame, showoff=True):
@@ -396,9 +400,9 @@ class Stanley2GreenMode(Mode):
 
         if self.line_road == None:
             # Must find the line here, First!
-            # print("What, No Road? You Real? BRUHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
+            self.log_add("no line here... backing")
             self.show_list = [frame, bev, road_bev, road_sw_bev]
-            move_robot(self.pub)
+            move_robot(self.pub, -0.25)
             return
 
         # green event!
@@ -415,8 +419,8 @@ class Stanley2GreenMode(Mode):
         if self.phase == 1:
             # stanley
 
-            z = move_stanley(self.pub, offset_mm, angle_deg)
-            self.log_add("z speed ", str(z))
+            z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+            self.log_add("z speed ", z)
 
             if green_max > TRUE_GREEN_CONF and self.line_road.get_distance(green_pos[1], green_pos[0]) < TRUE_GREEN_DIST_FROM_ROAD:
                 self.log_add("true green?", green_max)
@@ -454,14 +458,11 @@ class Stanley2GreenMode(Mode):
             self.show_list = [frame, bev, road_bev, road_sw_bev, 
                               get_mm_px_from_cm(green_bev_cm), get_mm_px_from_cm(green_blur_bev)]
 
-        if self.debug:
-            cv2.imwrite("S2G_" + str(self.index) + "_debug_green" + str(self.green_encounter) + ".jpg", green_bev)
-            cv2.imwrite("S2G_" + str(self.index) + "_debug_bev" + str(self.green_encounter) + ".jpg", bev)
 
 
 class Stanley2CrossMode(Mode):
 
-    def __init__(self, pub, index=0, left_way = True, right_way = True, from_it=False, left_offset = 0, use_green = False):
+    def __init__(self, pub, index=0, left_way = True, right_way = True, from_it=False, left_offset = 0, use_green = False, speed_weight = 1.0):
         self.end = False
         self.pub = pub
 
@@ -482,6 +483,8 @@ class Stanley2CrossMode(Mode):
         
         self.capsule = dict()
         self.use_green = use_green
+
+        self.speed_weight = speed_weight
 
 
     def set_frame_and_move(self, frame, showoff=True):
@@ -509,9 +512,9 @@ class Stanley2CrossMode(Mode):
         
         if self.line_road == None:
             # Must find the line here, First!
-            # print("What, No Road? You Real? BRUHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
+            self.log_add("no line here... backing")
             self.show_list = [frame, bev, road_bev, road_sw_bev]
-            # move_robot(self.pub)
+            move_robot(self.pub, -0.25)
             return
 
 
@@ -519,14 +522,12 @@ class Stanley2CrossMode(Mode):
         offset_mm = self.line_road.get_offset(BOT_FROM_BEV_X+self.left_offset,BOT_FROM_BEV_Y)
         angle_deg = self.line_road.get_angle()
 
-        z = move_stanley(self.pub, offset_mm, angle_deg)
+        z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
 
         self.log_add("offset", offset_mm)
         self.log_add("angle", angle_deg)
         self.log_add("speed_z", z)
-
-
-        # print(cross_pos, cross_max)
+        
         self.log_add("Cross position", positions)
 
         if is_cross:
@@ -540,10 +541,10 @@ class Stanley2CrossMode(Mode):
             move_robot(self.pub)
             self.capsule["dist_from_cross"] = BOT_FROM_BEV_Y - np.mean(positions)
 
+
+
         
         if self.use_green and self.phase == 1:
-
-
             if green_max > TRUE_GREEN_CONF and self.line_road.get_distance(green_pos[1], green_pos[0]) < TRUE_GREEN_DIST_FROM_ROAD:
                 self.log_add("true green?", green_max)
                 self.log_add("true green at", green_pos)
@@ -557,7 +558,6 @@ class Stanley2CrossMode(Mode):
                 self.phase = 2
         
         elif self.use_green and self.phase == 2:
-                
             if green_max < TRUE_GREEN_CONF:
                 self.end = True
                 self.log_add("Green is Gone! ", green_max)
@@ -578,7 +578,7 @@ class Stanley2CrossMode(Mode):
         # showoff now
         if showoff:
             cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
-            self.show_list = [frame, bev, road_bev, road_sw_bev, cross_find_view]
+            self.show_list = [frame, bev, road_bev, road_sw_bev, cross_find_view, get_mm_px_from_cm(green_blur_bev)]
 
 
 

@@ -274,7 +274,7 @@ def get_sliding_window_and_cross_result(image, left_way = True, right_way = True
     win_w = 180
     win_n = 8
     fill_min = 0.1
-    fill_max = 0.7
+    fill_max = 0.5
 
     if init > 0:
         lane_point = init
