@@ -366,8 +366,8 @@ def get_mm_px_from_cm(frame_cm):
     """
         make image size / 10
     """
-    cm_0 = np.shape(frame_mm)[0]
-    cm_1 = np.shape(frame_mm)[1]
+    cm_0 = np.shape(frame_cm)[0]
+    cm_1 = np.shape(frame_cm)[1]
     mm_0, mm_1 = cm_0*10, cm_1*10
 
     frame_mm = cv2.resize(frame_cm, dsize=(mm_0, mm_1), interpolation=cv2.INTER_LINEAR)

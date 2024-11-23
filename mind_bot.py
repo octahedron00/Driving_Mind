@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
@@ -23,14 +22,47 @@ VID_CONNECT_CMD = "log_2125.avi"
 
 IS_LOG = True
 IS_LOG_VID = False
+IS_LOG_SIGHT = True
 
+IS_SHOW = True
 
 FILE_EACH = "best.pt"
 FILE_ALL = "best.pt"
 
-class bot_mind:
 
-    def __init__(self):
+
+def showing_off(image_list, log="", get_image = False):
+    print(len(image_list))
+
+    canvas = np.zeros((900, 1200, 3), dtype=np.uint8) + 255
+
+    pos_x = [0, 740, 0, 300, 600, 900, 0, 0, 0]
+    pos_y = [0, 0, 580, 580, 580, 580, 0, 0, 0] 
+
+    for i, image in enumerate(image_list):
+        if len(np.shape(image)) < 3:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        
+        y, x = np.shape(image)[:2]
+
+        y_i = pos_y[i] + 50
+        y_f = y_i + y
+
+        x_i = pos_x[i] + 50
+        x_f = x_i + x
+
+        canvas[y_i:y_f, x_i:x_f] = image
+
+    cv2.putText(canvas, log, (20, 860), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
+
+    if not get_image:
+        cv2.imshow("canvas", canvas)
+    return canvas
+
+
+class Bot_Mind:
+
+    def __init__(self, show_function = showing_off):
 
         self.model_each = YOLO(FILE_EACH)
         self.model_all = YOLO(FILE_ALL) 
@@ -42,8 +74,10 @@ class bot_mind:
         null_predict_to_turn_on = self.model_all.predict(np.zeros((480, 640, 3)))
 
         now = datetime.datetime.now().strftime("%H%M")
+        if IS_LOG_SIGHT:
+            self.log_sight_writer = cv2.VideoWriter(f"vlog_sight_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (1200, 900))
         if IS_LOG_VID:
-            self.logwriter = cv2.VideoWriter("log_" + now + ".avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
+            self.logwriter = cv2.VideoWriter(f"vlog_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
         if IS_LOG:
             self.logtxt = open("log_" + now + ".txt", 'w')
 
@@ -55,6 +89,8 @@ class bot_mind:
         self.mode_pos = 0
 
         self.count_frame = 1
+
+        self.show_function = show_function
 
         self.mode_list = [
             StartMode(pub),
@@ -93,27 +129,8 @@ class bot_mind:
             EndMode(pub, self.model_all, 100),
 
 
-            Turn2RoadMode(pub, 101, is_left=False),
-            Stanley2CrossMode(pub, 102),
-            Turn2RoadMode(pub, 103, is_left=False, min_turn_sec=1., is_curve=True),
-            Stanley2GreenMode(pub, 104),
-            Stanley2CrossMode(pub, 105),
-            Turn2RoadMode(pub, 106, is_left=True, min_turn_sec=1., is_curve=True),
-            Stanley2CrossMode(pub, 107),
-            Turn2RoadMode(pub, 108, is_left=True, is_curve=True),
-            Stanley2GreenMode(pub, 109, left_offset = -10),
-            Turn2VoidMode(pub, 110, is_left=True, other_turn_sec=0),
-
-            Turn2RoadMode(pub, 111, is_left=True, min_turn_sec=1),
-            Stanley2CrossMode(pub, 112),
-            Turn2RoadMode(pub, 113, is_left=True, is_curve=True, min_turn_sec=1.),
-            Stanley2GreenMode(pub, 114, from_it=True),
-            Turn2RoadMode(pub, 115, is_left=True),
-
-
-            EndMode(pub, 200),
-
         ]
+
 
         cap = cv2.VideoCapture(VID_CONNECT_CMD)
         while cap.isOpened():
@@ -137,7 +154,17 @@ class bot_mind:
                 self.logtxt.write(f">>> -------   -------\n>>> Capsule Passed: {capsule.keys()}\n>>> -------   -------\n")
 
         time_start = time.time()
-        self.mode.set_frame_and_move(frame, showoff = True)
+        self.mode.set_frame_and_move(frame, showoff = IS_SHOW)
+
+        self.mode.log = f"{self.count_frame:04d} > {self.mode.log}"
+
+
+        if IS_SHOW:
+            image_list = self.mode.show_list
+            canvas = self.show_function(image_list, self.mode.log)
+            if IS_LOG_SIGHT:
+                self.log_sight_writer.write(canvas)
+
 
         if self.mode.running:
             self.mode.log_add("time: ", time.time() - time_start)
@@ -150,7 +177,6 @@ class bot_mind:
             a = input("Was it good?")
         cv2.waitKey(50)
 
-
 if __name__ == "__main__":
 
-    bot_mind()
+    Bot_Mind()

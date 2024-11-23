@@ -10,8 +10,7 @@ import math
 
 from ultralytics import YOLO, RTDETR
 
-
-from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
+from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm
 from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
 
 
@@ -41,24 +40,6 @@ PREFER_ERR_DEG = 5
 
 PREFER_DIST = 300
 PREFER_ERR_RATIO = 0.1
-
-
-
-
-def showing_off(image_list):
-#    return
-
-    px = [0, 600, 1200, 0, 600, 1200, 0, 600, 1200]
-    py = [0, 0, 0, 400, 400, 400, 800, 800, 800]
-
-    for i, frame in enumerate(image_list):
-
-        if i > 8:
-            break
-        cv2.namedWindow("win_" + str(i+1))
-        cv2.moveWindow("win_" + str(i+1), px[i], py[i])
-        cv2.imshow("win_" + str(i+1), frame)
-
 
 
 
@@ -125,11 +106,13 @@ def get_vote_count_result(count_map_list):
     
     return result
 
+
                 
 def get_2_point_dist(p1, p2):
 
     dist = math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
     return dist
+
 
 
 class Mode:
@@ -142,6 +125,7 @@ class Mode:
     capsule = dict()
     capsule = dict()
     index = 0
+    show_list = []
 
     def __init__(self, pub):
         self.end = False
@@ -151,10 +135,18 @@ class Mode:
         pass
 
     def log_add(self, a, b=""):
-        self.log += "  | " + str(a) + " " + str(b)
+        try:
+            self.log += f"  | {a:.03f}"
+        except:
+            self.log += f"  | {a}"
+        try:
+            self.log += f" {b:.03f}"
+        except:
+            self.log += f" {b}"
 
     def log_set(self, id, name):
         self.log = str(id) + " " + str(name)
+
 
 class StartMode(Mode):
 
@@ -170,15 +162,17 @@ class StartMode(Mode):
         pass
 
 
+
 class EndMode(Mode):
 
     def __init__(self, pub, model_all, index=0, predict_all = True):
         self.end = False
         self.pub = pub
         self.model = model_all
-        move_robot(pub)
         self.running = True
         self.predict_all = predict_all
+
+        move_robot(pub)
     
     def set_frame_and_move(self, frame, showoff=True):
         
@@ -213,8 +207,6 @@ class EndMode(Mode):
         if self.running:
             self.running = False
 
-        if showoff:
-            pass
 
 
 class EventMode(Mode):
@@ -361,7 +353,7 @@ class EventMode(Mode):
             self.end = True
 
         if showoff:
-            showing_off([frame, predict_frame])
+            self.show_list = [predict_frame]
 
 
 class Stanley2GreenMode(Mode):
@@ -405,7 +397,7 @@ class Stanley2GreenMode(Mode):
         if self.line_road == None:
             # Must find the line here, First!
             # print("What, No Road? You Real? BRUHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
-            showing_off([frame, road_bev, road_sw_bev, bev])
+            self.show_list = [frame, bev, road_bev, road_sw_bev]
             move_robot(self.pub)
             return
 
@@ -459,7 +451,9 @@ class Stanley2GreenMode(Mode):
         # showoff now
         if showoff:
             cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
-            showing_off([frame, road_bev, road_sw_bev, bev, green_bev_cm, green_blur_bev])
+            self.show_list = [frame, bev, road_bev, road_sw_bev, 
+                              get_mm_px_from_cm(green_bev_cm), get_mm_px_from_cm(green_blur_bev)]
+
         if self.debug:
             cv2.imwrite("S2G_" + str(self.index) + "_debug_green" + str(self.green_encounter) + ".jpg", green_bev)
             cv2.imwrite("S2G_" + str(self.index) + "_debug_bev" + str(self.green_encounter) + ".jpg", bev)
@@ -516,7 +510,7 @@ class Stanley2CrossMode(Mode):
         if self.line_road == None:
             # Must find the line here, First!
             # print("What, No Road? You Real? BRUHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
-            showing_off([frame, road_bev, road_sw_bev, bev])
+            self.show_list = [frame, bev, road_bev, road_sw_bev]
             # move_robot(self.pub)
             return
 
@@ -584,7 +578,7 @@ class Stanley2CrossMode(Mode):
         # showoff now
         if showoff:
             cv2.line(road_sw_bev, (int(self.line_road.calc(0)), 0), (int(self.line_road.calc(np.shape(road_sw_bev)[0])), np.shape(road_sw_bev)[0]), (0, 0, 255), 5)
-            showing_off([frame, road_bev, road_sw_bev, bev, cross_find_view])
+            self.show_list = [frame, bev, road_bev, road_sw_bev, cross_find_view]
 
 
 
@@ -638,7 +632,7 @@ class Turn2RoadMode(Mode):
 
         if self.phase == 0 and self.is_curve:
             dist_from_cross = self.capsule["dist_from_cross"]
-            self.log_add(self.capsule)
+            self.log_add("capsule keys", self.capsule.keys())
 
 
             road_edge_bev, angle = get_road_edge_angle(road_bev, self.is_left)
@@ -699,7 +693,7 @@ class Turn2RoadMode(Mode):
  
 
         if showoff:
-            showing_off([frame, road_bev, road_sw_bev, bev])
+            self.show_list = [frame, bev, road_bev, road_sw_bev, ]
 
 
 
@@ -825,4 +819,4 @@ class Turn2VoidMode(Mode):
                 self.end = True
 
         if showoff:
-            showing_off([frame, road_bev, road_edge_bev, bev])
+            self.show_list = [frame, bev, road_bev, road_edge_bev]
