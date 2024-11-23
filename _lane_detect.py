@@ -256,7 +256,7 @@ def get_square_pos(green_frame, size_square = 5):
                 max_pos = (i, j)
                 max_pos_xy = (j, i)
 
-    cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(blurred_frame[max_pos]), 0), 5)
+    cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(blurred_frame[max_pos]), 0), 1)
 
     return color_frame, max_pos, blurred_frame[max_pos]
 
@@ -357,7 +357,7 @@ def get_cm_px_from_mm(frame_mm):
     mm_1 = np.shape(frame_mm)[1]
     cm_0, cm_1 = int(mm_0/10), int(mm_1/10)
 
-    frame_cm = cv2.resize(frame_mm, dsize=(cm_0, cm_1), interpolation=cv2.INTER_LINEAR)
+    frame_cm = cv2.resize(frame_mm, dsize=(cm_1, cm_0), interpolation=cv2.INTER_LINEAR)
     return frame_cm
 
 
@@ -370,7 +370,7 @@ def get_mm_px_from_cm(frame_cm):
     cm_1 = np.shape(frame_cm)[1]
     mm_0, mm_1 = cm_0*10, cm_1*10
 
-    frame_mm = cv2.resize(frame_cm, dsize=(mm_0, mm_1), interpolation=cv2.INTER_LINEAR)
+    frame_mm = cv2.resize(frame_cm, dsize=(mm_1, mm_0), interpolation=cv2.INTER_LINEAR)
     return frame_mm
 
 

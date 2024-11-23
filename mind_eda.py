@@ -10,7 +10,7 @@ import sys
 
 from math import *
 
-from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur
+from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm
 from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
 from _lane_detect import LT_BEV, LD_BEV, RD_BEV, RT_BEV, H_BEV, W_BEV
 
@@ -48,14 +48,18 @@ def show(frame, frame_before, stop=False):
         road_bev,
         green_bev,
         edge_bev,
-        cross_bev,]
+        cross_bev,
+        get_mm_px_from_cm(green_blur_bev),
+        ]
     name_list = [
         'ori',
         'bev',
         'road',
         'green',
         'edge',
-        'cross',]
+        'cross',
+        'green_blur',
+        ]
     for i, f in enumerate(frame_list):
 
         if i > 8:
@@ -96,8 +100,8 @@ if __name__=="__main__":
     cap = cv2.VideoCapture(video_file)
     print(cap)
 
-    px = [0, 600, 1200, 0, 600, 1200, 0, 600, 1200]
-    py = [0, 0, 0, 400, 400, 400, 800, 800, 800]
+    px = [0, 700, 900, 1100, 1300, 700, 900, 1100, 1300]
+    py = [0, 0, 0, 0, 0, 330, 330, 330, 330]
 
     frame_before = []
 
