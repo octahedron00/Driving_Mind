@@ -3,6 +3,7 @@
 # %matplotlib inline
 
 
+import os
 import cv2
 import numpy as np
 import time
@@ -10,8 +11,8 @@ import math
 
 from ultralytics import YOLO, RTDETR
 
-from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm
-from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
+from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm
+from src._lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
 
 
 BOT_FROM_BEV_X = 100  # edit this
@@ -205,7 +206,7 @@ class EndMode(Mode):
 
                     self.log_add("count: ", str(count_map))
 
-                    cv2.imwrite(f"predict_{index}_final_{k+1}.jpg", predict_frame)
+                    cv2.imwrite(os.path.join("predict", f"predict_{index}_final_{k+1}.jpg"), predict_frame)
                     count_map_list.append(count_map)
                 count_result = get_vote_count_result(count_map_list=count_map_list)
 
@@ -300,7 +301,7 @@ class EventMode(Mode):
 
             self.log_add("count: ", str(count_map))
 
-            cv2.imwrite(f"predict_{self.index}_{self.n_frame_done}.jpg", predict_frame)
+            cv2.imwrite(os.path.join("predict", f"predict_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
             self.count_map_list.append(count_map)
 
             if self.n_frame - self.n_frame_done < 1:
