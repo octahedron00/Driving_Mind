@@ -4,6 +4,14 @@ AI driving mind uploaded on github:
 
 for Team AI-FORCE
 
+## TODO
+
+jupyter는 그냥 로봇에서 돌리면 그만이다: 세션 자주 갈아주기 정도
+
+pip install ultralytics keyboard 
+
+VS Code 안에서도 어.. 이것저것 해줄 것
+
 ## Basic Shape
 
 mind_bot.py 실행: 각각의 Mode들이 만들어짐.

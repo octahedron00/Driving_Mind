@@ -17,6 +17,15 @@ from _mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Tu
 
 
 FRAME_IGNORE_LEVEL = 1
+CAM_WIDTH = 1920
+CAM_HEIGHT = 1080
+CAM_FRAMERATE = 20
+VID_CONNECT_CMD = (
+    f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
+    f'! nvvidconv flip-method=0 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
+    f'! videoconvert ! video/x-raw, format=(string)BGR '
+    f'! appsink'
+)
 VID_CONNECT_CMD = "log_2125.avi"
 
 
