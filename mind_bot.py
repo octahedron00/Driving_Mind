@@ -192,7 +192,7 @@ class Bot_Mind:
 
 
         if len(VID_CONNECT_CMD) < 30:
-            time.sleep(0.05)
+            time.sleep(max(0, 0.1 - time.time() + time_start))
 
 if __name__ == "__main__":
 

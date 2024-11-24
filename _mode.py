@@ -437,7 +437,7 @@ class Stanley2GreenMode(Mode):
             phase 1: stanley until find the green point on road
             phase 2: adjusting distance from green: slowing down / backing
         """
-        self.frame_from_start += 1
+        self.frame_from_start_sensing += 1
 
         self.log_set(self.index, "Stanley2Green")
         bev = get_bev(frame)
