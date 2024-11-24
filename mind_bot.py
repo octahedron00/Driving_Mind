@@ -6,6 +6,7 @@ import numpy as np
 import time
 import math
 import datetime
+from multiprocessing import Process, Manager
 
 from ultralytics import YOLO, RTDETR
 
@@ -13,7 +14,7 @@ from fake_tiki import TikiMini
 
 from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
 from _mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode
-
+from _model_second import run_model_second
 
 
 FRAME_IGNORE_LEVEL = 1
@@ -30,8 +31,8 @@ VID_CONNECT_CMD = "log_2125.avi"
 
 
 IS_LOG = True
-IS_LOG_VID = True
-IS_LOG_SIGHT = True
+IS_LOG_VID = False
+IS_LOG_SIGHT = False
 
 IS_SHOW = True
 
@@ -60,34 +61,24 @@ def showing_off(image_list, log="", get_image = False):
     for i, image in enumerate(image_list):
         if len(np.shape(image)) < 3:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        
         y, x = np.shape(image)[:2]
-
         y_i = pos_y[i] + 50
         y_f = y_i + y
-
         x_i = pos_x[i] + 50
         x_f = x_i + x
-
         canvas[y_i:y_f, x_i:x_f] = image
-
     cv2.putText(canvas, log, (20, 960), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
 
     return canvas
+
+
 
 
 class Bot_Mind:
 
     def __init__(self, show_function = showing_off, go=True):
 
-        self.model_each = YOLO(FILE_EACH)
-        self.model_all = YOLO(FILE_ALL) 
-        # self.model_all = RTDETR(FILE_ALL) 
 
-        # self.model_each.to('cuda') 
-        # self.model_each.to('cuda')
-        null_predict_to_turn_on = self.model_each.predict(np.zeros((480, 640, 3)))
-        null_predict_to_turn_on = self.model_all.predict(np.zeros((480, 640, 3)))
 
         now = datetime.datetime.now().strftime("%H%M")
         if IS_LOG_SIGHT:
@@ -97,9 +88,21 @@ class Bot_Mind:
         if IS_LOG:
             self.logtxt = open("log_" + now + ".txt", 'w')
 
+
         self.pub = TikiMini()
         pub = self.pub
         pub.set_motor_mode(pub.MOTOR_MODE_PID)
+        
+        manager = Manager()
+        self.shared_list = manager.list([None] * 10)
+        self.model_second = Process(target=run_model_second, args=(pub, FILE_ALL, self.shared_list))
+        self.model_second.start()
+        self.shared_list[0] = np.zeros((480, 640, 3))
+
+        self.model_each = YOLO(FILE_EACH)
+        # self.model_each.to('cuda')
+        null_predict_to_turn_on = self.model_each.predict(np.zeros((480, 640, 3)))
+
 
         self.mode = StartMode(pub)
         self.mode_pos = 0
@@ -116,33 +119,33 @@ class Bot_Mind:
             Stanley2GreenMode(pub, 3,   left_offset = -10),
             Turn2VoidMode(pub, 4,       is_left=True),
 
-            EventMode(pub, self.model_each, 10, n_frame = 5, wait_sec = 0),
+            EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 0),
             Turn2RoadMode(pub, 11,      is_left=True,   min_turn_sec=1),
             Stanley2CrossMode(pub, 12),
             Turn2RoadMode(pub, 13,      is_left=False,  is_curve=True,  min_turn_sec=1.),
             Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1.3),
             Turn2VoidMode(pub, 15,      is_left=True),
 
-            EventMode(pub, self.model_each, 20, n_frame = 5, wait_sec = 1.0),
+            EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 1.0),
             Turn2RoadMode(pub, 21,      is_left=False,  min_turn_sec=1.),
             Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True, min_turn_sec=1.),
             Stanley2GreenMode(pub, 24,  left_offset = -10),
             Turn2VoidMode(pub, 25,      is_left=True),
 
-            EventMode(pub, self.model_each, 30, n_frame = 5, wait_sec = 1.0),
+            EventMode(pub, self.model_each, self.shared_list, 30, n_frame = 5, wait_sec = 1.0),
             Turn2RoadMode(pub, 31,      is_left=False, min_turn_sec=1.),
             Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10),
             Turn2VoidMode(pub, 33,      is_left=True),
 
 
-            EventMode(pub, self.model_each, 40, n_frame = 5, wait_sec = 1.0),
+            EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 1.0),
             Turn2RoadMode(pub, 41,      is_left=False,  min_turn_sec=1.),
             Stanley2CrossMode(pub, 42,  right_way=False),
             Turn2RoadMode(pub, 43,      is_left=True,   min_turn_sec=1., is_curve=True),
             # Stanley2GreenMode(pub, 44, speed_weight = 1.5),
 
-            EndMode(pub, self.model_all, 100),
+            EndMode(pub, None, 100, predict_all=False),
 
 
         ]
@@ -180,7 +183,7 @@ class Bot_Mind:
 
         if IS_SHOW:
             image_list = self.mode.show_list
-            canvas = self.show_function(image_list, self.mode.log)
+            canvas = self.show_function(image_list, self.mode.log, IS_LOG_SIGHT)
             if IS_LOG_SIGHT:
                 self.log_sight_writer.write(canvas)
 
@@ -195,7 +198,9 @@ class Bot_Mind:
             if IS_LOG:
                 self.logtxt.write(self.mode.log + "\n")
         else:
+            self.model_second.join()
             a = input("Was it good?")
+            return
         cv2.waitKey(1)
 
 

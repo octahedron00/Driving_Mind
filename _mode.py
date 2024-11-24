@@ -10,21 +10,8 @@ import math
 
 from ultralytics import YOLO, RTDETR
 
-from _lane_detect import (
-    get_bev,
-    get_road,
-    get_sliding_window_result,
-    get_green,
-    get_rect_blur,
-    get_mm_px_from_cm,
-)
-from _lane_detect import (
-    get_cm_px_from_mm,
-    get_square_pos,
-    get_road_edge_angle,
-    get_sliding_window_and_cross_result,
-    Line,
-)
+from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm
+from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
 
 
 BOT_FROM_BEV_X = 100  # edit this
@@ -233,12 +220,14 @@ class EndMode(Mode):
 #Eve
 class EventMode(Mode):
 
-    def __init__(self, pub, model, index=0, n_frame=5, wait_sec=2.0, predict_each=True):
+    def __init__(self, pub, model, shared_list_model_second, index=0, n_frame=5, wait_sec=2.0):
 
         self.end = False
         self.index = index
         self.pub = pub
         self.model = model
+
+        self.shared_list = shared_list_model_second
 
         self.phase = 1
         self.n_frame = n_frame
@@ -249,8 +238,6 @@ class EventMode(Mode):
         self.enem_tank_x_list = []
         self.enem_tank_y_list = []
 
-        self.predict_each = predict_each
-
         self.rot_time = 0
         self.rot_speed = 0
         self.rot_total_angle = 0
@@ -258,6 +245,7 @@ class EventMode(Mode):
         self.time_start = time.time()
 
         self.count_map_list = []
+
 
     def set_frame_and_move(self, frame, showoff=True):
         """
@@ -354,8 +342,10 @@ class EventMode(Mode):
                 self.phase = 5
 
             self.log_add("prediction result: ", str(count_result_map))
-            if self.predict_each:
-                self.pub.log(str(count_result_map))
+
+
+            # model_second를 위해서 자료 제공
+            self.shared_list[int(self.index/10)] = self.capsule[f"event_{self.index}_frame_list"]
 
 
         ### phase 3: For enem_tank: rotate the exact angle one time and fire cannon

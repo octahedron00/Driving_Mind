@@ -10,6 +10,8 @@ jupyter는 그냥 로봇에서 돌리면 그만이다: 세션 자주 갈아주�
 
 pip install ultralytics keyboard 
 
+아예 Jupyter 말고 그냥 Python을 쓰고 싶다면, 그냥 -ssh 접속 쓰기로 하자.
+
 VS Code 안에서도 어.. 이것저것 해줄 것
 
 ## Basic Shape
