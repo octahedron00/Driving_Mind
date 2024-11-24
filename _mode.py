@@ -733,6 +733,7 @@ class Turn2RoadMode(Mode):
         road_blur_bev = get_rect_blur(road_bev, 5)
         road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
 
+        # 시작, 커브일 경우 반경과 속도를 구해야 함!
         if self.phase == 0 and self.is_curve:
             dist_from_cross = self.capsule["dist_from_cross"]
 
@@ -740,25 +741,26 @@ class Turn2RoadMode(Mode):
             self.road_angle = angle
             if abs(self.road_angle) > 20:
                 self.road_angle = 0
-
             if self.is_left:
                 self.road_angle = -self.road_angle
 
+            # cross까지의 거리, 길에 대해 기울어진 각도를 통해 최적의 코너 반경을 구함: 공식은 이상하지 않을걸요?
             radius = dist_from_cross / (1 + math.sin(self.road_angle * math.pi / 180))
 
+            # 반경 * 회전각속도 / 직선속도는 항상 일정한 상수가 됨, 회전각속도 고정하고 직선속도 변화 (반경 300에서, 예상 속도 1.3)
             self.speed_x = radius * self.rot_z / RADIUS_VZ_OVER_VX_CONST
             self.log_add("radius", radius)
             self.log_add("rot_z", self.rot_z)
             self.log_add("SPEED_X", self.speed_x)
-            # cv2.imwrite(str(self.index) + "_curve_dist.jpg", road_sw_bev)
-            # cv2.imwrite(str(self.index) + "_curve_angle.jpg", road_edge_bev)
 
-        # starting
+
+        # starting: 0을 1로, 시간 측정 시작
         if self.phase == 0:
             self.phase = 1
             self.time_since_phase = time.time()
 
-        # turning at least certain amount: to ignore post-road
+
+        # Phase 1. turning at least certain amount: to ignore post-road
         if self.phase == 1:
             move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
 
@@ -767,9 +769,9 @@ class Turn2RoadMode(Mode):
                 self.time_since_phase = time.time()
                 # move_robot(self.pub)
 
-        # turning while the line is shown: to estimate time to be exact 90 degrees
+        # Phase 2. turning while the line is shown: to estimate time to be exact 90 degrees
         if self.phase == 2:
-            self.log_add("line_not_shown")
+            self.log_add("no_line")
 
             move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
 
@@ -780,36 +782,34 @@ class Turn2RoadMode(Mode):
 
                 self.log_add("line_on_angle", line_road.get_angle())
 
-                cv2.line(
-                    road_sw_bev,
-                    (int(self.line_road.calc(0)), 0),
-                    (
-                        int(self.line_road.calc(np.shape(road_sw_bev)[0])),
-                        np.shape(road_sw_bev)[0],
-                    ),
-                    (0, 0, 255),
-                    5,
-                )
+                cv2.line(road_sw_bev,
+                         (int(self.line_road.calc(0)), 0),  (int(self.line_road.calc(np.shape(road_sw_bev)[0])),np.shape(road_sw_bev)[0]),
+                         (0, 0, 255), 5)
 
                 if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
-                    # move_robot(self.pub)
                     self.road_encounter += 1
-                if self.road_encounter > 1:
+                
+                # needs 2 time for road_encounter
+                if self.road_encounter >= 2:
                     self.end = True
-            # cv2.imwrite(str(self.index) + "_T2R_" + str(round((time.time() - self.time_since_phase)*1000, 0)) + ".jpg", road_sw_bev)
 
         if showoff:
-            self.show_list = [
-                frame,
-                bev,
-                road_bev,
-                road_sw_bev,
-            ]
+            self.show_list = [frame, bev, road_bev, road_sw_bev]
 
 
 class Turn2VoidMode(Mode):
 
-    def __init__(self, pub, index=0, is_left=True, other_turn_sec=0.2):
+    def __init__(self, pub, index=0, is_left=True, other_turn_sec=0):
+        """
+            기본 방식: 지정된 시간 * 돌아야 하는 각도(현재 각도에서 계산)만큼 돌기.
+            is_left: 왼쪽으로 돌 것인지 확인
+            other_turn_sec: 이전에 쓰던 방식, 지금은 쓰지 않기로.
+
+            이전 방식: 한 번 돌면서, 길이 보이는 동안 시간에 따른 길의 각도를 측정함
+            추세선을 그리고 외삽하여, 예상 시간을 구하는 방식
+            문제점: 각도 측정에 오차가 잘 생기는 편... 연산량 줄인 HoughLinesP의 오차가 추세선 상에 매번 누적됨
+        """
+
         self.end = False
         self.pub = pub
 
@@ -841,21 +841,24 @@ class Turn2VoidMode(Mode):
         self.log_set(self.index, "Turn2Void")
         self.log_add("phase", self.phase)
 
-        bev = get_bev(frame)
 
         # road edge angle detection
+        bev = get_bev(frame)
         road_bev = get_road(bev)
         road_edge_bev, angle = get_road_edge_angle(road_bev, self.is_left)
+
 
         # phase 0: time starting
         if self.phase == 0:
             self.phase = 1
             self.time_since_phase = time.time()
 
+
         # phase 1: rotating to other side a little bit: to get max data and right angle.
         if self.phase == 1:
-            move_robot(self.pub, 0, -SPEED_Z, self.is_left)
+            # move_robot(self.pub, 0, -SPEED_Z, self.is_left)
 
+            # 지금은 other turn sec = 0이라, 아래 코드가 바로 작동된다. 하지만 가서는 쓰게 될수도...
             if time.time() - self.time_since_phase > self.other_turn_sec:
                 self.phase = 2
                 self.time_since_phase = time.time()
@@ -876,6 +879,7 @@ class Turn2VoidMode(Mode):
 
         # turning while the line is shown: to estimate time to be exact 90 degrees
         if self.phase == 2:
+            self.time_since_phase = time.time()
             move_robot(self.pub, 0, SPEED_Z, self.is_left)
 
             # to skip the image using phase...
@@ -912,6 +916,7 @@ class Turn2VoidMode(Mode):
                     self.est_time = self.est_time_regression
             """
 
+        # Phase 3: 그냥 그 시간만큼 turn하면 됨
         if self.phase == 3:
 
             if time.time() < self.time_since_phase + self.est_time:

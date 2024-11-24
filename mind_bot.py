@@ -42,11 +42,21 @@ FILE_ALL = "best.pt"
 
 def showing_off(image_list, log="", get_image = False):
 
-    canvas = np.zeros((1000, 1200, 3), dtype=np.uint8) + 255
-
     pos_x = [0, 740, 0, 300, 600, 900, 0, 0, 0]
     pos_y = [0, 0, 580, 580, 580, 580, 0, 0, 0] 
 
+    if not get_image:
+            
+        for i, image in enumerate(image_list):
+            if i > 8:
+                break
+            cv2.namedWindow("win_" + str(i+1))
+            cv2.moveWindow("win_" + str(i+1), pos_x[i], pos_y[i])
+            cv2.imshow("win_" + str(i+1), image)
+        return
+    
+
+    canvas = np.zeros((1200, 1500, 3), dtype=np.uint8) + 255
     for i, image in enumerate(image_list):
         if len(np.shape(image)) < 3:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -63,8 +73,6 @@ def showing_off(image_list, log="", get_image = False):
 
     cv2.putText(canvas, log, (20, 960), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
 
-    if not get_image:
-        cv2.imshow("canvas", canvas)
     return canvas
 
 
@@ -106,26 +114,26 @@ class Bot_Mind:
             Stanley2CrossMode(pub, 1,   use_green = True),
             Turn2RoadMode(pub, 2,       is_left=False,  is_curve=True),
             Stanley2GreenMode(pub, 3,   left_offset = -10),
-            Turn2VoidMode(pub, 4,       is_left=True,   other_turn_sec=0),
+            Turn2VoidMode(pub, 4,       is_left=True),
 
             EventMode(pub, self.model_each, 10, n_frame = 5, wait_sec = 0),
             Turn2RoadMode(pub, 11,      is_left=True,   min_turn_sec=1),
             Stanley2CrossMode(pub, 12),
             Turn2RoadMode(pub, 13,      is_left=False,  is_curve=True,  min_turn_sec=1.),
             Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1.3),
-            Turn2VoidMode(pub, 15,      is_left=True,   other_turn_sec=0),
+            Turn2VoidMode(pub, 15,      is_left=True),
 
             EventMode(pub, self.model_each, 20, n_frame = 5, wait_sec = 1.0),
             Turn2RoadMode(pub, 21,      is_left=False,  min_turn_sec=1.),
             Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True, min_turn_sec=1.),
             Stanley2GreenMode(pub, 24,  left_offset = -10),
-            Turn2VoidMode(pub, 25,      is_left=True,   other_turn_sec=0),
+            Turn2VoidMode(pub, 25,      is_left=True),
 
             EventMode(pub, self.model_each, 30, n_frame = 5, wait_sec = 1.0),
             Turn2RoadMode(pub, 31,      is_left=False, min_turn_sec=1.),
             Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10),
-            Turn2VoidMode(pub, 33,      is_left=True, other_turn_sec=0),
+            Turn2VoidMode(pub, 33,      is_left=True),
 
 
             EventMode(pub, self.model_each, 40, n_frame = 5, wait_sec = 1.0),

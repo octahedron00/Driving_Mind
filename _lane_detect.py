@@ -56,7 +56,7 @@ class Line:
 
     def get_angle(self, is_deg=True):
         """
-            angle, left side: - / right side: +
+            angle, left side: - \ / + :right side
         """
         angle = math.atan(self.var_1)
 
