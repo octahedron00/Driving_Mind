@@ -115,20 +115,20 @@ class Bot_Mind:
             Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1.3),
             Turn2VoidMode(pub, 15,      is_left=True,   other_turn_sec=0),
 
-            EventMode(pub, self.model_each, 20, n_frame = 7, wait_sec = 2.0),
+            EventMode(pub, self.model_each, 20, n_frame = 5, wait_sec = 1.0),
             Turn2RoadMode(pub, 21,      is_left=False,  min_turn_sec=1.),
             Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True, min_turn_sec=1.),
             Stanley2GreenMode(pub, 24,  left_offset = -10),
             Turn2VoidMode(pub, 25,      is_left=True,   other_turn_sec=0),
 
-            EventMode(pub, self.model_each, 30, n_frame = 10, wait_sec = 2.0),
+            EventMode(pub, self.model_each, 30, n_frame = 5, wait_sec = 1.0),
             Turn2RoadMode(pub, 31,      is_left=False, min_turn_sec=1.),
             Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10),
             Turn2VoidMode(pub, 33,      is_left=True, other_turn_sec=0),
 
 
-            EventMode(pub, self.model_each, 40, n_frame = 5, wait_sec = 2.0),
+            EventMode(pub, self.model_each, 40, n_frame = 5, wait_sec = 1.0),
             Turn2RoadMode(pub, 41,      is_left=False,  min_turn_sec=1.),
             Stanley2CrossMode(pub, 42,  right_way=False),
             Turn2RoadMode(pub, 43,      is_left=True,   min_turn_sec=1., is_curve=True),

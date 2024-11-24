@@ -78,6 +78,10 @@ class Control_Mind:
             self.image_count += 1
         elif self.keyboard_listener.is_pressed("n"):
             self.image_name = input("new dataset name:")
+            if len(self.image_name) < 1:
+                now = datetime.datetime.now().strftime("%H%M")
+                self.image_name = f"image_{now}"
+
             self.image_count = 1
         else:
             move_robot(pub)
