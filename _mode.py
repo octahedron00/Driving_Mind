@@ -298,7 +298,7 @@ class EventMode(Mode):
 
             cv2.imwrite(
                 "predict_" + str(self.index) + "_" + str(5 - self.n_frame) + ".jpg",
-                predict_frame,
+                predict_frame.copy(),
             )
             self.count_map_list.append(count_map)
 

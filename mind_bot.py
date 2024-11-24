@@ -70,7 +70,7 @@ def showing_off(image_list, log="", get_image = False):
 
 class Bot_Mind:
 
-    def __init__(self, show_function = showing_off):
+    def __init__(self, show_function = showing_off, go=True):
 
         self.model_each = YOLO(FILE_EACH)
         self.model_all = YOLO(FILE_ALL) 
@@ -139,6 +139,9 @@ class Bot_Mind:
 
         ]
 
+        if not go:
+            _ = input("Ready?")
+
 
         cap = cv2.VideoCapture(VID_CONNECT_CMD)
         while cap.isOpened():
@@ -185,7 +188,11 @@ class Bot_Mind:
                 self.logtxt.write(self.mode.log + "\n")
         else:
             a = input("Was it good?")
-        cv2.waitKey(50)
+        cv2.waitKey(1)
+
+
+        if len(VID_CONNECT_CMD) < 30:
+            time.sleep(0.05)
 
 if __name__ == "__main__":
 
