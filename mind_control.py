@@ -99,11 +99,7 @@ class Control_Mind:
                 self.clicked_v = True
                 if self.logwriter == None:
                     now = datetime.datetime.now().strftime("%H%M")
-                    self.logwriter = cv2.VideoWriter(
-                        f"vlog_control_{now}.avi",
-                        cv2.VideoWriter_fourcc(*"MP4V"),
-                        CAM_FRAMERATE,
-                        (CAM_WIDTH, CAM_HEIGHT))
+                    self.logwriter = cv2.VideoWriter(f"vlog_control_{now}.avi", cv2.VideoWriter_fourcc(*"MP4V"), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
                     print(f"Recording Start : vlog_control_{now}.avi")
                 else:
                     print("Recording finished")

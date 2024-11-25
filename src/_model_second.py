@@ -14,7 +14,7 @@ from src.fake_tiki import TikiMini
 from src._mode import get_vote_count_result, IOU_THRESHOLD, CONF_THRESHOLD, KEY_PREDICT, AREA_NAME
 
 
-def run_model_second(tiki: TikiMini, model_address, shared_list):
+def run_model_second(tiki: TikiMini, model_address, shared_list, is_detr = False):
     """
         Model Second: 2번째 thread를 이용하는, multithreading:
         결과가 바로 나오지 않지만, 끝날 때에는 반드시 나온다!
@@ -31,7 +31,10 @@ def run_model_second(tiki: TikiMini, model_address, shared_list):
 
     pos = 0
 
-    model = YOLO(model_address)
+    if is_detr:
+        model = RTDETR(model_address)
+    else:
+        model = YOLO(model_address)
     # model = RTDETR(model_address)
     # model.to('cuda')
 

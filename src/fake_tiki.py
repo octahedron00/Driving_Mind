@@ -44,10 +44,10 @@ class TikiMini:
         return 0, 0, 0
     
     def get_current(self):
-        return 0
+        return 300
 
     def get_battery_voltage(self):
-        return 0
+        return 11
 
     def fire_cannon(self):
         print("BOOOOOOM!!!")

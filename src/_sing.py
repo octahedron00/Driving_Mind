@@ -20,6 +20,7 @@ def sing(tiki):
     
     for note in SONG_NOTE:
         if note > 0:
+            tiki.stop_buzzer()
             freq = FREQ_C * math.exp2(note/12)
             tiki.play_buzzer(int(freq))
 

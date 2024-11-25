@@ -41,7 +41,7 @@ def show(frame, frame_before, stop=False):
     # print(polypoint)
 
     pos_x = [0, 460, 660, 860, 1060, 1260, 1460, 0, 0]
-    pos_y = [0, 780, 780, 780, 780, 780, 780, 0, 0] 
+    pos_y = [0, 0, 0, 0, 0, 0, 0, 0, 0] 
 
     cv2.polylines(frame, [polypoint], isClosed=True, color=(0, 255, 0), thickness=2)
 
