@@ -1,5 +1,5 @@
 import math
-from fake_tiki import TikiMini
+from src.fake_tiki import TikiMini
 import time
 
 
