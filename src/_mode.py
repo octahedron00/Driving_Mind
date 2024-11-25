@@ -26,7 +26,8 @@ SPEED_X = 1.0
 SPEED_Z = 1.0
 TIME_90DEG = 1.5 / SPEED_Z
 
-RADIUS_VZ_OVER_VX_CONST = 240  # edit this
+# 반경 줄일 거면 값을 높이기: x_speed 감소함
+RADIUS_VZ_OVER_VX_CONST = 240  #EDA
 
 TRUE_GREEN_CONF = 100
 TRUE_GREEN_DIST_FROM_ROAD = 30  # mm
@@ -41,8 +42,7 @@ WAIT_FRAME_4_MODEL = 10 # 0.5 second: will be enough for jetson nano computing s
 WAIT_FRAME_4_MODEL = 0
 
 KEY_PREDICT = ("ally", "enem", "ally_tank", "enem_tank")
-AREA_NAME = "0ABCDXXXX"*5
-
+AREA_NAME = "0ABCDXXXX"*5 # 1번도 A, 10번도 A, 2번도 B, 20번도 B, 를 만드는 괜찮은 방법.
 
 
 PREFER_ERR_DEG = 5
@@ -51,9 +51,17 @@ PREFER_DIST = 400
 PREFER_ERR_RATIO = 0.1
 
 
-
-
 def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
+    '''
+        move the robot: with x speed and z rotation value
+        간단함: x만큼 둘다 더하고, z만큼 한쪽 더하고 한쪽 빼줌.
+
+        최댓값은 각각 140, 40 rpm으로 되어있음: 대략 30~40cm/s, 6 seconds for rotation
+        높일 수 있지만, 일단 rotation은 더 과감하게 하기 어렵다.
+
+
+    '''
+
 
     x_max = 140
     z_max = 40
@@ -95,6 +103,7 @@ def move_stanley(pub, offset_mm, angle_deg, x_ratio=1):
 def get_vote_count_result(count_map_list):
     """
     getting the most shown value for each key
+    return: dict(class(str) -> #(int))
     """
 
     result = dict()
@@ -119,13 +128,18 @@ def get_vote_count_result(count_map_list):
 
 
 def get_2_point_dist(p1, p2):
-
+    # PYTHAGORAS ROX
     dist = math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
     return dist
 
 
 class Mode:
+    '''
+        로봇의 Query list 상에 존재할 mode의 기본 구조.
+        일단 init을 각각에 맞게 받고,
+        해당 mode 차례가 오면 set_frame_and_move를 매 frame마다 받는다.
 
+    '''
     end = False
     pub = None
     log = ""
@@ -159,6 +173,10 @@ class Mode:
 
 
 class StartMode(Mode):
+    '''
+        시작하자마자 바로 end가 나오기 때문에
+        바로 다음으로 넘어가는 mode
+    '''
 
     def __init__(self, pub):
         self.end = True
@@ -176,7 +194,7 @@ class StartMode(Mode):
 #End
 class EndMode(Mode):
 
-    def __init__(self, pub, model_all, index=0, predict_all=True):
+    def __init__(self, pub, model_all, index=0, predict_all=False):
         self.end = False
         self.pub = pub
         self.model = model_all
@@ -189,38 +207,42 @@ class EndMode(Mode):
 
         if self.running and self.predict_all:
             self.pub.log_clear()
-
-            ### Prediction works for each Event Zone(A, B, C, D: part no. 10, 20, 30, 40, each.)
-            for index in range(10, 41, 10):
-                event_image_list = self.capsule.get(f"event_{index}_frame_list", [])
-
-
-                ### Get all result for each Event Zone
-                result_list = self.model.predict(
-                    event_image_list, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD
-                )
+            '''
+                일단 잠가뒀지만, 만약 쓸 일 생기면 바로 풀어서 넣으면 됨.
+            '''
 
 
-                ### Get all count result
-                count_map_list = []
-                for k, result in enumerate(result_list):
-                    count_map = dict()
-                    predict_frame = result.plot()
+            # ### Prediction works for each Event Zone(A, B, C, D: part no. 10, 20, 30, 40, each.)
+            # for index in range(10, 41, 10):
+            #     event_image_list = self.capsule.get(f"event_{index}_frame_list", [])
 
-                    for i in range(len(result.boxes)):
-                        res = result.boxes[i]
-                        class_id = result.names[res.cls[0].item()]
 
-                        count_map[class_id] = 1 + count_map.get(class_id, 0)
+            #     ### Get all result for each Event Zone
+            #     result_list = self.model.predict(
+            #         event_image_list, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD
+            #     )
 
-                    self.log_add("count: ", str(count_map))
 
-                    cv2.imwrite(os.path.join("predict", f"predict_{index}_final_{k+1}.jpg"), predict_frame)
-                    count_map_list.append(count_map)
-                count_result = get_vote_count_result(count_map_list=count_map_list)
+            #     ### Get all count result
+            #     count_map_list = []
+            #     for k, result in enumerate(result_list):
+            #         count_map = dict()
+            #         predict_frame = result.plot()
 
-                ### Show result in OLED monitor, add one line (4 times). 
-                self.pub.log(f"Ally: {count_result[KEY_PREDICT[0]]} / Enem: {count_result[KEY_PREDICT[1]]}")
+            #         for i in range(len(result.boxes)):
+            #             res = result.boxes[i]
+            #             class_id = result.names[res.cls[0].item()]
+
+            #             count_map[class_id] = 1 + count_map.get(class_id, 0)
+
+            #         self.log_add("count: ", str(count_map))
+
+            #         cv2.imwrite(os.path.join("predict", f"predict_{index}_final_{k+1}.jpg"), predict_frame)
+            #         count_map_list.append(count_map)
+            #     count_result = get_vote_count_result(count_map_list=count_map_list)
+
+            #     ### Show result in OLED monitor, add one line (4 times). 
+            #     self.pub.log(f"Ally: {count_result[KEY_PREDICT[0]]} / Enem: {count_result[KEY_PREDICT[1]]}")
 
         if self.running:
             sing(self.pub)
@@ -231,7 +253,15 @@ class EndMode(Mode):
 #Eve
 class EventMode(Mode):
 
-    def __init__(self, pub, model, shared_list_model_second, index=0, n_frame=5, wait_sec=1.0, show_log = False):
+    def __init__(self, pub, model, shared_list_model_second, index, n_frame=5, wait_sec=1.0, show_log = False):
+        '''
+            model: 여기서 바로 사용할 model의 뭐시기를 그대로 가져옴
+            shared_list: model_second를 위한 것
+            index: 여기서는 아주 중요함! A 구역이면 10, B 구역은 20, 등.
+            n_frame: 몇 장 찍어서 최빈값 찾을 것인가: 많으면 좋지만 시간이 오래 걸림
+            wait_sec: 맨 마지막에 기다릴 시간, frame 보충에 적당한 시간이 필요.
+
+        '''
 
         self.end = False
         self.index = index
@@ -243,19 +273,26 @@ class EventMode(Mode):
         self.phase = 1
         self.n_frame = n_frame
         self.n_frame_done = 0
+
+        # WAIT_FRAME_4_MODEL: inference에 걸리는 시간만큼 frame 보내는 역할.
+        # 20fps 기준, 대략 10 frame이면 충분할 것!
+        # 처음에는 2배 기다림.
         self.wait_frame_4_predict = WAIT_FRAME_4_MODEL * 2
 
         self.wait_sec = wait_sec
+
+        self.count_map_list = []
+
+        # enem_tank 있는지 확인하고 위치 기록, 다 나오면 그 중 중앙값 이용.
         self.enem_tank_x_list = []
         self.enem_tank_y_list = []
 
+        # enem_tank 위치 잡고, 각도 잡고, 돌아야 하는 시간과 속도 구함.
         self.rot_time = 0
         self.rot_speed = 0
         self.rot_total_angle = 0
 
         self.time_start = time.time()
-
-        self.count_map_list = []
         self.show_log = show_log
 
 
@@ -289,16 +326,18 @@ class EventMode(Mode):
             # 모델에 맞는 이미지로 변환, 넣기.
             resize_image_4_model = get_resize_image_4_model(frame)
 
-
             ### saving frame in capsule for final prediction / End나 Model Second에서 쓰임
             ### 저장할 때부터 이미 이미지 resize 된 걸 저장하기로 함
             self.capsule[f"event_{self.index}_frame_list"] = self.capsule.get(f"event_{self.index}_frame_list", list()) + [resize_image_4_model]
 
 
             ### prediction works here
+            # 촬영 부저 음
             self.pub.play_buzzer(440)
             result_list = self.model.predict(resize_image_4_model, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
             self.pub.stop_buzzer()
+            
+            # 결과 풀어서 정리
             count_map = dict()
             for result in result_list:
                 predict_frame = result.plot()
@@ -311,17 +350,18 @@ class EventMode(Mode):
 
                     count_map[class_id] = 1 + count_map.get(class_id, 0)
 
-                    if class_id == KEY_PREDICT[-1]:
+                    if class_id == KEY_PREDICT[-1]: # enem_tank
                         # 원래 이미지에서의 위치를 계산하고 받아내서 이용!
                         pos_x, pos_y = get_pos_before_xy(frame, resize_image_4_model, ((cords[0]+cords[2])/2, (cords[1]+cords[3])/2))
                         self.enem_tank_x_list.append(pos_x)
                         self.enem_tank_y_list.append(pos_y)
 
+            # 만든 값 출력
             self.log_add("count: ", str(count_map))
-
             cv2.imwrite(os.path.join("predict", f"predict_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
             self.count_map_list.append(count_map)
 
+            # 프레임 다 썼다면? 다음 phase로 넘어가기.
             if self.n_frame - self.n_frame_done < 1:
                 self.phase = 2
 
@@ -335,10 +375,23 @@ class EventMode(Mode):
 
             if count_result_map[KEY_PREDICT[-1]] > 0: # enem_tank
                 n_xy = len(self.enem_tank_x_list)
-                enem_tank_xy = (
-                    sorted(self.enem_tank_x_list)[int((n_xy - 0.5) / 2)],
-                    sorted(self.enem_tank_y_list)[int((n_xy - 0.5) / 2)],
-                )
+                enem_tank_xy = (sorted(self.enem_tank_x_list)[int((n_xy - 0.5) / 2)], sorted(self.enem_tank_y_list)[int((n_xy - 0.5) / 2)])
+
+                '''
+                    Angle을 찾는 방법: 탱크와 내 점을 이미지 상에 선으로 이어놓고, BEV로 옮겨서 나온 선의 각도를 구함.
+                    지금은 돌아갈 방향과 속도, 그리고 시간을 미리 계산한다.
+
+                    사실 문제는, 20도 이상 벌어진 경우 찾을 수 없다는 점. 시야각이 실제로는 많이 넓기 때문에 도움이 되지 않을 수도 있다.
+                    심지어 line이 안 보일 수도 있는 수준.. 그러면 대형사고다. 가서 봐야 알겠지만, 일단 그렇다.
+                    
+                    이에 2가지 대안이 가능하다.
+                    Inference 시간이 짧다면, 그리고 항상 뜬다는 확신이 있다면 
+                    그 x 값이 중앙에 올 때까지 돌아가기 정도가 가능하다. Gradient Descend 식으로
+
+                    둘 중 하나라도 아니라면, BEV랑 같이 각도 값을 다 잡아둬야 한다.
+                    그리고 x 값에 따른 각도를 미리 정해두고 돌아가면 된다.
+
+                '''
                 angle_frame = np.zeros_like(frame)
                 cv2.line(angle_frame, enem_tank_xy, (int(np.shape(angle_frame)[1] / 2), np.shape(angle_frame)[0]), 255, 2)
                 angle_bev = get_bev(angle_frame)
@@ -356,7 +409,7 @@ class EventMode(Mode):
                 self.log_add("rot speed", k)
                 self.log_add("rot time", self.rot_time)
 
-            # if enem tank is not found here: skip adjusting / cannon firing
+            # if enem tank is not found here: skip adjusting / no cannon firing
             else:
                 self.phase = 5
 
@@ -372,6 +425,10 @@ class EventMode(Mode):
 
         ### phase 3: For enem_tank: rotate the exact angle one time and fire cannon
         elif self.phase == 3:
+            '''
+                만약 매번 adjust해야 한다면, 여기를 수정하면 되는 일.
+                그러나 그 가능성이 매우 낮다고 가정하여, 여기서는 수행하지 않음.
+            '''
             if self.rot_time > time.time() - self.time_start:
                 self.log_add("speed: ", self.rot_speed)
                 self.log_add("rotating: ", self.wait_sec)
@@ -442,6 +499,7 @@ class Stanley2GreenMode(Mode):
 
         self.frame_from_start_sensing = 0
         if from_it:
+            # 20프레임동안은 무시
             self.frame_from_start_sensing = -20
 
     def set_frame_and_move(self, frame, showoff=True):

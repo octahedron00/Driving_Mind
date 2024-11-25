@@ -45,9 +45,13 @@ def run_model_second(tiki: TikiMini, model_address, shared_list, is_detr = False
             time.sleep(1)
         
 
+        # 들어오면, 바로 inference 후 결과 출력!
         image_list = shared_list[pos]
-        result_list = model.predict(image_list, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
-        
+        result_list = []
+        for image in image_list:
+            # model_predict의 구조는 항상 동일함: 이미지가 하나면 list 안에 하나만 들어옴.
+            result_list += model.predict(image, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+
         count_map_list = []
         for k, result in enumerate(result_list):
             count_map = dict()
@@ -63,11 +67,15 @@ def run_model_second(tiki: TikiMini, model_address, shared_list, is_detr = False
             count_map_list.append(count_map)
         count_result = get_vote_count_result(count_map_list=count_map_list)
 
+
+        # 일단 print는 하고, 실제 robot에도 보이는 방향으로.
         print(count_result)
         if pos > 0:
             tiki.log(f" {AREA_NAME[pos]} AREA: Ally {count_result[KEY_PREDICT[0]]} / Enem {count_result[KEY_PREDICT[1]]}")
         shared_list[pos] = count_result
         pos += 1
+    
+    return
 
 
 

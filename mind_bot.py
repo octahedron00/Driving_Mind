@@ -108,7 +108,7 @@ class Bot_Mind:
         if DO_SECOND:
             self.thread_model_second = Process(target=run_model_second, args=(pub, FILE_SECOND, self.shared_list, DO_SECOND_DETR))
             self.thread_model_second.start()
-        self.shared_list[0] = np.zeros((480, 640, 3))
+        self.shared_list[0] = [np.zeros((480, 640, 3))]
 
 
         # first thread: 모델 하나 준비, RT인지 YOLO인지 확인까지.
