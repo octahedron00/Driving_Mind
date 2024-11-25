@@ -18,6 +18,10 @@ VS Code 안에서도 어.. 이것저것 해줄 것
 
 이렇게 해야 GUI가 내 화면에서 뜬다. 
 
+### Model을 적용할 때 주의점
+
+JetPack 4.6.1 / Onnx 1.11 이하, TensorRT 8.2.1, CUDA 10.2, 
+
 ## Basic Shape
 
 mind_bot.py 실행: 각각의 Mode들이 만들어짐.
