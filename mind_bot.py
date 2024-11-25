@@ -44,12 +44,15 @@ VID_CONNECT_CMD = "log_2125.avi"
 
 
 def showing_off(image_list, log="", get_image = False):
+    # 다른 곳에서 이미지 받아가는 게 아니면, 창 여러 개 출력
+    # 다른 곳에서 이미지 받아가는 게 맞다면, 그냥 큰 이미지에 짬뽕해서 되돌려주기
 
     pos_x = [0, 700, 900, 1100, 1300, 1500, 0, 0, 0]
     pos_y = [0, 0, 0, 0, 0, 0, 0, 0, 0] 
 
+    
+    # 다른 곳에서 이미지 받아가는 게 아니면, 창 여러 개 출력
     if not get_image:
-            
         for i, image in enumerate(image_list):
             if i > 8:
                 break
@@ -59,6 +62,7 @@ def showing_off(image_list, log="", get_image = False):
         return
     
 
+    # 다른 곳에서 이미지 받아가는 게 맞다면, 그냥 큰 이미지에 짬뽕해서 되돌려주기
     canvas = np.zeros((1920, 1080, 3), dtype=np.uint8) + 255
     for i, image in enumerate(image_list):
         if len(np.shape(image)) < 3:
@@ -69,7 +73,7 @@ def showing_off(image_list, log="", get_image = False):
         x_i = pos_x[i] + 50
         x_f = x_i + x
         canvas[y_i:y_f, x_i:x_f] = image
-    cv2.putText(canvas, log, (20, 960), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
+    cv2.putText(canvas, log, (20, 960), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color=(0, 0, 0), thickness=1)
 
     return canvas
 
@@ -81,7 +85,7 @@ class Bot_Mind:
     def __init__(self, show_function = showing_off, go=True):
 
 
-
+        # 로그파일 만들기
         now = datetime.datetime.now().strftime("%H%M")
         if IS_LOG_SIGHT:
             self.log_sight_writer = cv2.VideoWriter(f"vlog_sight_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
@@ -198,7 +202,8 @@ class Bot_Mind:
         self.mode.log = f"{self.count_frame:04d} : {self.mode.log}"
 
 
-        # 필요 시 출력까지
+        # 화면 보이기, 필요 시 그대로 record까지 진행.
+        # 이때, is_log_sight 켜진 상태로 진행하면 조금 느려진다! 감안해야 함... 
         if IS_SHOW:
             image_list = self.mode.show_list
             canvas = self.show_function(image_list, self.mode.log, IS_LOG_SIGHT)
@@ -206,18 +211,19 @@ class Bot_Mind:
                 self.log_sight_writer.write(canvas)
 
 
-        # 로그 출력까지. 
+        # 로그 출력
         if self.mode.running:
             self.mode.log_add("time: ", time.time() - time_start)
             self.mode.log_add(f"[ battery: {int((self.pub.get_battery_voltage() - 9.5)*100/(12.6-9.5)):02d}%,",
                               f"{self.pub.get_battery_voltage()}V / {self.pub.get_current()}mA ]")
             print(self.mode.log)
-            if IS_LOG_VID:
-                
-                cv2.putText(frame, f"{self.count_frame:04d}", (20, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
-                self.logwriter.write(frame)
             if IS_LOG:
                 self.logtxt.write(self.mode.log + "\n")
+            
+            # vlog 만들 때, 번호를 그려주는 방식으로.
+            if IS_LOG_VID:
+                cv2.putText(frame, f"{self.count_frame:04d}", (20, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
+                self.logwriter.write(frame)
         else:
             if DO_SECOND:
                 self.thread_model_second.join()

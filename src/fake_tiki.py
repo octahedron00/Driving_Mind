@@ -1,6 +1,10 @@
+'''
+    가짜 Tiki를 만들어, 함수가 전체적으로 잘 작동하는지 확인.
+    오탈자 없는지 자동으로 확인해줌.
 
+    대신 실제 robot 쓸 때는 이 패키지들 싹 바꿔줘야 합니다
 
-
+'''
 
 class TikiMini:
 
@@ -28,6 +32,8 @@ class TikiMini:
         print("buzzer stop")
 
     def log(self, log: str):
+        # log: max 5 lines 
+
         self.log_list.append(log)
         self.log_list = self.log_list[max(0, len(self.log_list)-5):]
         

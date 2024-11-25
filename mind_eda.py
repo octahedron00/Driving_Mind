@@ -27,6 +27,7 @@ def on_click(event, x, y, flags, images):
  
 
 
+# 급조한 재귀함수입니다
 def show(frame, frame_before, stop=False):
 
     bev = get_bev(frame)
@@ -37,13 +38,15 @@ def show(frame, frame_before, stop=False):
     edge_bev, _ = get_road_edge_angle(road_bev)
     cross_bev, _, _, _, _ = get_sliding_window_and_cross_result(road_bev)
     
+    # BEV만드는 ROI는 여기서 만듭니다!
     polypoint = np.array([LT_BEV, LD_BEV, RD_BEV, RT_BEV], dtype=np.int32)
+    cv2.polylines(frame, [polypoint], isClosed=True, color=(0, 255, 0), thickness=2)
     # print(polypoint)
 
+    # 각 창의 position 구성. 그냥 맨 윗줄에 싹 모아두기. 제일 큰 화면이 맨 뒤로 감
     pos_x = [0, 460, 660, 860, 1060, 1260, 1460, 0, 0]
     pos_y = [0, 0, 0, 0, 0, 0, 0, 0, 0] 
 
-    cv2.polylines(frame, [polypoint], isClosed=True, color=(0, 255, 0), thickness=2)
 
     frame_list = [
         frame,
@@ -72,6 +75,15 @@ def show(frame, frame_before, stop=False):
         cv2.imshow(name_list[i], f)
         cv2.setMouseCallback(name_list[i], on_click, (f, bev))
 
+
+    # 프레임 앞뒤로 움직이기 가능하게 함, 
+    # 일단 멈추고 싶다면 아무 키나 누르기,
+    # 뒤로 가고 싶다면 A, B 키를 누르기: 약 20프레임 정도 저장됨(아래에서 수정)
+    # 앞으로 다시 돌아가려면 D, F 누르기:
+    # 다시 재생하려면 다른 아무 키나 누르기.
+    # 재귀 함수 구현이라, 자세한 설명을 적으면 너무 길어집니다. 일단 잘 작동함!
+    # 
+    # 유일한 문제 상황은, RAM이 작을 때. 가능하면 local에서만 돌릴 것!
     if stop:
         a = cv2.waitKey(0)
         if a in [ord('a'), ord('b')]:
@@ -91,6 +103,7 @@ def show(frame, frame_before, stop=False):
         a = cv2.waitKey(0)
         if a in [ord('a'), ord('b')]:
             if len(frame_before) > 0:
+                # 한 프레임 전으로
                 show(frame_before[-1], frame_before[:-1], stop=True)
             else:
                 print("No More Data Available")

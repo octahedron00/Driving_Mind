@@ -36,7 +36,7 @@ class Control_Mind:
         self.speed_x = 0
         self.speed_z = 0
 
-        # 2번 동시에 인식되지 않도록 추가함
+        # 조금 길게 눌렀다는 이유로 2번 인식되지 않도록 추가함: 각각 촬영 / 녹화온오프 버튼에 대함
         self.clicked_c = False
         self.clicked_v = False
 
