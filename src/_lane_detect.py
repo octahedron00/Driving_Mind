@@ -66,6 +66,38 @@ class Line:
 
 
 
+def get_resize_image_4_model(image):
+
+    # 필요하다면, 양 끝을 자를 수도 있다! 여기 이용할 것.
+    # cutting_length = int( (np.shape(image)[1] - np.shape(image)[0])/2 )
+    # image = image[:, cutting_length:-cutting_length]
+
+    detection_image_size = (640, 640)
+
+    detection_image = cv2.resize(image, dsize=detection_image_size, interpolation=cv2.INTER_AREA)
+
+    return detection_image
+
+
+def get_pos_before_xy(image_before, image_after, pos_after_xy: tuple):
+    '''
+        이미지 모양이 변환되면, point의 위치도 변환된다! -> 간단한 수식으로 되돌릴 수 있음, 이걸 이용하기로.
+    '''
+
+    # 일단 자르지 않았다는 가정 하에, 진행.
+
+    bef_y, bef_x = np.shape(image_before)[:2]
+    aft_y, aft_x = np.shape(image_after)[:2]
+
+    pos_a_x, pos_a_y = pos_after_xy
+
+    pos_b_x = int((pos_a_x / aft_x) * bef_x)
+    pos_b_y = int((pos_a_y / aft_y) * bef_y)
+
+    return pos_b_x, pos_b_y
+
+
+
 
 
 def get_bev(image):
@@ -74,7 +106,6 @@ def get_bev(image):
         rt: right top, lt: left top, rd: right down, ld: left down
         Return
         1) _image : BEV result image
-        2) minv : inverse matrix of BEV conversion matrix
     """
 
     source = np.float32([[LT_BEV], [RT_BEV], [LD_BEV], [RD_BEV]])

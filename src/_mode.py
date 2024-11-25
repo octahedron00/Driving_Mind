@@ -11,9 +11,9 @@ import math
 
 from ultralytics import YOLO, RTDETR
 
-from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm
-from src._lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
-
+from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm 
+from src._lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result
+from src._lane_detect import get_resize_image_4_model, get_pos_before_xy, Line
 
 BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
@@ -275,13 +275,18 @@ class EventMode(Mode):
             self.wait_frame_4_predict = WAIT_FRAME_4_MODEL
             self.n_frame_done += 1
 
-            ### saving frame in capsule for final prediction at #End
-            self.capsule[f"event_{self.index}_frame_list"] = self.capsule.get(f"event_{self.index}_frame_list", list()) + [frame.copy()]
+            # 모델에 맞는 이미지로 변환, 넣기.
+            resize_image_4_model = get_resize_image_4_model(frame)
+
+
+            ### saving frame in capsule for final prediction / End나 Model Second에서 쓰임
+            ### 저장할 때부터 이미 이미지 resize 된 걸 저장하기로 함
+            self.capsule[f"event_{self.index}_frame_list"] = self.capsule.get(f"event_{self.index}_frame_list", list()) + [resize_image_4_model]
 
 
             ### prediction works here
             self.pub.play_buzzer(440)
-            result_list = self.model.predict(frame, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+            result_list = self.model.predict(resize_image_4_model, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
             self.pub.stop_buzzer()
             count_map = dict()
             for result in result_list:
@@ -296,8 +301,10 @@ class EventMode(Mode):
                     count_map[class_id] = 1 + count_map.get(class_id, 0)
 
                     if class_id == KEY_PREDICT[-1]:
-                        self.enem_tank_x_list.append(int((cords[0] + cords[2]) / 2))
-                        self.enem_tank_y_list.append(int((cords[1] + cords[3]) / 2))
+                        # 원래 이미지에서의 위치를 계산하고 받아내서 이용!
+                        pos_x, pos_y = get_pos_before_xy(frame, resize_image_4_model, ((cords[0]+cords[2])/2, (cords[1]+cords[3])/2))
+                        self.enem_tank_x_list.append(pos_x)
+                        self.enem_tank_y_list.append(pos_y)
 
             self.log_add("count: ", str(count_map))
 

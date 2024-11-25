@@ -10,9 +10,9 @@ import sys
 
 from math import *
 
-from _lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm
-from _lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
-from _lane_detect import LT_BEV, LD_BEV, RD_BEV, RT_BEV, H_BEV, W_BEV
+from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm
+from src._lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
+from src._lane_detect import LT_BEV, LD_BEV, RD_BEV, RT_BEV, H_BEV, W_BEV
 
 
 
@@ -40,6 +40,9 @@ def show(frame, frame_before, stop=False):
     polypoint = np.array([LT_BEV, LD_BEV, RD_BEV, RT_BEV], dtype=np.int32)
     # print(polypoint)
 
+    pos_x = [0, 460, 660, 860, 1060, 1260, 1460, 0, 0]
+    pos_y = [0, 780, 780, 780, 780, 780, 780, 0, 0] 
+
     cv2.polylines(frame, [polypoint], isClosed=True, color=(0, 255, 0), thickness=2)
 
     frame_list = [
@@ -65,7 +68,7 @@ def show(frame, frame_before, stop=False):
         if i > 8:
             break
         cv2.namedWindow(name_list[i])
-        cv2.moveWindow(name_list[i], px[i], py[i])
+        cv2.moveWindow(name_list[i], pos_x[i], pos_y[i])
         cv2.imshow(name_list[i], f)
         cv2.setMouseCallback(name_list[i], on_click, (f, bev))
 
@@ -102,9 +105,6 @@ if __name__=="__main__":
     print("Start of Video?")
     cap = cv2.VideoCapture(video_file)
     print(cap)
-
-    px = [0, 700, 900, 1100, 1300, 700, 900, 1100, 1300]
-    py = [0, 0, 0, 0, 0, 330, 330, 330, 330]
 
     frame_before = []
 

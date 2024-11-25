@@ -43,8 +43,8 @@ FILE_ALL = "best.pt"
 
 def showing_off(image_list, log="", get_image = False):
 
-    pos_x = [0, 740, 0, 300, 600, 900, 0, 0, 0]
-    pos_y = [0, 0, 580, 580, 580, 580, 0, 0, 0] 
+    pos_x = [0, 460, 660, 860, 1060, 1260, 0, 0, 0]
+    pos_y = [0, 780, 780, 780, 780, 780, 0, 0, 0] 
 
     if not get_image:
             
@@ -57,7 +57,7 @@ def showing_off(image_list, log="", get_image = False):
         return
     
 
-    canvas = np.zeros((1200, 1500, 3), dtype=np.uint8) + 255
+    canvas = np.zeros((1920, 1080, 3), dtype=np.uint8) + 255
     for i, image in enumerate(image_list):
         if len(np.shape(image)) < 3:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -82,9 +82,9 @@ class Bot_Mind:
 
         now = datetime.datetime.now().strftime("%H%M")
         if IS_LOG_SIGHT:
-            self.log_sight_writer = cv2.VideoWriter(f"vlog_sight_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (1200, 1000))
+            self.log_sight_writer = cv2.VideoWriter(f"vlog_sight_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
         if IS_LOG_VID:
-            self.logwriter = cv2.VideoWriter(f"vlog_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), 10.0, (640, 480))
+            self.logwriter = cv2.VideoWriter(f"vlog_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
         if IS_LOG:
             self.logtxt = open("log_" + now + ".txt", 'w')
 

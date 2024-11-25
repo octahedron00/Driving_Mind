@@ -10,13 +10,13 @@ import datetime
 
 import keyboard
 
-from fake_tiki import TikiMini
+from src.fake_tiki import TikiMini
 
-from _mode import move_robot
-from mind_bot import showing_off, VID_CONNECT_CMD, FRAME_IGNORE_LEVEL
+from src._mode import move_robot
+from mind_bot import showing_off, VID_CONNECT_CMD, FRAME_IGNORE_LEVEL, CAM_WIDTH, CAM_HEIGHT, CAM_FRAMERATE
 
 
-IS_LOG_VID = True
+IS_LOG_VID = False
 
 
 class Control_Mind:
@@ -28,8 +28,8 @@ class Control_Mind:
             self.logwriter = cv2.VideoWriter(
                 f"vlog_control_{now}.avi",
                 cv2.VideoWriter_fourcc(*"MP4V"),
-                10.0,
-                (640, 480),
+                CAM_FRAMERATE,
+                (CAM_WIDTH, CAM_HEIGHT),
             )
 
         self.pub = TikiMini()
@@ -42,6 +42,10 @@ class Control_Mind:
 
         self.show_function = show_function
         self.keyboard_listener = keyboard_listener
+
+        self.speed_x = 0
+        self.speed_z = 0
+        self.is_captured = False
 
         cap = cv2.VideoCapture(VID_CONNECT_CMD)
         while cap.isOpened():
@@ -60,31 +64,43 @@ class Control_Mind:
         if IS_LOG_VID:
             self.logwriter.write(frame)
 
-        cv2.waitKey(1)
-
         if self.keyboard_listener.is_pressed("w"):
-            move_robot(pub, 0.2, 0)
+            self.speed_x = 0.3
         elif self.keyboard_listener.is_pressed("s"):
-            move_robot(pub, -0.2, 0)
-        elif self.keyboard_listener.is_pressed("a"):
-            move_robot(pub, 0, 0.5)
+            self.speed_x = -0.3
+        else:
+            self.speed_x = 0
+
+        if self.keyboard_listener.is_pressed("a"):
+            self.speed_z = 0.5
         elif keyboard.is_pressed("d"):
-            move_robot(pub, 0, -0.5)
-        elif self.keyboard_listener.is_pressed("c"):
-            cv2.imwrite(
-                os.path.join("img", f"{self.image_name}_{self.image_count:04d}.jpg"),
-                frame,
-            )
-            self.image_count += 1
-        elif self.keyboard_listener.is_pressed("n"):
+            self.speed_z = -0.5
+        else:
+            self.speed_z = 0
+        
+        if self.keyboard_listener.is_pressed("c"):
+            if not self.is_captured:
+
+                cv2.imwrite(
+                    os.path.join("img", f"{self.image_name}_{self.image_count:04d}.jpg"),
+                    frame,
+                )
+                self.image_count += 1
+            self.is_captured = True
+        else:
+            self.is_captured = False
+
+        if self.keyboard_listener.is_pressed("n"):
             self.image_name = input("new dataset name:")
             if len(self.image_name) < 1:
                 now = datetime.datetime.now().strftime("%H%M")
                 self.image_name = f"image_{now}"
-
             self.image_count = 1
-        else:
-            move_robot(pub)
+        
+
+        move_robot(pub, self.speed_x, self.speed_z)
+
+        cv2.waitKey(1)
 
 
 if __name__ == "__main__":
