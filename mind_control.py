@@ -3,9 +3,6 @@
 import os
 
 import cv2
-import numpy as np
-import time
-import math
 import datetime
 
 import keyboard
@@ -100,7 +97,7 @@ class Control_Mind:
 
         move_robot(pub, self.speed_x, self.speed_z)
 
-        cv2.waitKey(50)
+        cv2.waitKey(1)
 
 
 if __name__ == "__main__":

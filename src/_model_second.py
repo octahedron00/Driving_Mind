@@ -11,10 +11,7 @@ from ultralytics import YOLO, RTDETR
 
 from src.fake_tiki import TikiMini
 
-from src._mode import get_vote_count_result, IOU_THRESHOLD, CONF_THRESHOLD, KEY_PREDICT
-
-
-AREA_NAME = "0ABCD"
+from src._mode import get_vote_count_result, IOU_THRESHOLD, CONF_THRESHOLD, KEY_PREDICT, AREA_NAME
 
 
 def run_model_second(tiki: TikiMini, model_address, shared_list):

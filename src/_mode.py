@@ -15,6 +15,10 @@ from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_g
 from src._lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result
 from src._lane_detect import get_resize_image_4_model, get_pos_before_xy, Line
 
+#for fun
+from src._sing import sing
+
+
 BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
 
@@ -37,11 +41,16 @@ WAIT_FRAME_4_MODEL = 10 # 0.5 second: will be enough for jetson nano computing s
 WAIT_FRAME_4_MODEL = 0
 
 KEY_PREDICT = ("ally", "enem", "ally_tank", "enem_tank")
+AREA_NAME = "0ABCDXXXX"*5
+
+
 
 PREFER_ERR_DEG = 5
 
 PREFER_DIST = 400
 PREFER_ERR_RATIO = 0.1
+
+
 
 
 def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
@@ -214,6 +223,7 @@ class EndMode(Mode):
                 self.pub.log(f"Ally: {count_result[KEY_PREDICT[0]]} / Enem: {count_result[KEY_PREDICT[1]]}")
 
         if self.running:
+            sing(self.pub)
             self.running = False
 
 
@@ -221,7 +231,7 @@ class EndMode(Mode):
 #Eve
 class EventMode(Mode):
 
-    def __init__(self, pub, model, shared_list_model_second, index=0, n_frame=5, wait_sec=2.0):
+    def __init__(self, pub, model, shared_list_model_second, index=0, n_frame=5, wait_sec=1.0, show_log = False):
 
         self.end = False
         self.index = index
@@ -246,6 +256,7 @@ class EventMode(Mode):
         self.time_start = time.time()
 
         self.count_map_list = []
+        self.show_log = show_log
 
 
     def set_frame_and_move(self, frame, showoff=True):
@@ -351,6 +362,9 @@ class EventMode(Mode):
 
             self.log_add("prediction result: ", str(count_result_map))
 
+            # 만약 second가 아니라 여기서 결과를 내야 한다면, 이렇게 진행.
+            if self.show_log:
+                self.pub.log(f" {AREA_NAME[self.index]} AREA: Ally {count_result_map[KEY_PREDICT[0]]} / Enem {count_result_map[KEY_PREDICT[1]]}")
 
             # model_second를 위해서 자료 제공
             self.shared_list[int(self.index/10)] = self.capsule[f"event_{self.index}_frame_list"]

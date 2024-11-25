@@ -17,6 +17,8 @@ from src._mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode
 from src._model_second import run_model_second
 
 
+DO_SECOND = True
+
 FRAME_IGNORE_LEVEL = 1
 CAM_WIDTH = 1920
 CAM_HEIGHT = 1080
@@ -95,8 +97,9 @@ class Bot_Mind:
         
         manager = Manager()
         self.shared_list = manager.list([None] * 10)
-        self.model_second = Process(target=run_model_second, args=(pub, FILE_ALL, self.shared_list))
-        self.model_second.start()
+        if DO_SECOND:
+            self.model_second = Process(target=run_model_second, args=(pub, FILE_ALL, self.shared_list))
+            self.model_second.start()
         self.shared_list[0] = np.zeros((480, 640, 3))
 
         self.model_each = YOLO(FILE_EACH)
@@ -119,31 +122,31 @@ class Bot_Mind:
             Stanley2GreenMode(pub, 3,   left_offset = -10),
             Turn2VoidMode(pub, 4,       is_left=True),
 
-            EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 0),
+            EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 11,      is_left=True,   min_turn_sec=1),
             Stanley2CrossMode(pub, 12),
             Turn2RoadMode(pub, 13,      is_left=False,  is_curve=True,  min_turn_sec=1.),
             Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1.3),
             Turn2VoidMode(pub, 15,      is_left=True),
 
-            EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 1.0),
+            EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 21,      is_left=False,  min_turn_sec=1.),
             Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True, min_turn_sec=1.),
             Stanley2GreenMode(pub, 24,  left_offset = -10),
             Turn2VoidMode(pub, 25,      is_left=True),
 
-            EventMode(pub, self.model_each, self.shared_list, 30, n_frame = 5, wait_sec = 1.0),
+            EventMode(pub, self.model_each, self.shared_list, 30, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 31,      is_left=False, min_turn_sec=1.),
             Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10),
             Turn2VoidMode(pub, 33,      is_left=True),
 
 
-            EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 1.0),
+            EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 41,      is_left=False,  min_turn_sec=1.),
             Stanley2CrossMode(pub, 42,  right_way=False),
             Turn2RoadMode(pub, 43,      is_left=True,   min_turn_sec=1., is_curve=True),
-            # Stanley2GreenMode(pub, 44, speed_weight = 1.5),
+            Stanley2GreenMode(pub, 44, speed_weight = 1.5),
 
             EndMode(pub, None, 100, predict_all=False),
 
@@ -198,8 +201,9 @@ class Bot_Mind:
             if IS_LOG:
                 self.logtxt.write(self.mode.log + "\n")
         else:
-            self.model_second.join()
-            a = input("Was it good?")
+            if DO_SECOND:
+                self.model_second.join()
+            _ = input("Was it good?")
             return
         cv2.waitKey(1)
 
