@@ -100,7 +100,7 @@ class Control_Mind:
 
         move_robot(pub, self.speed_x, self.speed_z)
 
-        cv2.waitKey(1)
+        cv2.waitKey(50)
 
 
 if __name__ == "__main__":

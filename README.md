@@ -20,7 +20,11 @@ VS Code 안에서도 어.. 이것저것 해줄 것
 
 ### Model을 적용할 때 주의점
 
-JetPack 4.6.1 / Onnx 1.11 이하, TensorRT 8.2.1, CUDA 10.2, 
+JetPack 4.6.1 / Onnx 1.11 이하, TensorRT 8.2.1, CUDA 10.2
+
+여기서... DETR이랑 YOLO가 잘 돌아갈까? 
+
+일단 GPU memory는 몇백 MB밖에 먹지 않는 것으로 보임.. 의외로 괜찮을지도
 
 ## Basic Shape
 
