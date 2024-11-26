@@ -426,7 +426,7 @@ def get_sliding_window_and_cross_result(image, left_way = True, right_way = True
         possible_cross_pos_y.append(int((t+b)/2))
 
 
-    if 1 <= len(possible_cross_pos_y) <= 10:
+    if 1 <= len(possible_cross_pos_y) <= 7:
         return window_frame, x_list, y_list, True, possible_cross_pos_y
     return window_frame, x_list, y_list, False, possible_cross_pos_y
 

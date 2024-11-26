@@ -25,7 +25,7 @@ def sing(tiki):
         if note > 0:
             tiki.stop_buzzer()
             # 수학적으로 음계를 정의하는 방법
-            freq = FREQ_C * math.exp2(note/12)
+            freq = FREQ_C * (2 ** (note/12))
             tiki.play_buzzer(int(freq))
 
         time.sleep(0.16)

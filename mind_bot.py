@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-
+import os
 import cv2
 import numpy as np
 import time
@@ -24,10 +24,10 @@ FILE_EACH = "best.pt"
 FILE_SECOND = "rtdetr-l.pt"
 
 IS_LOG = True
-IS_LOG_VID = False
-IS_LOG_SIGHT = False
+IS_LOG_VID = True
+IS_LOG_SIGHT = True
 
-IS_SHOW = False
+IS_SHOW = True
 
 
 FRAME_IGNORE_LEVEL = 1
@@ -40,22 +40,27 @@ VID_CONNECT_CMD = (
     f'! videoconvert ! video/x-raw, format=(string)BGR '
     f'! appsink'
 )
-VID_CONNECT_CMD = "log_2125.avi"
+VID_CONNECT_CMD = "test_1080.mp4"
 
 
 def showing_off(image_list, log="", get_image = False):
     # 다른 곳에서 이미지 받아가는 게 아니면, 창 여러 개 출력
     # 다른 곳에서 이미지 받아가는 게 맞다면, 그냥 큰 이미지에 짬뽕해서 되돌려주기
 
-    pos_x = [0, 700, 900, 1100, 1300, 1500, 0, 0, 0]
+    pos_x = [0, 900, 1100, 1300, 1500, 1700, 0, 0]
     pos_y = [0, 0, 0, 0, 0, 0, 0, 0, 0] 
 
-    
+    # 1920 1080은 화면 전체를 채우니까,
+    # 여기서 resize 한 번 하고 보여주기로 합시다.
+    # 게다가 inference한 것도 사이즈 맞게 변할 것: 640 640이 다시 펴지는 방향으로
+
     # 다른 곳에서 이미지 받아가는 게 아니면, 창 여러 개 출력
     if not get_image:
         for i, image in enumerate(image_list):
             if i > 8:
                 break
+            if i == 0:
+                image = cv2.resize(image.copy(), (960, 540))
             cv2.namedWindow("win_" + str(i+1))
             cv2.moveWindow("win_" + str(i+1), pos_x[i], pos_y[i])
             cv2.imshow("win_" + str(i+1), image)
@@ -63,14 +68,14 @@ def showing_off(image_list, log="", get_image = False):
     
 
     # 다른 곳에서 이미지 받아가는 게 맞다면, 그냥 큰 이미지에 짬뽕해서 되돌려주기
-    canvas = np.zeros((1920, 1080, 3), dtype=np.uint8) + 255
+    canvas = np.zeros((1080, 1920, 3), dtype=np.uint8) + 255
     for i, image in enumerate(image_list):
         if len(np.shape(image)) < 3:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         y, x = np.shape(image)[:2]
-        y_i = pos_y[i] + 50
+        y_i = pos_y[i]
         y_f = y_i + y
-        x_i = pos_x[i] + 50
+        x_i = pos_x[i]
         x_f = x_i + x
         canvas[y_i:y_f, x_i:x_f] = image
     cv2.putText(canvas, log, (20, 960), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color=(0, 0, 0), thickness=1)
@@ -88,11 +93,11 @@ class Bot_Mind:
         # 로그파일 만들기
         now = datetime.datetime.now().strftime("%H%M")
         if IS_LOG_SIGHT:
-            self.log_sight_writer = cv2.VideoWriter(f"vlog_sight_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
+            self.log_sight_writer = cv2.VideoWriter(os.path.join("log", f"vlog_sight_{now}.avi"), cv2.VideoWriter_fourcc(*'MP4V'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
         if IS_LOG_VID:
-            self.logwriter = cv2.VideoWriter(f"vlog_{now}.avi", cv2.VideoWriter_fourcc(*'MP4V'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
+            self.logwriter = cv2.VideoWriter(os.path.join("log", f"vlog_{now}.avi"), cv2.VideoWriter_fourcc(*'MP4V'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
         if IS_LOG:
-            self.logtxt = open("log_" + now + ".txt", 'w')
+            self.logtxt = open(os.path.join("log", f"log_{now}.txt"), 'w')
 
 
         # turn on tiki / 맨 첫 줄에는 시작 시간의 V/mA 값이 나옴
@@ -169,6 +174,8 @@ class Bot_Mind:
             _ = input("Ready?")
 
 
+        self.time_taken_by_mode = time.time()
+
         '''Running Part Here'''
         cap = cv2.VideoCapture(VID_CONNECT_CMD)
         while cap.isOpened():
@@ -193,8 +200,9 @@ class Bot_Mind:
             self.mode = self.mode_list[self.mode_pos]
             self.mode.capsule = capsule
             if IS_LOG:
+                self.logtxt.write(f"   / -------   -------\n  *  Time Passed: {time.time() - self.time_taken_by_mode}\n   \\ -------   -------\n")
                 self.logtxt.write(f"   / -------   -------\n  *  Capsule Passed: {capsule.keys()}\n   \\ -------   -------\n")
-
+            self.time_taken_by_mode = time.time()
 
         # 시간 재고 바로 실행
         time_start = time.time()
@@ -232,6 +240,7 @@ class Bot_Mind:
         cv2.waitKey(1)
 
 
+        # 영상 재생 중에는 프레임이 너무 빨리 넘어가서... 그래서 추가함
         if len(VID_CONNECT_CMD) < 30:
             time.sleep(max(0, 0.1 - time.time() + time_start))
 
