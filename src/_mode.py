@@ -51,6 +51,14 @@ PREFER_DIST = 400
 PREFER_ERR_RATIO = 0.1
 
 
+# 이거 쓰게 될까? 아니었으면 좋겠지만, 바로 준비 가능하게 준비하자.
+TARGET_X_LIST = []
+TARGET_ANGLE_LIST = []
+
+CALC_TARGET_ANGLE_FROM_X = np.poly1d(np.polyfit(TARGET_X_LIST, TARGET_ANGLE_LIST))
+
+
+
 def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
     '''
         move the robot: with x speed and z rotation value
@@ -392,6 +400,8 @@ class EventMode(Mode):
                     그리고 x 값에 따른 각도를 미리 정해두고 돌아가면 된다.
 
                 '''
+
+                #EDA 여기를 바꿔야 하면 바꿀 것!!!
                 angle_frame = np.zeros_like(frame)
                 cv2.line(angle_frame, enem_tank_xy, (int(np.shape(angle_frame)[1] / 2), np.shape(angle_frame)[0]), 255, 2)
                 angle_bev = get_bev(angle_frame)

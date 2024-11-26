@@ -62,7 +62,7 @@ S2C (Stanley2Cross)
 
     sliding window는 따라가되, 그 중심에서부터 한 쪽으로 얼마 이상 채워지면 cross로 인식
 
-T2V(Turn2Void)
+T2V (Turn2Void)
 
     살짝 반대로 돌았다가(1) 직후 자신의 각도 확인. 
 
@@ -72,7 +72,7 @@ T2V(Turn2Void)
 
     돌아야 하는 시간만큼 돌아감(3)
 
-T2R(Turn2Road)
+T2R (Turn2Road)
 
     일단 지정된 시간만큼 돌고(1), 그 뒤로 sliding window로 길 찾으면 멈추기(2)
 
