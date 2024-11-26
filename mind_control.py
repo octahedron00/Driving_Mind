@@ -14,7 +14,6 @@ from src._mode import move_robot
 from mind_bot import showing_off, VID_CONNECT_CMD, FRAME_IGNORE_LEVEL, CAM_WIDTH, CAM_HEIGHT, CAM_FRAMERATE
 
 
-
 class Control_Mind:
 
     def __init__(self, show_function=showing_off, keyboard_listener=keyboard):
@@ -28,6 +27,10 @@ class Control_Mind:
         self.count_frame = 1
 
         self.image_name = f"image_{now}"
+        try:
+            os.makedirs(os.path.join("img", self.image_name))
+        except:
+            pass
         self.image_count = 1
 
         self.show_function = show_function
@@ -48,8 +51,8 @@ class Control_Mind:
             self.count_frame += 1
             if self.count_frame % FRAME_IGNORE_LEVEL == 0:
                 self.action(frame)
-
-
+        
+        cv2.destroyAllWindows()
 
     def action(self, frame):
         pub = self.pub
@@ -59,6 +62,7 @@ class Control_Mind:
         if self.logwriter != None:
             self.logwriter.write(frame)
 
+        # 앞뒤좌우 단순하게
         if self.keyboard_listener.is_pressed("w"):
             self.speed_x = 0.3
         elif self.keyboard_listener.is_pressed("s"):
@@ -72,28 +76,35 @@ class Control_Mind:
             self.speed_z = -0.5
         else:
             self.speed_z = 0
-        
+
+        # c: 캡쳐, 사진 만들기
         if self.keyboard_listener.is_pressed("c"):
             if not self.clicked_c:
-
-                cv2.imwrite(
-                    os.path.join("img", f"{self.image_name}_{self.image_count:04d}.jpg"),
-                    frame,
-                )
+                cv2.imwrite(os.path.join("img", self.image_name, f"{self.image_name}_{self.image_count:04d}.jpg"), frame)
+                print(f"{self.image_name}_{self.image_count:04d}.jpg is saved")
                 self.image_count += 1
             self.clicked_c = True
         else:
             self.clicked_c = False
 
+
+        # n: 캡쳐 경로 바꾸기
+        # img/이름/이름_번호.jpg로 저장됨, 번호는 그 안 파일 갯수 다음으로 지정됨
         if self.keyboard_listener.is_pressed("n"):
+            
             self.image_name = input("new dataset name:")
             if len(self.image_name) < 1:
                 now = datetime.datetime.now().strftime("%H%M")
                 self.image_name = f"image_{now}"
-            self.image_count = 1
-        
+            try:
+                os.makedirs(os.path.join("img", self.image_name))
+            except:
+                pass
+            self.image_count = len(os.listdir(os.path.join("img", self.image_name))) + 1
 
-        
+
+
+
         if self.keyboard_listener.is_pressed("v"):
             if not self.clicked_v:
                 self.clicked_v = True
@@ -108,11 +119,10 @@ class Control_Mind:
         else:
             self.clicked_v = False
 
-
         move_robot(pub, self.speed_x, self.speed_z)
 
         cv2.waitKey(1)
-        time.sleep(0.05)
+        # time.sleep(0.05)
 
 
 if __name__ == "__main__":
