@@ -17,7 +17,7 @@ from src._mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode
 from src._model_second import run_model_second
 
 
-DO_MODEL = False
+DO_MODEL = True
 
 DO_DETR = False
 DO_SECOND = False

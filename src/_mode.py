@@ -19,10 +19,10 @@ from src._lane_detect import get_resize_image_4_model, get_pos_before_xy, Line
 from src._sing import sing
 
 
-mtx = np.array([[1.57989272e+03, 0.00000000e+00, 1.79055940e+03], 
-                [0.00000000e+00, 1.58057756e+03, 1.04190141e+03], 
-                [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
-dist = np.array([[-0.31578277, 0.1005125, 0.00038617, 0.00119873, -0.01417388]])
+mtx = np.array([[624.021794, 0, 705.539195],
+                [0, 624.719173, 398.307132],
+                [0, 0, 1]])
+dist = np.array([[-0.318379, 0.108202, -0.000758, 0.000421, -0.016728]])
 
 
 
@@ -36,7 +36,10 @@ def calibrate(img):
     
     # crop the image
     x, y, w, h = roi
-    dst = dst[y:y+h, x:x+w]
+    dst = dst[y+249:y+h, x:x+w]
+    #dst = dst[250:, :]
+    print(dst.shape)
+
     return dst
 
 
