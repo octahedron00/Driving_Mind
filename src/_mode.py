@@ -43,8 +43,8 @@ def calibrate(img):
 BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
 
-SPEED_X = 0.2
-SPEED_Z = 0.3
+SPEED_X = 0.4
+SPEED_Z = 0.5
 TIME_90DEG = 0.5 / SPEED_Z
 
 # 반경 줄일 거면 값을 높이기: x_speed 감소함
