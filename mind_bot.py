@@ -33,7 +33,7 @@ IS_SHOW = True
 FRAME_IGNORE_LEVEL = 1
 CAM_WIDTH = 1280
 CAM_HEIGHT = 960
-CAM_FRAMERATE = 8
+CAM_FRAMERATE = 20
 VID_CONNECT_CMD = (
     f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
     f'! nvvidconv flip-method=2 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
@@ -55,6 +55,7 @@ def showing_off(image_list, log="", get_image = False):
 
     # 다른 곳에서 이미지 받아가는 게 아니면, 창 여러 개 출력
     if not get_image:
+        return
         for i, image in enumerate(image_list):
             if i > 8:
                 break

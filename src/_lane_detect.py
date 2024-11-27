@@ -148,7 +148,7 @@ def get_road(image):
     """
     # rev = 255 - image
 
-    black_max = 105 # EDA
+    black_max = 120 # EDA
     black_min = 0
 
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -308,7 +308,7 @@ def get_green(image):
     """
     hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
 
-    green = cv2.inRange(hls, (45, 40, 45), (95, 200, 255)) # EDA
+    green = cv2.inRange(hls, (35, 40, 45), (60, 200, 255)) # EDA
     return green
 
 
