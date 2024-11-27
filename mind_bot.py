@@ -36,7 +36,7 @@ CAM_HEIGHT = 960
 CAM_FRAMERATE = 8
 VID_CONNECT_CMD = (
     f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
-    f'! nvvidconv flip-method=0 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
+    f'! nvvidconv flip-method=2 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
     f'! videoconvert ! video/x-raw, format=(string)BGR '
     f'! appsink max-buffers=1 drop=True'
 )

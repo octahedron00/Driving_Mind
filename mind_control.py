@@ -112,10 +112,17 @@ class Control_Mind:
                     now = datetime.datetime.now().strftime("%H%M")
                     self.logwriter = cv2.VideoWriter(f"vlog_control_{now}.avi", cv2.VideoWriter_fourcc(*"MJPG"), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
                     print(f"Recording Start : vlog_control_{now}.avi")
+                    self.pub.play_buzzer("440")
+                    time.sleep(0.1)
+                    self.pub.stop_buzzer()
+
                 else:
                     print("Recording finished")
                     self.logwriter.release()
                     self.logwriter = None
+                    self.pub.play_buzzer("880")
+                    time.sleep(0.1)
+                    self.pub.stop_buzzer()
         else:
             self.clicked_v = False
 
