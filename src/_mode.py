@@ -43,9 +43,9 @@ def calibrate(img):
 BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
 
-SPEED_X = 0.4
+SPEED_X = 0.3
 SPEED_Z = 0.5
-TIME_90DEG = 0.5 / SPEED_Z
+TIME_90DEG = 0.53 / SPEED_Z
 
 # 반경 줄일 거면 값을 높이기: x_speed 감소함
 RADIUS_VZ_OVER_VX_CONST = 240  #EDA
@@ -58,7 +58,7 @@ BEV_SHAPE = (300, 200)
 
 # for event:
 
-TIME_MOVE_BACK = 0.1 / SPEED_X
+TIME_MOVE_BACK = 0.05 / SPEED_X
 
 CONF_THRESHOLD = 0.6
 IOU_THRESHOLD = 0.6
@@ -471,7 +471,7 @@ class EventMode(Mode):
 
             # if enem tank is not found here: skip adjusting / no cannon firing
             # else:
-            self.phase = 5
+            self.phase = 4
 
             self.log_add("prediction result: ", str(count_result_map))
 
@@ -481,6 +481,18 @@ class EventMode(Mode):
 
             # model_second를 위해서 자료 제공
             self.shared_list[int(self.index/10)] = self.capsule[f"event_{self.index}_frame_list"]
+            
+            self.time_start = time.time()
+
+        elif self.phase == 4:
+
+            self.log_add("mode ", self.n_frame)
+            move_robot(self.pub, SPEED_X)
+
+            if time.time() - self.time_start > TIME_MOVE_BACK:
+                move_robot(self.pub)
+                self.phase = 5
+
 
 
         # ### phase 3: For enem_tank: rotate the exact angle one time and fire cannon
@@ -533,7 +545,7 @@ class EventMode(Mode):
 #S2G
 class Stanley2GreenMode(Mode):
 
-    def __init__(self, pub, index=0, from_it=False, left_offset=0, speed_weight=1.0):
+    def __init__(self, pub, index=0, from_it=False, left_offset=0, speed_weight=1.0, prefer_dist = PREFER_DIST):
         '''
             pub = tiki
             index = 번호, 로그에 남기기 위함
@@ -556,6 +568,7 @@ class Stanley2GreenMode(Mode):
         self.speed_weight = speed_weight
 
         self.frame_without_line = 5
+        self.prefer_dist = prefer_dist
 
         self.frame_from_start_sensing = 0
         if from_it:
@@ -643,7 +656,7 @@ class Stanley2GreenMode(Mode):
                 return
 
             # 가까우면 음수, 멀면 양수, -0.5 ~ 0.25까지 나올 수 있음: BEV 따라서..
-            dist_ratio = (get_2_point_dist((green_pos[1], green_pos[0]), (BOT_FROM_BEV_X, BOT_FROM_BEV_Y)) / PREFER_DIST) - 1
+            dist_ratio = (get_2_point_dist((green_pos[1], green_pos[0]), (BOT_FROM_BEV_X, BOT_FROM_BEV_Y)) / self.prefer_dist) - 1
             self.log_add("Dist ratio ", dist_ratio)
 
             if abs(dist_ratio) > PREFER_ERR_RATIO:
@@ -819,7 +832,7 @@ class Stanley2CrossMode(Mode):
 
 class Turn2RoadMode(Mode):
 
-    def __init__(self, pub, index=0, is_left=True, min_turn_sec=TIME_90DEG*0.9, is_curve=False):
+    def __init__(self, pub, index=0, is_left=True, min_turn_sec=TIME_90DEG*0.8, is_curve=False):
         """
             is_left: 왼쪽으로 돌 때 true / 오른쪽으로 돌 거면 false
             min_turn_sec: 길을 무시하고 돌아갈 시간, 다른 오브젝트나 기물이 길처럼 보일 수 있음: 예상 시간의 80% 정도로 잡기.
@@ -923,6 +936,7 @@ class Turn2RoadMode(Mode):
                 
                 # needs 2 time for road_encounter
                 if self.road_encounter >= 2:
+                    move_robot(self.pub)
                     self.end = True
 
         if showoff:
