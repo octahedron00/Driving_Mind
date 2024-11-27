@@ -19,6 +19,27 @@ from src._lane_detect import get_resize_image_4_model, get_pos_before_xy, Line
 from src._sing import sing
 
 
+mtx = np.array([[1.57989272e+03, 0.00000000e+00, 1.79055940e+03], 
+                [0.00000000e+00, 1.58057756e+03, 1.04190141e+03], 
+                [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+dist = np.array([[-0.31578277, 0.1005125, 0.00038617, 0.00119873, -0.01417388]])
+
+
+
+def calibrate(img):
+    
+    h,  w = img.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 0, (w,h))
+
+    # undistort
+    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
+    
+    # crop the image
+    x, y, w, h = roi
+    dst = dst[y:y+h, x:x+w]
+    return dst
+
+
 BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
 
@@ -330,6 +351,8 @@ class EventMode(Mode):
                 return
             self.wait_frame_4_predict = WAIT_FRAME_4_MODEL
             self.n_frame_done += 1
+
+            frame = calibrate(frame)
 
             # 모델에 맞는 이미지로 변환, 넣기.
             resize_image_4_model = get_resize_image_4_model(frame)
