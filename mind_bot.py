@@ -104,7 +104,7 @@ class Bot_Mind:
         self.pub = TikiMini()
         pub = self.pub
         pub.set_motor_mode(pub.MOTOR_MODE_PID)
-        pub.log(f" AI-FORCE  >v< {pub.get_battery_voltage()}V {pub.get_current()}mA")
+        # pub.log(f" AI-FORCE  >v< {pub.get_battery_voltage()}V {pub.get_current()}mA")
         
 
         # second thread 준비, init까지 진행
