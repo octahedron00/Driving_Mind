@@ -24,7 +24,7 @@ FILE_EACH = "best.pt"
 FILE_SECOND = "rtdetr-l.pt"
 
 IS_LOG = True
-IS_LOG_VID = True
+IS_LOG_VID = False
 IS_LOG_SIGHT = False
 
 IS_SHOW = True
