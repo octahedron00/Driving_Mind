@@ -44,7 +44,7 @@ BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
 
 SPEED_X = 0.25
-SPEED_Z = 0.5
+SPEED_Z = 0.3
 TIME_90DEG = 0.53 / SPEED_Z
 
 # 반경 줄일 거면 값을 높이기: x_speed 감소함
@@ -70,7 +70,7 @@ AREA_NAME = "0ABCDXXXX"*5 # 1번도 A, 10번도 A, 2번도 B, 20번도 B, 를 �
 
 PREFER_ERR_DEG = 5
 
-PREFER_DIST = 300
+PREFER_DIST = 350
 PREFER_ERR_RATIO = 0.15
 
 
@@ -385,32 +385,33 @@ class EventMode(Mode):
 
             ### prediction works here
             # 촬영 부저 음
-            self.pub.play_buzzer(440)
-            result_list = self.model.predict(resize_image_4_model, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
-            self.pub.stop_buzzer()
+            count_map = dict()
+            if self.model != None:
+                self.pub.play_buzzer(440)
+                result_list = self.model.predict(resize_image_4_model, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+                self.pub.stop_buzzer()
             
             # 결과 풀어서 정리
-            count_map = dict()
-            for result in result_list:
-                predict_frame = result.plot()
+                for result in result_list:
+                    predict_frame = result.plot()
 
-                for i in range(len(result.boxes)):
-                    res = result.boxes[i]
-                    cords = res.xyxy[0].tolist()
-                    cords = [round(x) for x in cords]
-                    class_id = result.names[res.cls[0].item()]
+                    for i in range(len(result.boxes)):
+                        res = result.boxes[i]
+                        cords = res.xyxy[0].tolist()
+                        cords = [round(x) for x in cords]
+                        class_id = result.names[res.cls[0].item()]
 
-                    count_map[class_id] = 1 + count_map.get(class_id, 0)
+                        count_map[class_id] = 1 + count_map.get(class_id, 0)
 
-                    if class_id == KEY_PREDICT[-1]: # enem_tank
-                        # 원래 이미지에서의 위치를 계산하고 받아내서 이용!
-                        pos_x, pos_y = get_pos_before_xy(frame, resize_image_4_model, ((cords[0]+cords[2])/2, (cords[1]+cords[3])/2))
-                        self.enem_tank_x_list.append(pos_x)
-                        self.enem_tank_y_list.append(pos_y)
+                        if class_id == KEY_PREDICT[-1]: # enem_tank
+                            # 원래 이미지에서의 위치를 계산하고 받아내서 이용!
+                            pos_x, pos_y = get_pos_before_xy(frame, resize_image_4_model, ((cords[0]+cords[2])/2, (cords[1]+cords[3])/2))
+                            self.enem_tank_x_list.append(pos_x)
+                            self.enem_tank_y_list.append(pos_y)
 
-            # 만든 값 출력
-            self.log_add("count: ", str(count_map))
-            cv2.imwrite(os.path.join("predict", f"predict_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
+                # 만든 값 출력
+                self.log_add("count: ", str(count_map))
+                cv2.imwrite(os.path.join("predict", f"predict_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
             self.count_map_list.append(count_map)
 
             # 프레임 다 썼다면? 다음 phase로 넘어가기.
@@ -540,6 +541,65 @@ class EventMode(Mode):
             self.show_list = [predict_frame]
 
 
+
+class _SheepMode(Mode):
+
+    def __init__(self, pub, index=0, sleep_sec = 1.0):
+        '''
+            pub = tiki
+            index = 번호, 로그에 남기기 위함
+            from_it: 시작 첫 10프레임에 보이는 green을 무시할 것인지의 여부
+            left_offset: 길보다 왼쪽으로 몇 mm 틀어서 갈 것인가
+            speed_weight: 기본 stanley에서 속도를 조금 더 빠르게 할 수 있음: max 1.5, 그 이상은 의미 X
+        '''
+        self.end = False
+        self.pub = pub
+
+        self.phase = 1
+
+        self.index = index
+
+        self.sleep_sec = sleep_sec
+        self.time_start = time.time()
+
+
+    def set_frame_and_move(self, frame, showoff=True):
+        """
+            phase 1: stanley until find the green point on road
+            phase 2: adjusting distance from green: slowing down / backing
+        """
+
+
+        self.log_set(self.index, "Sheep")
+        bev = get_bev(frame)
+        self.log_add("phase ", self.phase)
+
+        # slidingwindow
+        road_bev = get_road(bev)
+        road_blur_bev = get_rect_blur(road_bev, 5)
+        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
+
+
+
+        if self.phase == 1:
+            self.time_start = time.time()
+            self.phase = 2
+            move_robot(self.pub)
+
+
+        elif self.phase == 2:
+            self.log_add("sleep ", time.time() - self.time_start)
+            self.log_add("until ", self.sleep_sec)
+            if time.time() - self.time_start < self.sleep_sec:
+                pass
+            else:
+                self.end = True
+
+
+
+        # showoff now
+        if showoff:
+            self.show_list = [frame, bev, road_bev, road_sw_bev]
 
 
 #S2G

@@ -178,10 +178,10 @@ def get_sliding_window_result(image, init=-1):
 
     # pixel means mm here
     win_h = 10
-    win_w = 120
+    win_w = 160
     win_n = 10
-    fill_min = 0.2
-    fill_max = 0.8
+    fill_min = 0.15
+    fill_max = 0.6
 
     if init > 0:
         lane_point = init

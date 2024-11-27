@@ -133,7 +133,7 @@ if __name__=="__main__":
         show(frame, frame_before)
  
         frame_before.append(frame)
-        if len(frame_before) > 20:
+        if len(frame_before) > 50:
             frame_before = frame_before[1:]
  
  

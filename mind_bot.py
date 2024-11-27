@@ -13,9 +13,11 @@ from ultralytics import YOLO, RTDETR
 from tiki.mini import TikiMini
 
 from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
-from src._mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode
+from src._mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode, _SheepMode
 from src._model_second import run_model_second
 
+
+DO_MODEL = False
 
 DO_DETR = False
 DO_SECOND = False
@@ -40,6 +42,8 @@ VID_CONNECT_CMD = (
     f'! videoconvert ! video/x-raw, format=(string)BGR '
     f'! appsink max-buffers=1 drop=True'
 )
+
+SLEEP_SEC = 0.5
 
 
 def showing_off(image_list, log="", get_image = False):
@@ -104,6 +108,11 @@ class Bot_Mind:
         self.pub = TikiMini()
         pub = self.pub
         pub.set_motor_mode(pub.MOTOR_MODE_PID)
+        pub.set_motor_power(pub.MOTOR_LEFT, 0)
+        pub.set_motor_power(pub.MOTOR_RIGHT, 0)
+        pub.stop_buzzer()
+        pub.log_clear()
+
         # pub.log(f" AI-FORCE  >v< {pub.get_battery_voltage()}V {pub.get_current()}mA")
         
 
@@ -113,17 +122,20 @@ class Bot_Mind:
         if DO_SECOND:
             self.thread_model_second = Process(target=run_model_second, args=(pub, FILE_SECOND, self.shared_list, DO_SECOND_DETR))
             self.thread_model_second.start()
-        self.shared_list[0] = [np.zeros((480, 640, 3))]
+            self.shared_list[0] = [np.zeros((480, 640, 3))]
 
 
-        # first thread: 모델 하나 준비, RT인지 YOLO인지 확인까지.
-        '''단, 이때 반드시 cuda 켜서 진행할 것! 아래 주석 되어있는 건 cpu 상 테스트였기 때문...'''
-        if DO_DETR:
-            self.model_each = RTDETR(FILE_EACH)
+        if DO_MODEL:
+            # first thread: 모델 하나 준비, RT인지 YOLO인지 확인까지.
+            '''단, 이때 반드시 cuda 켜서 진행할 것! 아래 주석 되어있는 건 cpu 상 테스트였기 때문...'''
+            if DO_DETR:
+                self.model_each = RTDETR(FILE_EACH)
+            else:
+                self.model_each = YOLO(FILE_EACH)
+            self.model_each.to('cuda')
+            null_predict_to_turn_on = self.model_each.predict(np.zeros((480, 640, 3)))
         else:
-            self.model_each = YOLO(FILE_EACH)
-        self.model_each.to('cuda')
-        null_predict_to_turn_on = self.model_each.predict(np.zeros((480, 640, 3)))
+            self.model_each = None
 
 
         # 기타 기본 셋팅
@@ -136,44 +148,72 @@ class Bot_Mind:
             StartMode(pub),
 
             Turn2VoidMode(pub, 4,       is_left=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 13,      is_left=False,  is_curve=False),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
 
             # Stanley2CrossMode(pub, 1,   use_green = True),
             Stanley2GreenMode(pub, 1.5),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             # Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
             Turn2VoidMode(pub, 2.5,       is_left=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Stanley2GreenMode(pub, 3,   left_offset = -10, prefer_dist=200),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 4,       is_left=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
 
             EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             # Turn2RoadMode(pub, 11,      is_left=True),
             Turn2VoidMode(pub, 11.5,       is_left=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             # Stanley2CrossMode(pub, 12),/
             Stanley2GreenMode(pub, 12.5),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             # Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
             Turn2VoidMode(pub, 13.5,       is_left=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
 
             EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
-            Turn2RoadMode(pub, 21,      is_left=False),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
+            # Turn2RoadMode(pub, 21,      is_left=False),
+            Turn2VoidMode(pub, 21.5,      is_left=False),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             # Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
             Stanley2GreenMode(pub, 22.5),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Stanley2GreenMode(pub, 24,  left_offset = -10),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 25,      is_left=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
 
             EventMode(pub, self.model_each, self.shared_list, 30, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 31,      is_left=False),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 33,      is_left=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
 
             EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 41,      is_left=False),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Stanley2GreenMode(pub, 42.5),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             # Stanley2CrossMode(pub, 42,  right_way=False),
             Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Stanley2GreenMode(pub, 44, speed_weight = 1),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
 
             EndMode(pub, None, 100, predict_all=False),
         ]
