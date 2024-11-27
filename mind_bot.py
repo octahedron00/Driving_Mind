@@ -24,7 +24,7 @@ FILE_EACH = "yolov8n.pt"
 FILE_SECOND = "rtdetr-l.pt"
 
 IS_LOG = True
-IS_LOG_VID = False
+IS_LOG_VID = True
 IS_LOG_SIGHT = False
 
 IS_SHOW = True
@@ -95,7 +95,7 @@ class Bot_Mind:
         if IS_LOG_SIGHT:
             self.log_sight_writer = cv2.VideoWriter(os.path.join("log", f"vlog_sight_{now}.avi"), cv2.VideoWriter_fourcc(*'MJPG'), CAM_FRAMERATE + 0.0, (1920, 1080))
         if IS_LOG_VID:
-            self.logwriter = cv2.VideoWriter(os.path.join("log", f"vlog_{now}.avi"), cv2.VideoWriter_fourcc(*'MJPG'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
+            self.logwriter = cv2.VideoWriter(os.path.join("log", f"vlog_{now}.avi"), cv2.VideoWriter_fourcc(*'MJPG'), CAM_FRAMERATE + 0.0, (CAM_WIDTH/2, CAM_HEIGHT/2))
         if IS_LOG:
             self.logtxt = open(os.path.join("log", f"log_{now}.txt"), 'w')
 
@@ -233,8 +233,9 @@ class Bot_Mind:
             
             # vlog 만들 때, 번호를 그려주는 방식으로.
             if IS_LOG_VID:
-                cv2.putText(frame, f"{self.count_frame:04d}", (20, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
-                self.logwriter.write(frame)
+                frame_write = cv2.resize(frame_write, dsize=(CAM_WIDTH/2, CAM_HEIGHT/2))
+                cv2.putText(frame_write, f"{self.count_frame:04d}", (20, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
+                self.logwriter.write(frame_write)
         else:
             if DO_SECOND:
                 self.thread_model_second.join()

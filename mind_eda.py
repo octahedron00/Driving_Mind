@@ -124,7 +124,8 @@ if __name__=="__main__":
     while cap.isOpened():
         ret, frame = cap.read()
 
-        frame = np.array(frame[::-1])
+        
+        # frame = np.array(frame[::-1])
         if not ret:
             print("End of Video?")
             break
