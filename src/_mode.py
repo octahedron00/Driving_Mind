@@ -478,7 +478,7 @@ class EventMode(Mode):
 
             # 만약 second가 아니라 여기서 결과를 내야 한다면, 이렇게 진행.
             if self.show_log:
-                self.pub.log(f" {AREA_NAME[self.index]} AREA: Ally {count_result_map[KEY_PREDICT[0]]} / Enem {count_result_map[KEY_PREDICT[1]]}")
+                self.pub.log(f" {AREA_NAME[self.index]}: Ally {count_result_map[KEY_PREDICT[0]]} / Enem {count_result_map[KEY_PREDICT[1]]}")
 
             # model_second를 위해서 자료 제공
             self.shared_list[int(self.index/10)] = self.capsule[f"event_{self.index}_frame_list"]
