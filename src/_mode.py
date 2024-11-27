@@ -111,6 +111,8 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
         speed_left *= 180 / speed_max
         speed_right *= 180 / speed_max
 
+    print("SPEED: ", speed_left, speed_right)
+
     speed_left, speed_right = int(speed_left), int(speed_right)
 
     pub.set_motor_power(pub.MOTOR_LEFT, speed_left)
