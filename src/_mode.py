@@ -57,6 +57,9 @@ TRUE_GREEN_DIST_FROM_ROAD = 30  # mm
 BEV_SHAPE = (300, 200)
 
 # for event:
+
+TIME_MOVE_BACK = 0.1 / SPEED_X
+
 CONF_THRESHOLD = 0.6
 IOU_THRESHOLD = 0.6
 WAIT_FRAME_4_MODEL = 20 # 0.5 second: will be enough for jetson nano computing smaller yolo
@@ -301,7 +304,7 @@ class EventMode(Mode):
 
         self.shared_list = shared_list_model_second
 
-        self.phase = 1
+        self.phase = 0
         self.n_frame = n_frame
         self.n_frame_done = 0
 
@@ -342,9 +345,23 @@ class EventMode(Mode):
         self.log_set(self.index, "Event")
         self.log_set("phase", self.phase)
 
+        if self.phase == 0:
+            self.time_start = time.time()
+            self.phase = 1
+            move_robot(self.pub)
+
+        
+        if self.phase == 1:
+            self.log_add("mode ", self.n_frame)
+            move_robot(self.pub, -SPEED_X)
+
+            if time.time() - self.time_start > TIME_MOVE_BACK:
+                move_robot(self.pub)
+                self.phase = 2
+    
 
         ### phase 1: getting frames and run prediction for each. 
-        if self.phase == 1:
+        if self.phase == 2:
             self.log_add("mode ", self.n_frame)
             move_robot(self.pub)
 
@@ -396,57 +413,63 @@ class EventMode(Mode):
 
             # 프레임 다 썼다면? 다음 phase로 넘어가기.
             if self.n_frame - self.n_frame_done < 1:
-                self.phase = 2
+                self.phase = 3
 
 
         ### phase 2: Get consensus of count result! 
-        elif self.phase == 2:
-            self.phase = 3
+        elif self.phase == 3:
+            self.phase = 4
             self.time_start = time.time()
 
             count_result_map = get_vote_count_result(self.count_map_list)
 
             if count_result_map[KEY_PREDICT[-1]] > 0: # enem_tank
-                n_xy = len(self.enem_tank_x_list)
-                enem_tank_xy = (sorted(self.enem_tank_x_list)[int((n_xy - 0.5) / 2)], sorted(self.enem_tank_y_list)[int((n_xy - 0.5) / 2)])
+                # n_xy = len(self.enem_tank_x_list)
+                # enem_tank_xy = (sorted(self.enem_tank_x_list)[int((n_xy - 0.5) / 2)], sorted(self.enem_tank_y_list)[int((n_xy - 0.5) / 2)])
 
                 '''
-                    Angle을 찾는 방법: 탱크와 내 점을 이미지 상에 선으로 이어놓고, BEV로 옮겨서 나온 선의 각도를 구함.
-                    지금은 돌아갈 방향과 속도, 그리고 시간을 미리 계산한다.
+                    # Angle을 찾는 방법: 탱크와 내 점을 이미지 상에 선으로 이어놓고, BEV로 옮겨서 나온 선의 각도를 구함.
+                    # 지금은 돌아갈 방향과 속도, 그리고 시간을 미리 계산한다.
 
-                    사실 문제는, 20도 이상 벌어진 경우 찾을 수 없다는 점. 시야각이 실제로는 많이 넓기 때문에 도움이 되지 않을 수도 있다.
-                    심지어 line이 안 보일 수도 있는 수준.. 그러면 대형사고다. 가서 봐야 알겠지만, 일단 그렇다.
+                    # 사실 문제는, 20도 이상 벌어진 경우 찾을 수 없다는 점. 시야각이 실제로는 많이 넓기 때문에 도움이 되지 않을 수도 있다.
+                    # 심지어 line이 안 보일 수도 있는 수준.. 그러면 대형사고다. 가서 봐야 알겠지만, 일단 그렇다.
                     
-                    이에 2가지 대안이 가능하다.
-                    Inference 시간이 짧다면, 그리고 항상 뜬다는 확신이 있다면 
-                    그 x 값이 중앙에 올 때까지 돌아가기 정도가 가능하다. Gradient Descend 식으로
+                    # 이에 2가지 대안이 가능하다.
+                    # Inference 시간이 짧다면, 그리고 항상 뜬다는 확신이 있다면 
+                    # 그 x 값이 중앙에 올 때까지 돌아가기 정도가 가능하다. Gradient Descend 식으로
 
-                    둘 중 하나라도 아니라면, BEV랑 같이 각도 값을 다 잡아둬야 한다.
-                    그리고 x 값에 따른 각도를 미리 정해두고 돌아가면 된다.
+                    # 둘 중 하나라도 아니라면, BEV랑 같이 각도 값을 다 잡아둬야 한다.
+                    # 그리고 x 값에 따른 각도를 미리 정해두고 돌아가면 된다.
+
+                    아니, 일단 필요 없으니까 그냥 하자.
+                    각도 맞추는 게 아니라 그냥 쏘면 된다. 센서는 안 움직이니까!
 
                 '''
 
-                #EDA 여기를 바꿔야 하면 바꿀 것!!!
-                angle_frame = np.zeros_like(frame)
-                cv2.line(angle_frame, enem_tank_xy, (int(np.shape(angle_frame)[1] / 2), np.shape(angle_frame)[0]), 255, 2)
-                angle_bev = get_bev(angle_frame)
-                _bev, angle = get_road_edge_angle(angle_bev, ignore_canny=True)
+                self.pub.play_buzzer(880)
+                self.pub.fire_cannon()
+                self.pub.stop_buzzer()
+                # #EDA 여기를 바꿔야 하면 바꿀 것!!!
+                # angle_frame = np.zeros_like(frame)
+                # cv2.line(angle_frame, enem_tank_xy, (int(np.shape(angle_frame)[1] / 2), np.shape(angle_frame)[0]), 255, 2)
+                # angle_bev = get_bev(angle_frame)
+                # _bev, angle = get_road_edge_angle(angle_bev, ignore_canny=True)
 
-                k = SPEED_Z
-                if angle > 0:
-                    k = -k
-                angle = abs(angle)
+                # k = SPEED_Z
+                # if angle > 0:
+                #     k = -k
+                # angle = abs(angle)
 
-                self.rot_time = TIME_90DEG * angle / 90
-                self.rot_speed = k
+                # self.rot_time = TIME_90DEG * angle / 90
+                # self.rot_speed = k
 
-                self.log_add("Enem tank angle", angle)
-                self.log_add("rot speed", k)
-                self.log_add("rot time", self.rot_time)
+                # self.log_add("Enem tank angle", angle)
+                # self.log_add("rot speed", k)
+                # self.log_add("rot time", self.rot_time)
 
             # if enem tank is not found here: skip adjusting / no cannon firing
-            else:
-                self.phase = 5
+            # else:
+            self.phase = 5
 
             self.log_add("prediction result: ", str(count_result_map))
 
@@ -458,38 +481,38 @@ class EventMode(Mode):
             self.shared_list[int(self.index/10)] = self.capsule[f"event_{self.index}_frame_list"]
 
 
-        ### phase 3: For enem_tank: rotate the exact angle one time and fire cannon
-        elif self.phase == 3:
-            '''
-                만약 매번 adjust해야 한다면, 여기를 수정하면 되는 일.
-                그러나 그 가능성이 매우 낮다고 가정하여, 여기서는 수행하지 않음.
-            '''
-            if self.rot_time > time.time() - self.time_start:
-                self.log_add("speed: ", self.rot_speed)
-                self.log_add("rotating: ", self.wait_sec)
-                self.log_add("until: ", time.time() - self.time_start)
-                move_robot(self.pub, 0, self.rot_speed)
-            else:
-                self.phase = 4
-                self.time_start = time.time()
-                move_robot(self.pub)
-                self.pub.play_buzzer(880)
-                self.pub.fire_cannon()
-                self.pub.stop_buzzer()
-                # BANG!!!
+        # ### phase 3: For enem_tank: rotate the exact angle one time and fire cannon
+        # elif self.phase == 3:
+        #     '''
+        #         만약 매번 adjust해야 한다면, 여기를 수정하면 되는 일.
+        #         그러나 그 가능성이 매우 낮다고 가정하여, 여기서는 수행하지 않음.
+        #     '''
+        #     if self.rot_time > time.time() - self.time_start:
+        #         self.log_add("speed: ", self.rot_speed)
+        #         self.log_add("rotating: ", self.wait_sec)
+        #         self.log_add("until: ", time.time() - self.time_start)
+        #         move_robot(self.pub, 0, self.rot_speed)
+        #     else:
+        #         self.phase = 4
+        #         self.time_start = time.time()
+        #         move_robot(self.pub)
+        #         self.pub.play_buzzer(880)
+        #         self.pub.fire_cannon()
+        #         self.pub.stop_buzzer()
+        #         # BANG!!!
 
 
-        ### phase 4: Rotate back the exact same angle (preparing next move)
-        elif self.phase == 4:
-            if self.rot_time > time.time() - self.time_start:
-                self.log_add("speed: ", -self.rot_speed)
-                self.log_add("rotating_back: ", self.wait_sec)
-                self.log_add("until: ", time.time() - self.time_start)
-                move_robot(self.pub, 0, -self.rot_speed)
-            else:
-                self.phase = 5
-                self.time_start = time.time()
-                move_robot(self.pub)
+        # ### phase 4: Rotate back the exact same angle (preparing next move)
+        # elif self.phase == 4:
+        #     if self.rot_time > time.time() - self.time_start:
+        #         self.log_add("speed: ", -self.rot_speed)
+        #         self.log_add("rotating_back: ", self.wait_sec)
+        #         self.log_add("until: ", time.time() - self.time_start)
+        #         move_robot(self.pub, 0, -self.rot_speed)
+        #     else:
+        #         self.phase = 5
+        #         self.time_start = time.time()
+        #         move_robot(self.pub)
 
 
         ### phase 5: Waiting a little bit: to fill the frames again...
