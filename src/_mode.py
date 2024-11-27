@@ -59,8 +59,7 @@ BEV_SHAPE = (300, 200)
 # for event:
 CONF_THRESHOLD = 0.6
 IOU_THRESHOLD = 0.6
-WAIT_FRAME_4_MODEL = 10 # 0.5 second: will be enough for jetson nano computing smaller yolo
-WAIT_FRAME_4_MODEL = 0
+WAIT_FRAME_4_MODEL = 20 # 0.5 second: will be enough for jetson nano computing smaller yolo
 
 KEY_PREDICT = ("ally", "enem", "ally_tank", "enem_tank")
 AREA_NAME = "0ABCDXXXX"*5 # 1번도 A, 10번도 A, 2번도 B, 20번도 B, 를 만드는 괜찮은 방법.

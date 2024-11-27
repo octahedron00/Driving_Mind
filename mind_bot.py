@@ -20,7 +20,7 @@ from src._model_second import run_model_second
 DO_DETR = False
 DO_SECOND = False
 DO_SECOND_DETR = False
-FILE_EACH = "best.pt"
+FILE_EACH = "yolov8n.pt"
 FILE_SECOND = "rtdetr-l.pt"
 
 IS_LOG = True
