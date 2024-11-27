@@ -141,7 +141,7 @@ def get_bev(image):
 
 
 
-def get_road(image):
+def get_road(image, with_green = True):
     """
     returning black and green in binary
 
@@ -151,12 +151,19 @@ def get_road(image):
     black_max = 120 # EDA
     black_min = 0
 
-    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # black = cv2.inRange(image_gray, black_min, black_max)
 
-    black = cv2.inRange(image_gray, black_min, black_max)
+
+    hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+    black = cv2.inRange(hls, (0, 0, 0), (180, black_max, 30)) # EDA
+
     green = get_green(image)
-    
-    road_bin = cv2.add(black, green)
+
+    if with_green:
+        road_bin = cv2.add(black, green)
+    else:
+        road_bin = black
 
     return road_bin
 

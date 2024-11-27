@@ -33,7 +33,7 @@ IS_SHOW = True
 FRAME_IGNORE_LEVEL = 1
 CAM_WIDTH = 1280
 CAM_HEIGHT = 960
-CAM_FRAMERATE = 20
+CAM_FRAMERATE = 16
 VID_CONNECT_CMD = (
     f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
     f'! nvvidconv flip-method=2 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
@@ -95,7 +95,7 @@ class Bot_Mind:
         if IS_LOG_SIGHT:
             self.log_sight_writer = cv2.VideoWriter(os.path.join("log", f"vlog_sight_{now}.avi"), cv2.VideoWriter_fourcc(*'MJPG'), CAM_FRAMERATE + 0.0, (1920, 1080))
         if IS_LOG_VID:
-            self.logwriter = cv2.VideoWriter(os.path.join("log", f"vlog_{now}.avi"), cv2.VideoWriter_fourcc(*'MJPG'), CAM_FRAMERATE + 0.0, (CAM_WIDTH/2, CAM_HEIGHT/2))
+            self.logwriter = cv2.VideoWriter(os.path.join("log", f"vlog_{now}.avi"), cv2.VideoWriter_fourcc(*'MJPG'), CAM_FRAMERATE + 0.0, (int(CAM_WIDTH/2), int(CAM_HEIGHT/2)))
         if IS_LOG:
             self.logtxt = open(os.path.join("log", f"log_{now}.txt"), 'w')
 
@@ -142,31 +142,31 @@ class Bot_Mind:
             Turn2VoidMode(pub, 4,       is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
-            Turn2RoadMode(pub, 11,      is_left=True,   min_turn_sec=1),
+            Turn2RoadMode(pub, 11,      is_left=True),
             # Stanley2CrossMode(pub, 12),/
             Stanley2GreenMode(pub, 12.5),
-            Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True,  min_turn_sec=1.),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1.3),
+            Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
+            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1),
             Turn2VoidMode(pub, 15,      is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
-            Turn2RoadMode(pub, 21,      is_left=False,  min_turn_sec=1.),
+            Turn2RoadMode(pub, 21,      is_left=False),
             # Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
             Stanley2GreenMode(pub, 22.5),
-            Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True, min_turn_sec=1.),
+            Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
             Stanley2GreenMode(pub, 24,  left_offset = -10),
             Turn2VoidMode(pub, 25,      is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 30, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
-            Turn2RoadMode(pub, 31,      is_left=False, min_turn_sec=1.),
+            Turn2RoadMode(pub, 31,      is_left=False),
             Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10),
             Turn2VoidMode(pub, 33,      is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
-            Turn2RoadMode(pub, 41,      is_left=False,  min_turn_sec=1.),
+            Turn2RoadMode(pub, 41,      is_left=False),
             Stanley2GreenMode(pub, 42.5),
             # Stanley2CrossMode(pub, 42,  right_way=False),
-            Turn2RoadMode(pub, 43,      is_left=True,   min_turn_sec=1., is_curve=True),
+            Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
             Stanley2GreenMode(pub, 44, speed_weight = 1),
 
             EndMode(pub, None, 100, predict_all=False),
@@ -233,8 +233,9 @@ class Bot_Mind:
             
             # vlog 만들 때, 번호를 그려주는 방식으로.
             if IS_LOG_VID:
-                frame_write = cv2.resize(frame_write, dsize=(CAM_WIDTH/2, CAM_HEIGHT/2))
-                cv2.putText(frame_write, f"{self.count_frame:04d}", (20, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
+                frame_write = cv2.resize(frame, dsize=(int(CAM_WIDTH/2), int(CAM_HEIGHT/2)))
+                cv2.putText(frame_write, f"{self.count_frame:04d}", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
+                cv2.putText(frame_write, self.mode.log, (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.3, color=(0, 0, 0), thickness=1)
                 self.logwriter.write(frame_write)
         else:
             if DO_SECOND:

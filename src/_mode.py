@@ -43,9 +43,9 @@ def calibrate(img):
 BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
 
-SPEED_X = 1.0
-SPEED_Z = 1.0
-TIME_90DEG = 1.5 / SPEED_Z
+SPEED_X = 0.2
+SPEED_Z = 0.3
+TIME_90DEG = 0.5 / SPEED_Z
 
 # 반경 줄일 거면 값을 높이기: x_speed 감소함
 RADIUS_VZ_OVER_VX_CONST = 240  #EDA
@@ -67,7 +67,7 @@ AREA_NAME = "0ABCDXXXX"*5 # 1번도 A, 10번도 A, 2번도 B, 20번도 B, 를 �
 
 PREFER_ERR_DEG = 5
 
-PREFER_DIST = 250
+PREFER_DIST = 300
 PREFER_ERR_RATIO = 0.1
 
 
@@ -116,12 +116,12 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
 def move_stanley(pub, offset_mm, angle_deg, x_ratio=1):
 
-    kp = 0.035
+    kp = 0.05
     ka = 0.10
-    k = 0.5
+    k = 1
     x = SPEED_X * x_ratio
 
-    z = -(angle_deg * ka - math.atan(kp * offset_mm)) * x * k
+    z = -(angle_deg * ka - math.atan(kp * offset_mm)) * k
 
     move_robot(pub, x, z)
 
@@ -791,7 +791,7 @@ class Stanley2CrossMode(Mode):
 
 class Turn2RoadMode(Mode):
 
-    def __init__(self, pub, index=0, is_left=True, min_turn_sec=1.2, is_curve=False):
+    def __init__(self, pub, index=0, is_left=True, min_turn_sec=TIME_90DEG*0.9, is_curve=False):
         """
             is_left: 왼쪽으로 돌 때 true / 오른쪽으로 돌 거면 false
             min_turn_sec: 길을 무시하고 돌아갈 시간, 다른 오브젝트나 기물이 길처럼 보일 수 있음: 예상 시간의 80% 정도로 잡기.

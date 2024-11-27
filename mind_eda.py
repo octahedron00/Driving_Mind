@@ -123,7 +123,7 @@ if __name__=="__main__":
 
     while cap.isOpened():
         ret, frame = cap.read()
-
+        frame = cv2.resize(frame, dsize=(np.shape(frame)[1]*2, np.shape(frame)[0]*2))
         
         # frame = np.array(frame[::-1])
         if not ret:
