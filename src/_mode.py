@@ -576,8 +576,6 @@ class _SheepMode(Mode):
 
         # slidingwindow
         road_bev = get_road(bev)
-        road_blur_bev = get_rect_blur(road_bev, 5)
-        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
 
 
 
@@ -599,7 +597,7 @@ class _SheepMode(Mode):
 
         # showoff now
         if showoff:
-            self.show_list = [frame, bev, road_bev, road_sw_bev]
+            self.show_list = [frame, bev, road_bev]
 
 
 #S2G
