@@ -43,7 +43,7 @@ def calibrate(img):
 BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
 
-SPEED_X = 0.3
+SPEED_X = 0.25
 SPEED_Z = 0.5
 TIME_90DEG = 0.53 / SPEED_Z
 
@@ -70,7 +70,7 @@ AREA_NAME = "0ABCDXXXX"*5 # 1번도 A, 10번도 A, 2번도 B, 20번도 B, 를 �
 
 PREFER_ERR_DEG = 5
 
-PREFER_DIST = 280
+PREFER_DIST = 300
 PREFER_ERR_RATIO = 0.15
 
 
