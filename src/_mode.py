@@ -67,8 +67,8 @@ AREA_NAME = "0ABCDXXXX"*5 # 1번도 A, 10번도 A, 2번도 B, 20번도 B, 를 �
 
 PREFER_ERR_DEG = 5
 
-PREFER_DIST = 300
-PREFER_ERR_RATIO = 0.1
+PREFER_DIST = 280
+PREFER_ERR_RATIO = 0.15
 
 
 # 이거 쓰게 될까? 아니었으면 좋겠지만, 바로 준비 가능하게 준비하자.
@@ -273,7 +273,10 @@ class EndMode(Mode):
             #     self.pub.log(f"Ally: {count_result[KEY_PREDICT[0]]} / Enem: {count_result[KEY_PREDICT[1]]}")
 
         if self.running:
-            sing(self.pub)
+            '''
+                sing sing sing sing 
+            '''
+            # sing(self.pub)
             self.running = False
 
 
@@ -833,7 +836,7 @@ class Turn2RoadMode(Mode):
         self.log_add("phase", self.phase)
 
         bev = get_bev(frame)
-        road_bev = get_road(bev)
+        road_bev = get_road(bev, with_green=False)
         road_blur_bev = get_rect_blur(road_bev, 5)
         road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
 

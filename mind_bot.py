@@ -245,10 +245,6 @@ class Bot_Mind:
         cv2.waitKey(1)
 
 
-        # 영상 재생 중에는 프레임이 너무 빨리 넘어가서... 그래서 추가함
-        if len(VID_CONNECT_CMD) < 30:
-            time.sleep(max(0, 0.1 - time.time() + time_start))
-
 if __name__ == "__main__":
 
     Bot_Mind()
