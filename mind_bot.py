@@ -135,21 +135,24 @@ class Bot_Mind:
         self.mode_list = [
             StartMode(pub),
 
-            Stanley2CrossMode(pub, 1,   use_green = True),
-            Turn2RoadMode(pub, 2,       is_left=False,  is_curve=True),
+            # Stanley2CrossMode(pub, 1,   use_green = True),
+            Stanley2GreenMode(pub, 1.5),
+            Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
             Stanley2GreenMode(pub, 3,   left_offset = -10),
             Turn2VoidMode(pub, 4,       is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 11,      is_left=True,   min_turn_sec=1),
-            Stanley2CrossMode(pub, 12),
-            Turn2RoadMode(pub, 13,      is_left=False,  is_curve=True,  min_turn_sec=1.),
+            # Stanley2CrossMode(pub, 12),/
+            Stanley2GreenMode(pub, 12.5),
+            Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True,  min_turn_sec=1.),
             Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1.3),
             Turn2VoidMode(pub, 15,      is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 21,      is_left=False,  min_turn_sec=1.),
-            Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
+            # Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
+            Stanley2GreenMode(pub, 22.5),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True, min_turn_sec=1.),
             Stanley2GreenMode(pub, 24,  left_offset = -10),
             Turn2VoidMode(pub, 25,      is_left=True),
@@ -161,9 +164,10 @@ class Bot_Mind:
 
             EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 41,      is_left=False,  min_turn_sec=1.),
-            Stanley2CrossMode(pub, 42,  right_way=False),
+            Stanley2GreenMode(pub, 42.5),
+            # Stanley2CrossMode(pub, 42,  right_way=False),
             Turn2RoadMode(pub, 43,      is_left=True,   min_turn_sec=1., is_curve=True),
-            # Stanley2GreenMode(pub, 44, speed_weight = 1.5),
+            Stanley2GreenMode(pub, 44, speed_weight = 1),
 
             EndMode(pub, None, 100, predict_all=False),
         ]

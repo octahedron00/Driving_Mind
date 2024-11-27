@@ -607,6 +607,7 @@ class Stanley2GreenMode(Mode):
 
         ### 녹색 보고 phase 2: 속도 자체를 녹색 표식과의 위치 관계에 따라 바꿈, PREFER_ERR_RATIO 안으로 들어오면 끝. 
         elif self.phase == 2:
+            self.capsule["dist_from_cross"] = 0
             # 만약 Green이 사라진다면? 일단 거기서 끝내기. 그럴 일은 없겠지만, 거기서 멈추기로 함.
             if green_max < TRUE_GREEN_CONF:
                 self.end = True
@@ -761,6 +762,7 @@ class Stanley2CrossMode(Mode):
                 self.phase = 2
 
         elif self.use_green and self.phase == 2:
+            self.capsule["dist_from_cross"] = 0
             # 만약 Green이 사라진다면? 일단 거기서 끝내기. 그럴 일은 없겠지만, 거기서 멈추기로 함.
             if green_max < TRUE_GREEN_CONF:
                 self.end = True
