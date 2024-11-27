@@ -123,7 +123,7 @@ def move_stanley(pub, offset_mm, angle_deg, x_ratio=1):
 
     kp = 0.05
     ka = 0.10
-    k = 1.5
+    k = 2
     x = SPEED_X * x_ratio
 
     z = -(angle_deg * ka - math.atan(kp * offset_mm)) * k * x * x 
