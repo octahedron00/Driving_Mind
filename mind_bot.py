@@ -31,14 +31,14 @@ IS_SHOW = True
 
 
 FRAME_IGNORE_LEVEL = 1
-CAM_WIDTH = 1920
-CAM_HEIGHT = 1080
-CAM_FRAMERATE = 20
+CAM_WIDTH = 1280
+CAM_HEIGHT = 960
+CAM_FRAMERATE = 8
 VID_CONNECT_CMD = (
-    f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width=3280, height=2464, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
+    f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
     f'! nvvidconv flip-method=0 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
     f'! videoconvert ! video/x-raw, format=(string)BGR '
-    f'! appsink'
+    f'! appsink max-buffers=1 drop=True'
 )
 
 
@@ -121,7 +121,7 @@ class Bot_Mind:
             self.model_each = RTDETR(FILE_EACH)
         else:
             self.model_each = YOLO(FILE_EACH)
-        # self.model_each.to('cuda')
+        self.model_each.to('cuda')
         null_predict_to_turn_on = self.model_each.predict(np.zeros((480, 640, 3)))
 
 
