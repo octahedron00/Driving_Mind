@@ -8,7 +8,7 @@ import datetime
 
 import keyboard
 
-from src.fake_tiki import TikiMini
+from tiki.mini import TikiMini
 
 from src._mode import move_robot
 from mind_bot import showing_off, VID_CONNECT_CMD, FRAME_IGNORE_LEVEL, CAM_WIDTH, CAM_HEIGHT, CAM_FRAMERATE
