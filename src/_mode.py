@@ -890,7 +890,7 @@ class Stanley2CrossMode(Mode):
 
 class Turn2RoadMode(Mode):
 
-    def __init__(self, pub, index=0, is_left=True, min_turn_sec=TIME_90DEG*0.8, is_curve=False):
+    def __init__(self, pub, index=0, is_left=True, min_turn_sec=TIME_90DEG*0.8, is_curve=False, z_ratio = 1):
         """
             is_left: 왼쪽으로 돌 때 true / 오른쪽으로 돌 거면 false
             min_turn_sec: 길을 무시하고 돌아갈 시간, 다른 오브젝트나 기물이 길처럼 보일 수 있음: 예상 시간의 80% 정도로 잡기.
@@ -914,7 +914,7 @@ class Turn2RoadMode(Mode):
         self.time_since_phase = 0
         self.est_time = 0
 
-        self.rot_z = SPEED_Z
+        self.rot_z = SPEED_Z * z_ratio
         self.speed_x = 0
 
         self.index = index
@@ -976,7 +976,8 @@ class Turn2RoadMode(Mode):
         if self.phase == 2:
             self.log_add("no_line")
 
-            move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
+            if self.road_encounter <= 0:
+                move_robot(self.pub, self.speed_x, self.rot_z, self.is_left)
 
             if len(x_list) > 2:
                 self.init_pos_for_sliding_windows = x_list[1]
@@ -991,11 +992,13 @@ class Turn2RoadMode(Mode):
 
                 if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
                     self.road_encounter += 1
-                
+                    move_robot(self.pub, self.speed_x, -self.rot_z, self.is_left)
                 # needs 2 time for road_encounter
                 if self.road_encounter >= 2:
                     move_robot(self.pub)
                     self.end = True
+            else:
+                self.road_encounter = max(0, self.road_encounter-1)
 
         if showoff:
             self.show_list = [frame, bev, road_bev, road_sw_bev]

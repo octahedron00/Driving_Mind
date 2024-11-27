@@ -36,6 +36,7 @@ def show(frame, frame_before, stop=False):
     green_bev_cm = get_cm_px_from_mm(green_bev)
     green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
     edge_bev, _ = get_road_edge_angle(road_bev)
+    sliding_bev, _, _ = get_sliding_window_result(road_bev)
     cross_bev, _, _, _, _ = get_sliding_window_and_cross_result(road_bev)
     
     # BEV만드는 ROI는 여기서 만듭니다!
@@ -53,8 +54,9 @@ def show(frame, frame_before, stop=False):
         bev,
         road_bev,
         green_bev,
-        edge_bev,
+        sliding_bev,
         cross_bev,
+        edge_bev,
         get_mm_px_from_cm(green_blur_bev),
         ]
     name_list = [
@@ -62,8 +64,9 @@ def show(frame, frame_before, stop=False):
         'bev',
         'road',
         'green',
-        'edge',
+        'slide',
         'cross',
+        'edge',
         'green_blur',
         ]
     for i, f in enumerate(frame_list):
