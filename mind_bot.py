@@ -135,6 +135,11 @@ class Bot_Mind:
         self.mode_list = [
             StartMode(pub),
 
+            Turn2VoidMode(pub, 4,       is_left=True),
+            EndMode(pub, 0),
+            Turn2RoadMode(pub, 13,      is_left=False,  is_curve=True),
+            EndMode(pub, 0),
+
             # Stanley2CrossMode(pub, 1,   use_green = True),
             Stanley2GreenMode(pub, 1.5),
             Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
