@@ -234,8 +234,8 @@ class Bot_Mind:
             # vlog 만들 때, 번호를 그려주는 방식으로.
             if IS_LOG_VID:
                 frame_write = cv2.resize(frame, dsize=(int(CAM_WIDTH/2), int(CAM_HEIGHT/2)))
-                cv2.putText(frame_write, f"{self.count_frame:04d}", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(0, 0, 0), thickness=1)
-                cv2.putText(frame_write, self.mode.log, (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.3, color=(0, 0, 0), thickness=1)
+                cv2.putText(frame_write, f"{self.count_frame:04d}", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(255,255,255), thickness=1)
+                cv2.putText(frame_write, self.mode.log, (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.15, color=(255,255,255), thickness=1)
                 self.logwriter.write(frame_write)
         else:
             if DO_SECOND:
