@@ -222,8 +222,7 @@ class Bot_Mind:
         # 로그 출력
         if self.mode.running:
             self.mode.log_add("time: ", time.time() - time_start)
-            self.mode.log_add(f"[ battery: {int((self.pub.get_battery_voltage() - 9.5)*100/(12.6-9.5)):02d}%,",
-                              f"{self.pub.get_battery_voltage()}V / {self.pub.get_current()}mA ]")
+            self.mode.log_add(f"[ battery: {self.pub.get_battery_voltage()}V / {self.pub.get_current()}mA ]")
             print(self.mode.log)
             if IS_LOG:
                 self.logtxt.write(self.mode.log + "\n")
