@@ -9,7 +9,7 @@ import os
 
 from ultralytics import YOLO, RTDETR
 
-from src.fake_tiki import TikiMini
+from tiki.mini import TikiMini
 
 from src._mode import get_vote_count_result, IOU_THRESHOLD, CONF_THRESHOLD, KEY_PREDICT, AREA_NAME
 
