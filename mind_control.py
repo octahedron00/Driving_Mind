@@ -83,6 +83,10 @@ class Control_Mind:
                 cv2.imwrite(os.path.join("img", self.image_name, f"{self.image_name}_{self.image_count:04d}.jpg"), frame)
                 print(f"{self.image_name}_{self.image_count:04d}.jpg is saved")
                 self.image_count += 1
+                
+                self.pub.play_buzzer("523")
+                time.sleep(0.05)
+                self.pub.stop_buzzer()
             self.clicked_c = True
         else:
             self.clicked_c = False
@@ -113,7 +117,7 @@ class Control_Mind:
                     self.logwriter = cv2.VideoWriter(f"vlog_control_{now}.avi", cv2.VideoWriter_fourcc(*"MJPG"), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
                     print(f"Recording Start : vlog_control_{now}.avi")
                     self.pub.play_buzzer("440")
-                    time.sleep(0.1)
+                    time.sleep(0.05)
                     self.pub.stop_buzzer()
 
                 else:
@@ -121,7 +125,7 @@ class Control_Mind:
                     self.logwriter.release()
                     self.logwriter = None
                     self.pub.play_buzzer("880")
-                    time.sleep(0.1)
+                    time.sleep(0.05)
                     self.pub.stop_buzzer()
         else:
             self.clicked_v = False
