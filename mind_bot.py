@@ -10,7 +10,7 @@ from multiprocessing import Process, Manager
 
 from ultralytics import YOLO, RTDETR
 
-from src.fake_tiki import TikiMini
+from tiki.mini import TikiMini
 
 from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
 from src._mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode
@@ -18,14 +18,14 @@ from src._model_second import run_model_second
 
 
 DO_DETR = False
-DO_SECOND = True
-DO_SECOND_DETR = True
+DO_SECOND = False
+DO_SECOND_DETR = False
 FILE_EACH = "best.pt"
 FILE_SECOND = "rtdetr-l.pt"
 
 IS_LOG = True
 IS_LOG_VID = True
-IS_LOG_SIGHT = True
+IS_LOG_SIGHT = False
 
 IS_SHOW = True
 
@@ -35,12 +35,11 @@ CAM_WIDTH = 1920
 CAM_HEIGHT = 1080
 CAM_FRAMERATE = 20
 VID_CONNECT_CMD = (
-    f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
+    f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width=3280, height=2464, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
     f'! nvvidconv flip-method=0 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
     f'! videoconvert ! video/x-raw, format=(string)BGR '
     f'! appsink'
 )
-VID_CONNECT_CMD = "test_1080.mp4"
 
 
 def showing_off(image_list, log="", get_image = False):
@@ -93,9 +92,9 @@ class Bot_Mind:
         # 로그파일 만들기
         now = datetime.datetime.now().strftime("%H%M")
         if IS_LOG_SIGHT:
-            self.log_sight_writer = cv2.VideoWriter(os.path.join("log", f"vlog_sight_{now}.avi"), cv2.VideoWriter_fourcc(*'MP4V'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
+            self.log_sight_writer = cv2.VideoWriter(os.path.join("log", f"vlog_sight_{now}.avi"), cv2.VideoWriter_fourcc(*'MJPG'), CAM_FRAMERATE + 0.0, (1920, 1080))
         if IS_LOG_VID:
-            self.logwriter = cv2.VideoWriter(os.path.join("log", f"vlog_{now}.avi"), cv2.VideoWriter_fourcc(*'MP4V'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
+            self.logwriter = cv2.VideoWriter(os.path.join("log", f"vlog_{now}.avi"), cv2.VideoWriter_fourcc(*'MJPG'), CAM_FRAMERATE + 0.0, (CAM_WIDTH, CAM_HEIGHT))
         if IS_LOG:
             self.logtxt = open(os.path.join("log", f"log_{now}.txt"), 'w')
 
