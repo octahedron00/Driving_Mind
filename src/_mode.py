@@ -1107,7 +1107,7 @@ def get_real_time_adjust(is_left=True):
 
 class Turn2VoidMode(Mode):
 
-    def __init__(self, pub, index=0, is_left=True, other_turn_sec=0):
+    def __init__(self, pub, index=0, is_left=True, other_turn_sec=0, use_road_angle = False):
         """
             기본 방식: 지정된 시간 * 돌아야 하는 각도(현재 각도에서 계산)만큼 돌기.
             is_left: 왼쪽으로 돌 것인지 확인
@@ -1138,6 +1138,7 @@ class Turn2VoidMode(Mode):
         self.waiting_for_next_frame = 2
 
         self.index = index
+        self.use_road_angle = use_road_angle
 
     def set_frame_and_move(self, frame, showoff=True):
         """
@@ -1172,14 +1173,17 @@ class Turn2VoidMode(Mode):
                 self.time_since_phase = time.time()
                 move_robot(self.pub)
 
-                angle_at_start = angle
+                if self.use_road_angle:
+                    angle_at_start = angle
+                else:
+                    angle_at_start = 0
 
                 if self.is_left:
                     self.est_time_angle_calc = (TIME_90DEG / 90) * (90 - angle_at_start)
                 else:
                     self.est_time_angle_calc = (TIME_90DEG / 90) * (90 + angle_at_start)
                 self.est_time = self.est_time_angle_calc
-                if abs(angle) > 0: ###### 45 or 10
+                if abs(angle_at_start) > 10: ###### 45 or 10
                     self.est_time = TIME_90DEG 
 
                 self.log_add("angle", angle)

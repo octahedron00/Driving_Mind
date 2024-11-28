@@ -56,8 +56,11 @@ def get_road(image, with_green = True):
 
     hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
     # black_1 = cv2.inRange(hls, (0, 0, 0), (10, black_max, 50)) # EDA
-    black = cv2.inRange(hls, (60, 0, 0), (170, black_max, 50)) # EDA
-    
+    black_origin = cv2.inRange(hls, (0, 0, 0), (180, black_max, 50)) # EDA
+    etc1 = cv2.inRange(hls, (0, 110, 0), (30, 140, 50)) # EDA
+    etc2 = cv2.inRange(hls, (140, 110, 0), (180, 140, 50)) # EDA
+
+    black = cv2.subtract(black_origin, cv2.add(etc1, etc2))
     # black = cv2.add(black_1, black_2)
 
     # black = cv2.inRange(hls, (0, 0, 0), (180, black_max, 60)) # EDA
