@@ -154,6 +154,8 @@ class Bot_Mind:
 
         self.mode_list = [
             StartMode(pub),
+            Turn2VoidMode(pub, 4,       is_left=True),
+            Turn2RoadMode(pub, 13,      is_left=False),
 
 
             Stanley2GreenMode(pub, 1, speeding_time=1.0),
