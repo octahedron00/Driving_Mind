@@ -97,7 +97,7 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 def move_stanley(pub, offset_mm, angle_deg, x_ratio=1):
 
     kp = 0.03 # 0.05
-    ka = 0.12 # 0.10
+    ka = 0.11 # 0.10
     k = 2.0
     x = SPEED_X * x_ratio
 
