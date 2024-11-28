@@ -180,7 +180,7 @@ class Bot_Mind:
             # Turn2VoidMode(pub, 21.5,      is_left=False),
 
             # Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
-            Stanley2GreenMode(pub, 22.5),
+            Stanley2GreenMode(pub, 22.5, from_it=True),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
             Stanley2GreenMode(pub, 24,  left_offset = -10, prefer_dist=230, speeding_time=1.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
