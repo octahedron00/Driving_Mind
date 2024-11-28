@@ -98,7 +98,7 @@ def move_stanley(pub, offset_mm, angle_deg, x_ratio=1):
 
     kp = 0.05
     ka = 0.10
-    k = 2
+    k = 2.2
     x = SPEED_X * x_ratio
 
     z = -(angle_deg * ka - math.atan(kp * offset_mm)) * k * x * x 
@@ -298,7 +298,7 @@ EVE_CONCENSUS_LIMIT = 3
 #Eve
 class EventMode(Mode):
 
-    def __init__(self, pub, models, shared_list_model_second, index, n_frame=5, wait_sec=1.0, show_log = False, step_for_cam = 0):
+    def __init__(self, pub, models, shared_list_model_second, index, n_frame=3, wait_sec=0.1, show_log = False, step_for_cam = 0):
         '''
             model: 여기서 바로 사용할 model의 뭐시기를 그대로 가져옴
             shared_list: model_second를 위한 것
@@ -322,7 +322,7 @@ class EventMode(Mode):
         # WAIT_FRAME_4_MODEL: inference에 걸리는 시간만큼 frame 보내는 역할.
         # 20fps 기준, 대략 10 frame이면 충분할 것!
         # 처음에는 2배 기다림.
-        self.wait_frame_4_predict = 8
+        self.wait_frame_4_predict = 5
 
         self.wait_sec = wait_sec
 
@@ -358,7 +358,8 @@ class EventMode(Mode):
 
         if self.phase == 0:
             self.time_start = time.time()
-            self.phase = 1
+            # skip phase 1
+            self.phase = 2
             move_robot(self.pub)
 
 
@@ -627,8 +628,8 @@ class Stanley2GreenMode(Mode):
 
         self.frame_from_start_sensing = 0
         if from_it:
-            # 20프레임동안은 무시
-            self.frame_from_start_sensing = -20
+            # 20프레임동안은 무시  ###### 25
+            self.frame_from_start_sensing = -25
 
     def set_frame_and_move(self, frame, showoff=True):
         """
@@ -1016,7 +1017,7 @@ class Turn2RoadMode(Mode):
 
             road_edge_bev, angle = get_road_edge_angle(road_bev, self.is_left)
             self.road_angle = angle
-            if abs(self.road_angle) > 20:
+            if abs(self.road_angle) > 10:
                 self.road_angle = 0
             if self.is_left:
                 self.road_angle = -self.road_angle
@@ -1040,7 +1041,7 @@ class Turn2RoadMode(Mode):
         # Phase 1. turning at least certain amount: to ignore post-road
         if self.phase == 1:
 
-            # 아예 처음에 엄청 빨리 돌아서, 시간을 좀 절약하자.
+            # 아예 처음에 엄청 빨리 돌아서, 시간을 좀 절약하자. # not practical
             z_slowing_down = 1*(0.6-(time.time()-self.time_since_phase))
 
             # if self.rot_z < z_slowing_down:
@@ -1078,7 +1079,7 @@ class Turn2RoadMode(Mode):
                     self.road_encounter += 1
                     move_robot(self.pub, 0, -self.rot_z, self.is_left)
                 # needs 2 time for road_encounter
-                if self.road_encounter >= 5:
+                if self.road_encounter >= 3:
                     move_robot(self.pub)
                     self.end = True
             else:
