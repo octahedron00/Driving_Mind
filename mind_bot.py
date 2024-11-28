@@ -134,8 +134,8 @@ class Bot_Mind:
                 self.model_each = YOLO(FILE_EACH)
             self.model_each.to('cuda')
             null_predict_to_turn_on = self.model_each.predict(np.zeros((640, 640, 3)), device=0)
-            null_predict_to_turn_on = self.model_each.predict(np.zeros((640, 640, 3)), device=0)
-            null_predict_to_turn_on = self.model_each.predict([np.zeros((640, 640, 3))]*5, device=0)
+            # null_predict_to_turn_on = self.model_each.predict(np.zeros((640, 640, 3)), device=0)
+            # null_predict_to_turn_on = self.model_each.predict([np.zeros((640, 640, 3))]*5, device=0)
         else:
             self.model_each = None
 
