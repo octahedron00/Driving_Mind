@@ -26,7 +26,7 @@ BOT_FROM_BEV_Y = 500  # edit this
 
 SPEED_X = 0.25
 SPEED_Z = 0.4
-TIME_90DEG = 0.52 / SPEED_Z
+TIME_90DEG = 0.55 / SPEED_Z
 TIME_SET_STANLEY = 1
 RATIO_SPEEDING = 3
 
@@ -194,6 +194,7 @@ class Mode:
     running = True
     phase = 0
     capsule = dict()
+    capsule["angle_from_road"] = 0
     index = 0
     show_list = []
 
@@ -747,6 +748,7 @@ class Stanley2GreenMode(Mode):
         ### 녹색 보고 phase 2: 속도 자체를 녹색 표식과의 위치 관계에 따라 바꿈, PREFER_ERR_RATIO 안으로 들어오면 끝. 
         elif self.phase == 2:
             self.capsule["dist_from_cross"] = 0
+            self.capsule["angle_from_road"] = angle_deg
             # 만약 Green이 사라진다면? 일단 거기서 끝내기. 그럴 일은 없겠지만, 거기서 멈추기로 함.
             if green_max < TRUE_GREEN_CONF:
                 self.end = True
@@ -1022,7 +1024,7 @@ class Turn2RoadMode(Mode):
             dist_from_cross = self.capsule["dist_from_cross"]
 
             road_edge_bev, angle = get_road_edge_angle(road_bev, self.is_left)
-            self.road_angle = angle
+            self.road_angle = self.capsule["angle_from_road"]
             if abs(self.road_angle) > 20:
                 self.road_angle = 0
             if self.is_left:
