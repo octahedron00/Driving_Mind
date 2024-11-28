@@ -25,8 +25,8 @@ BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
 
 SPEED_X = 0.25
-SPEED_Z = 0.35
-TIME_90DEG = 0.55 / SPEED_Z
+SPEED_Z = 0.4
+TIME_90DEG = 0.53 / SPEED_Z
 TIME_SET_STANLEY = 1
 RATIO_SPEEDING = 3
 
@@ -1087,7 +1087,7 @@ class Turn2RoadMode(Mode):
                     self.road_encounter += 1
                     move_robot(self.pub, 0, -self.rot_z, self.is_left)
                 # needs 2 time for road_encounter
-                if self.road_encounter >= 2:
+                if self.road_encounter >= 4:
                     move_robot(self.pub)
                     self.end = True
             else:
