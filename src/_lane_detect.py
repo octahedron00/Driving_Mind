@@ -60,7 +60,7 @@ def get_road(image, with_green = True):
     
     # black = cv2.add(black_1, black_2)
 
-    black = cv2.inRange(hls, (0, 0, 0), (180, black_max, 50)) # EDA
+    black = cv2.inRange(hls, (0, 0, 0), (180, black_max, 60)) # EDA
 
     green = get_green(image)
 
