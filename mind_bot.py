@@ -27,7 +27,7 @@ FILE_EACH = "best.pt"
 
 DO_ENSEMBLE = True
 
-MODEL_FIRST_LIST = ["yolo11s.pt", "yolo11s.pt"]
+MODEL_FIRST_LIST = ["yolo11s.pt"]
 MODEL_SECOND_LIST = ["best.pt", 'yolo11s.pt']
 
 IS_LOG = True
