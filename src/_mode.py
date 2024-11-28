@@ -49,7 +49,7 @@ BOT_FROM_BEV_Y = 500  # edit this
 
 SPEED_X = 0.25
 SPEED_Z = 0.4
-TIME_90DEG = 0.53 / SPEED_Z
+TIME_90DEG = 0.52 / SPEED_Z
 TIME_SET_STANLEY = 1
 RATIO_SPEEDING = 2
 
@@ -299,7 +299,7 @@ EVE_CONCENSUS_LIMIT = 3
 #Eve
 class EventMode(Mode):
 
-    def __init__(self, pub, model, shared_list_model_second, index, n_frame=5, wait_sec=1.0, show_log = False, do_step_back=True):
+    def __init__(self, pub, model, shared_list_model_second, index, n_frame=5, wait_sec=1.0, show_log = False, step_for_cam = 0):
         '''
             model: 여기서 바로 사용할 model의 뭐시기를 그대로 가져옴
             shared_list: model_second를 위한 것
@@ -341,7 +341,7 @@ class EventMode(Mode):
         self.time_start = time.time()
         self.show_log = show_log
 
-        self.do_step_back = do_step_back
+        self.step_for_cam = step_for_cam
 
 
     def set_frame_and_move(self, frame, showoff=True):
@@ -365,14 +365,14 @@ class EventMode(Mode):
 
         ### phase 1: 일단 뒤로 조금 가볼까? -> 90도 맞추기에도 도움이 될 것으로 보임...      
         if self.phase == 1:
-            if not self.do_step_back:
-                move_robot(self.pub)
-                self.phase = 2
 
-            self.log_add("mode ", self.n_frame)
-            move_robot(self.pub, -SPEED_X)
+            # self.log_add("mode ", self.n_frame)
+            if self.step_for_cam > 0:
+                move_robot(self.pub, SPEED_X)
+            elif self.step_for_cam < 0:
+                move_robot(self.pub, -SPEED_X)
 
-            if time.time() - self.time_start > TIME_MOVE_BACK:
+            if (TIME_MOVE_BACK * abs(self.step_for_cam)) < time.time() - self.time_start:
                 move_robot(self.pub)
                 self.phase = 2
     
@@ -476,15 +476,12 @@ class EventMode(Mode):
             self.time_start = time.time()
 
         elif self.phase == 4:
-            if not self.do_step_back:
-                move_robot(self.pub)
-                self.phase = 5
-                return
+            if self.step_for_cam > 0:
+                move_robot(self.pub, -SPEED_X)
+            elif self.step_for_cam < 0:
+                move_robot(self.pub, SPEED_X)
 
-            self.log_add("mode ", self.n_frame)
-            move_robot(self.pub, SPEED_X)
-
-            if time.time() - self.time_start > TIME_MOVE_BACK:
+            if (TIME_MOVE_BACK * abs(self.step_for_cam)) < time.time() - self.time_start:
                 move_robot(self.pub)
                 self.phase = 5
 
@@ -1078,7 +1075,7 @@ class Turn2RoadMode(Mode):
 
                 if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
                     self.road_encounter += 1
-                    move_robot(self.pub, self.speed_x, -self.rot_z*1.5, self.is_left)
+                    move_robot(self.pub)
                 # needs 2 time for road_encounter
                 if self.road_encounter >= 2:
                     move_robot(self.pub)

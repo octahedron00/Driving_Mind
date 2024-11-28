@@ -19,6 +19,88 @@ H_BEV = 300
 W_BEV = 200
 
 
+
+
+'''
+    EDA로 보고, 결과 꺼내는 건 반드시 필요하다.
+    지금 카메라 고정했으니까, 일단 그거 이용하자.
+
+    일단 그거 이용해서 본선 경기장 상태 확인 후 움직인다.
+    밝기는 안 변해도 색상이 변하니까 문제다. 빛을 보면.
+    모니터를 볼 때마다 문제가 생긴다.
+    그 광원을 가려야 한다. 사람들을 세워서라도.
+
+    지금은 WhiteBalance 같은 건 다 껐다.
+    일단 전체적인 문제는 해결된 것 같은데, 실전을 못 해봤다.
+    일단 여기를 중심으로 많이 바뀔 것 같으니, 이렇게 따로 띄어놓기로 한다.
+'''
+
+
+
+
+
+def get_road(image, with_green = True):
+    """
+    returning black and green in binary
+
+    """
+    # rev = 255 - image
+
+    black_max = 120 # EDA
+    black_min = 0
+
+    # image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # black = cv2.inRange(image_gray, black_min, black_max)
+
+
+    hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+    # black_1 = cv2.inRange(hls, (20, 0, 0), (40, black_max, 50)) # EDA
+    # black_2 = cv2.inRange(hls, (90, 0, 0), (160, black_max, 50)) # EDA
+    
+    # black = cv2.add(black_1, black_2)
+
+    black = cv2.inRange(hls, (0, 0, 0), (180, black_max, 50)) # EDA
+
+    green = get_green(image)
+
+    if with_green:
+        road_bin = cv2.add(black, green)
+    else:
+        road_bin = black
+
+    return road_bin
+
+
+
+def get_green(image):
+    """
+        getting green(255) with using 'hls' value filter.
+    """
+    hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+
+    green = cv2.inRange(hls, (35, 40, 45), (80, 200, 255)) # EDA
+    return green
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class Line:
     '''
         To make any linear regression easier to use
@@ -141,34 +223,17 @@ def get_bev(image):
 
 
 
-def get_road(image, with_green = True):
-    """
-    returning black and green in binary
-
-    """
-    # rev = 255 - image
-
-    black_max = 140 # EDA
-    black_min = 0
-
-    # image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # black = cv2.inRange(image_gray, black_min, black_max)
 
 
-    hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
-    black_1 = cv2.inRange(hls, (0, 0, 0), (30, black_max, 50)) # EDA
-    black_2 = cv2.inRange(hls, (90, 0, 0), (180, black_max, 50)) # EDA
-    
-    black = cv2.add(black_1, black_2)
 
-    green = get_green(image)
 
-    if with_green:
-        road_bin = cv2.add(black, green)
-    else:
-        road_bin = black
 
-    return road_bin
+
+
+
+
+
+
 
 
 
@@ -183,7 +248,7 @@ def get_sliding_window_result(image, init=-1):
     win_h = 10
     win_w = 160
     win_n = 10
-    fill_min = 0.15
+    fill_min = 0.10
     fill_max = 0.6
 
     if init > 0:
@@ -311,15 +376,6 @@ def get_rect_blur(frame, size_square_mm = 5):
     return blurred_frame
 
 
-
-def get_green(image):
-    """
-        getting green(255) with using 'hls' value filter.
-    """
-    hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
-
-    green = cv2.inRange(hls, (35, 40, 45), (80, 200, 255)) # EDA
-    return green
 
 
 
