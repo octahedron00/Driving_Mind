@@ -165,8 +165,13 @@ class Bot_Mind:
 
         self.mode_list = [
             StartMode(pub),
-            # Turn2VoidMode(pub, 4,       is_left=True),
-            # Turn2RoadMode(pub, 13,      is_left=False),
+
+
+            ## testing T2V macro : will be more practical than our thoughts...
+            Turn2VoidMode(pub, -2,       is_left=True),
+            _SheepMode(pub, -1.5, sleep_sec = 1),
+            Turn2VoidMode(pub, -1,      is_left=False),
+            EndMode(pub, None, 100, predict_all=False),
 
 
             Stanley2GreenMode(pub, 1, speeding_time=1.0),
