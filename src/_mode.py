@@ -1085,7 +1085,7 @@ class Turn2RoadMode(Mode):
 
                 if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
                     self.road_encounter += 1
-                    move_robot(self.pub)
+                    move_robot(self.pub, 0, -self.rot_z, self.is_left)
                 # needs 2 time for road_encounter
                 if self.road_encounter >= 2:
                     move_robot(self.pub)
