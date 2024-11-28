@@ -219,7 +219,7 @@ class Bot_Mind:
             Stanley2GreenMode(pub, 42, from_it=True),
             Turn2VoidMode(pub, 43,      is_left=True, use_road_angle=True, time_ratio = 0.9),
             # Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
-            Stanley2GreenMode(pub, 44, prefer_dist=200),
+            Stanley2GreenMode(pub, 44, prefer_dist=200, speeding_time=0.5),
 
             EndMode(pub, None, 100, predict_all=False),
         ]
