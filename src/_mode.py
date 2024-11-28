@@ -703,7 +703,7 @@ class Stanley2GreenMode(Mode):
             if time.time() - self.time_start < self.speeding_time:
                 self.log_add("Speeding!!!")
                 z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=RATIO_SPEEDING)
-                if z > S2X_LIMIT_Z:
+                if abs(z) > S2X_LIMIT_Z:
                     self.time_start = time.time()
                     self.phase = 1
                 self.log_add("z speed ", z)
