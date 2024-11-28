@@ -30,7 +30,7 @@ DO_ENSEMBLE = False
 MODEL_FIRST_LIST = ["yolo11s.pt"]
 MODEL_SECOND_LIST = ["best.pt", 'yolo11s.pt']
 
-INF_FRAMES = 3
+INF_FRAMES = 2
 STEP_FOR_CAM = 0
 
 
