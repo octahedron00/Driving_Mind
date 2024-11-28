@@ -1179,15 +1179,15 @@ class Turn2VoidMode(Mode):
                 else:
                     self.est_time_angle_calc = (TIME_90DEG / 90) * (90 + angle_at_start)
                 self.est_time = self.est_time_angle_calc
-                if abs(angle) > 6:
+                if abs(angle) > 0:
                     self.est_time = TIME_90DEG
 
                 self.log_add("angle", angle)
                 self.log_add("time", self.est_time)
-                
+
 
         # turning while the line is shown: to estimate time to be exact 90 degrees
-        if self.phase == 2:
+        elif self.phase == 2:
             self.time_since_phase = time.time()
             move_robot(self.pub, 0, SPEED_Z, self.is_left)
 
@@ -1226,7 +1226,7 @@ class Turn2VoidMode(Mode):
             """
 
         # Phase 3: 그냥 그 시간만큼 turn하면 됨
-        if self.phase == 3:
+        elif self.phase == 3:
 
             if time.time() < self.time_since_phase + (self.est_time * get_real_time_adjust(self.is_left)):
                 move_robot(self.pub, 0, SPEED_Z, self.is_left)
