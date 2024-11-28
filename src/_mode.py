@@ -67,7 +67,8 @@ TIME_MOVE_BACK = 0.05 / SPEED_X
 
 CONF_THRESHOLD = 0.6
 IOU_THRESHOLD = 0.6
-WAIT_FRAME_4_MODEL = 8 # 0.5 second: will be enough for jetson nano computing smaller yolo
+WAIT_FRAME_4_MODEL = 8 # 0.5 second: in 16fps, will be enough for jetson nano computing smaller yolo
+
 
 KEY_PREDICT = ("ally", "enem", "ally_tank", "enem_tank")
 AREA_NAME = "0ABCDXXXX"*5 # 1번도 A, 10번도 A, 2번도 B, 20번도 B, 를 만드는 괜찮은 방법.
@@ -79,26 +80,17 @@ PREFER_DIST = 380
 PREFER_ERR_RATIO = 0.15
 
 
-# 이거 쓰게 될까? 아니었으면 좋겠지만, 바로 준비 가능하게 준비하자.
-TARGET_X_LIST = []
-TARGET_ANGLE_LIST = []
-
-# CALC_TARGET_ANGLE_FROM_X = np.poly1d(np.polyfit(TARGET_X_LIST, TARGET_ANGLE_LIST, deg=3))
-
-
-
 def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
     '''
-        move the robot: with x speed and z rotation value
-        간단함: x만큼 둘다 더하고, z만큼 한쪽 더하고 한쪽 빼줌.
+        # move the robot: with x speed and z rotation value
+        # 간단함: x만큼 둘다 더하고, z만큼 한쪽 더하고 한쪽 빼줌.
 
-        최댓값은 각각 140, 40 rpm으로 되어있음: 대략 30~40cm/s, 6 seconds for rotation
-        높일 수 있지만, 일단 rotation은 더 과감하게 하기 어렵다.
+        # 최댓값은 각각 140, 40 rpm으로 되어있음: 대략 30~40cm/s, 6 seconds for rotation
+        # 높일 수 있지만, 일단 rotation은 더 과감하게 하기 어렵다.
 
-
+        문제는, 그냥 느려야 한다는 거.
+        미끄러진다. 아주 잘. Stanley가 안 될 정도로.
     '''
-
-
     x_max = 140
     z_max = 40
 
@@ -730,6 +722,7 @@ class Stanley2GreenMode(Mode):
                 self.phase = 0
 
         if self.phase == 0:
+            self.pub.play_buzzer(660)
             if time.time() - self.time_start < self.speeding_time:
                 self.log_add("Speeding!!!")
                 z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=RATIO_SPEEDING)
@@ -741,6 +734,7 @@ class Stanley2GreenMode(Mode):
 
 
         if self.phase == 1:
+            self.pub.stop_buzzer()
             # do stanley
             z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
             self.log_add("z speed ", z)
@@ -901,6 +895,7 @@ class Stanley2CrossMode(Mode):
                 self.phase = 0
 
         if self.phase == 0:
+            self.pub.play_buzzer(660)
             if time.time() - self.time_start < self.speeding_time:
                 self.log_add("Speeding!!!")
                 z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=RATIO_SPEEDING)
@@ -914,6 +909,7 @@ class Stanley2CrossMode(Mode):
 
         # Phase 2는 녹색을 쓰는 경우만 / 그때는 거리에 맞춰서 속도 줄이고 할 예정.
         if self.phase == 1:
+            self.pub.stop_buzzer()
             z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
 
         self.log_add("offset", offset_mm)
