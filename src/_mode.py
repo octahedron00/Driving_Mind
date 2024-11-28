@@ -65,7 +65,7 @@ BEV_SHAPE = (300, 200)
 
 TIME_MOVE_BACK = 0.04 / SPEED_X
 
-CONF_THRESHOLD = 0.6
+CONF_THRESHOLD = 0.75
 IOU_THRESHOLD = 0.6
 WAIT_FRAME_4_MODEL = 1 # 0.5 second: in 16fps, will be enough for jetson nano computing smaller yolo
 
@@ -322,7 +322,7 @@ class EventMode(Mode):
         # WAIT_FRAME_4_MODEL: inference에 걸리는 시간만큼 frame 보내는 역할.
         # 20fps 기준, 대략 10 frame이면 충분할 것!
         # 처음에는 2배 기다림.
-        self.wait_frame_4_predict = WAIT_FRAME_4_MODEL
+        self.wait_frame_4_predict = 8
 
         self.wait_sec = wait_sec
 
@@ -1049,7 +1049,7 @@ class Turn2RoadMode(Mode):
                 self.pub.stop_buzzer()
 
 
-            move_robot(self.pub, self.speed_x, max(self.rot_z, z_slowing_down), self.is_left)
+            move_robot(self.pub, self.speed_x, max(self.rot_z, self.rot_z), self.is_left)
 
             if time.time() - self.time_since_phase > self.min_turn_sec:
                 self.phase = 2
