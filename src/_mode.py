@@ -1100,7 +1100,7 @@ class Turn2RoadMode(Mode):
 
 def get_real_time_adjust(is_left=True):
     if is_left:
-        return 1.03
+        return 1.01
     return 1.0
 
 
