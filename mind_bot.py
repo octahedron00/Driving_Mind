@@ -185,7 +185,7 @@ class Bot_Mind:
 
             EventMode(pub, self.models, self.shared_list, 20, n_frame = INF_FRAMES, wait_sec = 0.1, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2RoadMode(pub, 21,      is_left=False),
-            Stanley2GreenMode(pub, 22,  from_it=True),
+            Stanley2GreenMode(pub, 22,  from_it=True, left_offset=-10),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
             Stanley2GreenMode(pub, 24,  prefer_dist=230, speeding_time=1.0),
             _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
