@@ -36,7 +36,7 @@ def run_model_second(tiki: TikiMini, model_address, shared_list, is_detr = False
     else:
         model = YOLO(model_address)
     # model = RTDETR(model_address)
-    # model.to('cuda')
+    model.to('cuda')
 
     while pos < 5:
 

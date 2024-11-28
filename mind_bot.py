@@ -13,7 +13,7 @@ from ultralytics import YOLO, RTDETR
 from tiki.mini import TikiMini
 
 from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
-from src._mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode, _SheepMode
+from src._mode import StartMode, EventMode, Stanley2GreenMode, Turn2VoidMode, Turn2RoadMode, EndMode, _SheepMode
 from src._model_second import run_model_second
 
 
@@ -43,7 +43,7 @@ VID_CONNECT_CMD = (
     f'! appsink max-buffers=1 drop=True'
 )
 
-SLEEP_SEC = 0.3
+SLEEP_SEC = 0.1
 
 
 def showing_off(image_list, log="", get_image = False):
@@ -148,28 +148,27 @@ class Bot_Mind:
 
         self.mode_list = [
             StartMode(pub),
+            Turn2RoadMode(pub, 0,       is_left=True),
+            EndMode(pub, 1000),
 
-            # Turn2VoidMode(pub, 4,       is_left=True),
-            # Turn2RoadMode(pub, 13,      is_left=False,  is_curve=False),
-            
-            # Stanley2CrossMode(pub, 1,   use_green = True),
-            # _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            # Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
-            # _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            # EndMode(pub, 1000),
+            # testing salting
+            Stanley2GreenMode(pub, 0, salting=True),
+            Turn2RoadMode(pub, 0,       is_left=True,  is_curve=True),
+            Turn2RoadMode(pub, 0,       is_left=True,  is_curve=True),
+            Stanley2GreenMode(pub, 0, salting=False),
+            EndMode(pub, 1000),
 
-            # Stanley2CrossMode(pub, 1,   use_green = True),
-            Stanley2GreenMode(pub, 1.5, salting=False),
+
+
+            Stanley2GreenMode(pub, 1, speeding_time=1.0),
             Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
-            # Turn2VoidMode(pub, 2.5,       is_left=True),
             Stanley2GreenMode(pub, 3,   left_offset = -10, prefer_dist=200),
-            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
+            _SheepMode(pub, 3.5, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 4,       is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 11,      is_left=True),
-            # Stanley2CrossMode(pub, 12),
-            Stanley2GreenMode(pub, 12.5),
+            Stanley2GreenMode(pub, 12),
             Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
             Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=200, speeding_time=3.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
@@ -177,25 +176,21 @@ class Bot_Mind:
 
             EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 21,      is_left=False),
-            # Turn2VoidMode(pub, 21.5,      is_left=False),
-
-            # Stanley2CrossMode(pub, 22,  left_way=False, from_it=True, left_offset=0),
-            Stanley2GreenMode(pub, 22.5, from_it=True),
+            Stanley2GreenMode(pub, 22,  from_it=True),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
-            Stanley2GreenMode(pub, 24,  left_offset = -10, prefer_dist=230, speeding_time=1.0),
-            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
+            Stanley2GreenMode(pub, 24,  prefer_dist=230, speeding_time=1.0),
+            _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 25,      is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 30, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 31,      is_left=False),
-            Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10, prefer_dist=230, speeding_time=3.0),
-            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
+            Stanley2GreenMode(pub, 32,  from_it=True, prefer_dist=230, speeding_time=3.0),
+            _SheepMode(pub, 32.5, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 33,      is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 41,      is_left=False),
-            # Stanley2CrossMode(pub, 42,  right_way=False),
-            Stanley2GreenMode(pub, 42.5, from_it=True, salting=True),
+            Stanley2GreenMode(pub, 42.5, from_it=True),
             Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
             Stanley2GreenMode(pub, 44, speed_weight = 1, prefer_dist=200),
 
@@ -265,7 +260,7 @@ class Bot_Mind:
             if IS_LOG_VID:
                 frame_write = cv2.resize(frame, dsize=(int(CAM_WIDTH/2), int(CAM_HEIGHT/2)))
                 cv2.putText(frame_write, f"{self.count_frame:04d}", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color=(255,255,255), thickness=1)
-                cv2.putText(frame_write, self.mode.log, (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.15, color=(255,255,255), thickness=1)
+                cv2.putText(frame_write, self.mode.log, (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.25, color=(255,255,255), thickness=1)
                 self.logwriter.write(frame_write)
         else:
             if DO_SECOND:
