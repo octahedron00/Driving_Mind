@@ -404,7 +404,7 @@ class EventMode(Mode):
             # 모델에 맞는 이미지로 변환, 넣기.
             resize_image_4_model = get_resize_image_4_model(frame)
 
-            cv2.imwrite(os.path.join("predict", f"predict_{datetime.datetime.now().strftime('%H%M')}_{self.index}_{self.n_frame_done}.jpg"), frame)
+            cv2.imwrite(os.path.join("predict", f"predict_{datetime.datetime.now().strftime('%H%M')}_{self.index}_{self.n_frame_done}.jpg"), resize_image_4_model)
             ### saving frame in capsule for final prediction / End나 Model Second에서 쓰임
             ### 저장할 때부터 이미 이미지 resize 된 걸 저장하기로 함
             self.capsule[f"event_{self.index}_frame_list"] = self.capsule.get(f"event_{self.index}_frame_list", list()) + [resize_image_4_model]
