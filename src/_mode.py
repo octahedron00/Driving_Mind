@@ -1232,7 +1232,8 @@ class Turn2VoidMode(Mode):
                 move_robot(self.pub, 0, SPEED_Z, self.is_left)
             else:
                 move_robot(self.pub)
-                print(self.pub.get_encoder(self.pub.MOTOR_LEFT), self.pub.get_encoder(self.pub.MOTOR_RIGHT))
+                print(self.pub.get_encoder(self.pub.MOTOR_LEFT))
+                print(self.pub.get_encoder(self.pub.MOTOR_RIGHT))
                 self.end = True
 
         if showoff:
