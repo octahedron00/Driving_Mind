@@ -479,6 +479,7 @@ class EventMode(Mode):
             if not self.do_step_back:
                 move_robot(self.pub)
                 self.phase = 5
+                return
 
             self.log_add("mode ", self.n_frame)
             move_robot(self.pub, SPEED_X)
