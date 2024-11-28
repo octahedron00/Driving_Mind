@@ -1024,7 +1024,7 @@ class Turn2RoadMode(Mode):
             dist_from_cross = self.capsule["dist_from_cross"]
 
             road_edge_bev, angle = get_road_edge_angle(road_bev, self.is_left)
-            self.road_angle = self.capsule["angle_from_road"]
+            self.road_angle = angle
             if abs(self.road_angle) > 20:
                 self.road_angle = 0
             if self.is_left:
@@ -1164,7 +1164,7 @@ class Turn2VoidMode(Mode):
                 self.time_since_phase = time.time()
                 move_robot(self.pub)
 
-                angle_at_start = angle
+                angle_at_start = self.capsule["angle_from_road"]
 
                 if self.is_left:
                     self.est_time_angle_calc = (TIME_90DEG / 90) * (90 - angle_at_start)
