@@ -67,7 +67,7 @@ TIME_MOVE_BACK = 0.05 / SPEED_X
 
 CONF_THRESHOLD = 0.6
 IOU_THRESHOLD = 0.6
-WAIT_FRAME_4_MODEL = 20 # 0.5 second: will be enough for jetson nano computing smaller yolo
+WAIT_FRAME_4_MODEL = 8 # 0.5 second: will be enough for jetson nano computing smaller yolo
 
 KEY_PREDICT = ("ally", "enem", "ally_tank", "enem_tank")
 AREA_NAME = "0ABCDXXXX"*5 # 1번도 A, 10번도 A, 2번도 B, 20번도 B, 를 만드는 괜찮은 방법.
@@ -116,7 +116,7 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
         speed_left *= 180 / speed_max
         speed_right *= 180 / speed_max
 
-    print("SPEED: ", speed_left, speed_right)
+    # print("SPEED: ", speed_left, speed_right)
 
     speed_left, speed_right = int(speed_left), int(speed_right)
 
@@ -163,6 +163,16 @@ def get_vote_count_result(count_map_list):
         result[key] = list_count[max_i]
 
     return result
+
+
+def is_concensus(count_map_list):
+
+    for key in KEY_PREDICT:
+        value = count_map_list[0].get(key, 0)
+        for count_map in count_map_list:
+            if value != count_map.get(key, 0):
+                return False
+    return True
 
 
 def get_2_point_dist(p1, p2):
@@ -290,6 +300,8 @@ class EndMode(Mode):
             self.running = False
 
 
+EVE_CONCENSUS_LIMIT = 3
+
 
 #Eve
 class EventMode(Mode):
@@ -318,7 +330,7 @@ class EventMode(Mode):
         # WAIT_FRAME_4_MODEL: inference에 걸리는 시간만큼 frame 보내는 역할.
         # 20fps 기준, 대략 10 frame이면 충분할 것!
         # 처음에는 2배 기다림.
-        self.wait_frame_4_predict = WAIT_FRAME_4_MODEL * 2
+        self.wait_frame_4_predict = WAIT_FRAME_4_MODEL
 
         self.wait_sec = wait_sec
 
@@ -346,8 +358,6 @@ class EventMode(Mode):
         phase 5: wait for time ends: filling frames at once
 
         """
-        # frame = cv2.imread("2356.jpg")
-
         predict_frame = frame
         self.log_set(self.index, "Event")
         self.log_set("phase", self.phase)
@@ -370,14 +380,17 @@ class EventMode(Mode):
         ### phase 1: getting frames and run prediction for each. 
         if self.phase == 2:
             self.log_add("mode ", self.n_frame)
-            move_robot(self.pub)
 
             if self.wait_frame_4_predict > 0:
+                move_robot(self.pub)
+                if self.wait_frame_4_predict == 3:
+                    move_robot(self.pub, 0, 0.2 * ((-1)**self.n_frame))
                 self.wait_frame_4_predict -= 1
                 return
             self.wait_frame_4_predict = WAIT_FRAME_4_MODEL
             self.n_frame_done += 1
 
+            move_robot(self.pub)
             frame = calibrate(frame)
 
             # 모델에 맞는 이미지로 변환, 넣기.
@@ -419,8 +432,14 @@ class EventMode(Mode):
                 cv2.imwrite(os.path.join("predict", f"predict_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
             self.count_map_list.append(count_map)
 
-            # 프레임 다 썼다면? 다음 phase로 넘어가기.
-            if self.n_frame - self.n_frame_done < 1:
+
+            # 만약 3장 이상에서 합의 봤으면 그냥 넘어가기.
+            if self.n_frame_done == EVE_CONCENSUS_LIMIT and is_concensus(self.count_map_list):
+                self.phase = 3
+
+
+            # 프레임 다 썼다면? 다음으로 넘어가기.
+            if self.n_frame <= self.n_frame_done:
                 self.phase = 3
 
 
@@ -481,7 +500,7 @@ class EventMode(Mode):
 
             self.log_add("prediction result: ", str(count_result_map))
 
-            # 만약 second가 아니라 여기서 결과를 내야 한다면, 이렇게 진행.
+            # 만약 second model이 아니라 여기서 결과를 내야 한다면, 이렇게 진행.
             if self.show_log:
                 self.pub.log(f" {AREA_NAME[self.index]}: Ally {count_result_map[KEY_PREDICT[0]]} / Enem {count_result_map[KEY_PREDICT[1]]}")
 
@@ -712,7 +731,7 @@ class Stanley2GreenMode(Mode):
 
         if self.phase == 0:
             if time.time() - self.time_start < self.speeding_time:
-                self.log_add("Speeding ready")
+                self.log_add("Speeding!!!")
                 z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=RATIO_SPEEDING)
                 self.log_add("z speed ", z)
             else:
@@ -817,7 +836,7 @@ class Stanley2CrossMode(Mode):
             phase -2 : setting time
             phase -1 : normal stanley
             phase  0 : speeding!!
-            
+
             Phase는 녹색을 쓸 때만: S2G와 동일 / 그 외에는 그냥, 진행시킴.
         """
         
@@ -883,7 +902,7 @@ class Stanley2CrossMode(Mode):
 
         if self.phase == 0:
             if time.time() - self.time_start < self.speeding_time:
-                self.log_add("Speeding ready")
+                self.log_add("Speeding!!!")
                 z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=RATIO_SPEEDING)
                 self.log_add("z speed ", z)
             else:

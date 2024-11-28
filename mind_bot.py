@@ -23,7 +23,7 @@ DO_DETR = False
 DO_SECOND = False
 DO_SECOND_DETR = False
 FILE_EACH = "best.pt"
-FILE_SECOND = "rtdetr-l.pt"
+FILE_SECOND = "best.pt"
 
 IS_LOG = True
 IS_LOG_VID = True
@@ -124,7 +124,7 @@ class Bot_Mind:
         if DO_SECOND:
             self.thread_model_second = Process(target=run_model_second, args=(pub, FILE_SECOND, self.shared_list, DO_SECOND_DETR))
             self.thread_model_second.start()
-            self.shared_list[0] = [np.zeros((480, 640, 3))]
+            self.shared_list[0] = [np.zeros((640, 640, 3))]
 
 
         if DO_MODEL:
@@ -135,8 +135,9 @@ class Bot_Mind:
             else:
                 self.model_each = YOLO(FILE_EACH)
             self.model_each.to('cuda')
-            null_predict_to_turn_on = self.model_each.predict(np.zeros((480, 640, 3)), device=0)
-            null_predict_to_turn_on = self.model_each.predict(np.zeros((480, 640, 3)), device=0)
+            null_predict_to_turn_on = self.model_each.predict(np.zeros((640, 640, 3)), device=0)
+            null_predict_to_turn_on = self.model_each.predict(np.zeros((640, 640, 3)), device=0)
+            null_predict_to_turn_on = self.model_each.predict([np.zeros((640, 640, 3))]*5, device=0)
         else:
             self.model_each = None
 
@@ -173,7 +174,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=230, speeding_time=SPEEDING_TIME),
+            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=230, speeding_time=1.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True),
 
@@ -187,7 +188,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 24,  left_offset = -10, prefer_dist=230, speeding_time=SPEEDING_TIME),
+            Stanley2GreenMode(pub, 24,  left_offset = -10, prefer_dist=230, speeding_time=1.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 25,      is_left=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
@@ -196,7 +197,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 31,      is_left=False),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10, prefer_dist=230, speeding_time=SPEEDING_TIME),
+            Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10, prefer_dist=230, speeding_time=1.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 33,      is_left=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
