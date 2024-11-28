@@ -44,7 +44,7 @@ IS_SHOW = True
 FRAME_IGNORE_LEVEL = 1
 CAM_WIDTH = 1280
 CAM_HEIGHT = 960
-CAM_FRAMERATE = 16
+CAM_FRAMERATE = 20
 VID_CONNECT_CMD = (
     f'nvarguscamerasrc awbmode=manual aeLock=true exposuretimerange=\"5000000 5000000\" ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
     f'! nvvidconv flip-method=2 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
