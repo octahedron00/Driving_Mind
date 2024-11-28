@@ -67,7 +67,7 @@ TIME_MOVE_BACK = 0.04 / SPEED_X
 
 CONF_THRESHOLD = 0.6
 IOU_THRESHOLD = 0.6
-WAIT_FRAME_4_MODEL = 8 # 0.5 second: in 16fps, will be enough for jetson nano computing smaller yolo
+WAIT_FRAME_4_MODEL = 1 # 0.5 second: in 16fps, will be enough for jetson nano computing smaller yolo
 
 
 KEY_PREDICT = ("ally", "enem", "ally_tank", "enem_tank")
@@ -751,7 +751,7 @@ class Stanley2GreenMode(Mode):
             self.log_add("Dist ratio ", dist_ratio)
 
             if abs(dist_ratio) > PREFER_ERR_RATIO:
-                z = move_stanley(self.pub, offset_mm, angle_deg, dist_ratio)  # slow down a lot
+                z = move_stanley(self.pub, offset_mm, angle_deg, dist_ratio*2)  # slow down a lot
             else:
                 z = move_robot(self.pub)  # stop
                 self.end = True
@@ -1076,7 +1076,7 @@ class Turn2RoadMode(Mode):
 
                 if len(x_list) > 4 or abs(line_road.get_angle()) < 10:
                     self.road_encounter += 1
-                    move_robot(self.pub, self.speed_x, -self.rot_z, self.is_left)
+                    move_robot(self.pub, self.speed_x, -self.rot_z*1.5, self.is_left)
                 # needs 2 time for road_encounter
                 if self.road_encounter >= 2:
                     move_robot(self.pub)
