@@ -168,15 +168,15 @@ class Bot_Mind:
 
 
             ## testing T2V macro : will be more practical than our thoughts...
-            Turn2VoidMode(pub, -2,       is_left=True),
-            _SheepMode(pub, -1.5, sleep_sec = 1),
-            Turn2VoidMode(pub, -1,      is_left=False),
-            _SheepMode(pub, -0.5, sleep_sec = 1),
-            Turn2VoidMode(pub, -2,       is_left=True),
-            _SheepMode(pub, -1.5, sleep_sec = 1),
-            Turn2VoidMode(pub, -1,      is_left=False),
-            _SheepMode(pub, -0.5, sleep_sec = 1),
-            EndMode(pub, None, 100, predict_all=False),
+            # Turn2VoidMode(pub, -2,       is_left=True),
+            # _SheepMode(pub, -1.5, sleep_sec = 1),
+            # Turn2VoidMode(pub, -1,      is_left=False),
+            # _SheepMode(pub, -0.5, sleep_sec = 1),
+            # Turn2VoidMode(pub, -2,       is_left=True),
+            # _SheepMode(pub, -1.5, sleep_sec = 1),
+            # Turn2VoidMode(pub, -1,      is_left=False),
+            # _SheepMode(pub, -0.5, sleep_sec = 1),
+            # EndMode(pub, None, 100, predict_all=False),
 
 
             Stanley2GreenMode(pub, 1, speeding_time=1.0),
