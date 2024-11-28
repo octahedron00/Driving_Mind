@@ -178,7 +178,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=230, speeding_time=1.0),
+            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=200, speeding_time=1.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True),
 
