@@ -149,6 +149,7 @@ class Bot_Mind:
         self.mode_list = [
             StartMode(pub),
             Turn2RoadMode(pub, 0,       is_left=True),
+            Stanley2GreenMode(pub, 1, speeding_time=1.0),
             EndMode(pub, 1000),
 
             # # testing salting
