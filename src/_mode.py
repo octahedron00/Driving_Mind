@@ -379,11 +379,8 @@ class EventMode(Mode):
                 move_robot(self.pub, SPEED_X)
             elif self.step_for_cam < 0:
                 move_robot(self.pub, -SPEED_X)
-            move_robot(self.pub, -SPEED_X)
 
-            #  * abs(self.step_for_cam))
-
-            if (TIME_MOVE_BACK) < time.time() - self.time_start:
+            if (TIME_MOVE_BACK * abs(self.step_for_cam)) < time.time() - self.time_start:
                 move_robot(self.pub)
                 self.phase = 2
     

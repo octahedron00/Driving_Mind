@@ -49,7 +49,7 @@ VID_CONNECT_CMD = (
     f'! appsink max-buffers=1 drop=True'
 )
 
-SLEEP_SEC = 0.1
+SLEEP_SEC = 0.2
 
 
 def showing_off(image_list, log="", get_image = False):
