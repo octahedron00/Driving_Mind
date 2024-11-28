@@ -20,10 +20,15 @@ from src._model_second import run_model_second
 DO_MODEL = True
 
 DO_DETR = False
-DO_SECOND = False
+DO_SECOND = True
 DO_SECOND_DETR = False
 FILE_EACH = "best.pt"
-FILE_SECOND = "best.pt"
+
+
+DO_ENSEMBLE = True
+
+FILE_SECOND = ["best.pt", 'yolo11s.pt']
+YOLO_ENSEMBLE_LIST = ["yolo11s.pt", "yolo11s.pt"]
 
 IS_LOG = True
 IS_LOG_VID = True
@@ -38,7 +43,7 @@ CAM_WIDTH = 1280
 CAM_HEIGHT = 960
 CAM_FRAMERATE = 16
 VID_CONNECT_CMD = (
-    f'nvarguscamerasrc  awbmode=manual aeLock=true exposuretimerange=\"5000000 5000000\" ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
+    f'nvarguscamerasrc awbmode=manual aeLock=true exposuretimerange=\"5000000 5000000\" ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
     f'! nvvidconv flip-method=2 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
     f'! videoconvert ! video/x-raw, format=(string)BGR '
     f'! appsink max-buffers=1 drop=True'
@@ -123,22 +128,23 @@ class Bot_Mind:
         if DO_SECOND:
             self.thread_model_second = Process(target=run_model_second, args=(pub, FILE_SECOND, self.shared_list, DO_SECOND_DETR))
             self.thread_model_second.start()
-            self.shared_list[0] = [np.zeros((640, 640, 3))]
+            self.shared_list[0] = ([np.zeros((640, 640, 3))], [])
 
 
+        self.models = []
         if DO_MODEL:
             # first thread: 모델 하나 준비, RT인지 YOLO인지 확인까지.
             '''단, 이때 반드시 cuda 켜서 진행할 것! 아래 주석 되어있는 건 cpu 상 테스트였기 때문...'''
             if DO_DETR:
-                self.model_each = RTDETR(FILE_EACH)
+                self.models = [RTDETR(FILE_EACH)]
+            elif DO_ENSEMBLE:
+                for model_address in YOLO_ENSEMBLE_LIST:
+                    self.models.append(YOLO(model_address))
             else:
-                self.model_each = YOLO(FILE_EACH)
-            self.model_each.to('cuda')
-            null_predict_to_turn_on = self.model_each.predict(np.zeros((640, 640, 3)), device=0)
-            # null_predict_to_turn_on = self.model_each.predict(np.zeros((640, 640, 3)), device=0)
-            # null_predict_to_turn_on = self.model_each.predict([np.zeros((640, 640, 3))]*5, device=0)
-        else:
-            self.model_each = None
+                self.model_each = [YOLO(FILE_EACH)]
+            for model in self.models:
+                model.to('cuda')
+                null_predict_to_turn_on = model.predict(np.zeros((640, 640, 3)), device=0)
 
 
         # 기타 기본 셋팅
@@ -157,7 +163,7 @@ class Bot_Mind:
             _SheepMode(pub, 3.5, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 4,       is_left=True),
 
-            EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
+            EventMode(pub, self.models, self.shared_list, 10, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2RoadMode(pub, 11,      is_left=True),
             Stanley2GreenMode(pub, 12),
             Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
@@ -165,7 +171,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True),
 
-            EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
+            EventMode(pub, self.models, self.shared_list, 20, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2VoidMode(pub, 21,      is_left=False),
             # Turn2RoadMode(pub, 21,      is_left=False),
             Stanley2GreenMode(pub, 22,  from_it=True),
@@ -174,13 +180,13 @@ class Bot_Mind:
             _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 25,      is_left=True),
 
-            EventMode(pub, self.model_each, self.shared_list, 30, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
+            EventMode(pub, self.models, self.shared_list, 30, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2RoadMode(pub, 31,      is_left=False),
             Stanley2GreenMode(pub, 32,  from_it=True, prefer_dist=230, speeding_time=3.0),
             _SheepMode(pub, 32.5, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 33,      is_left=True),
 
-            EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
+            EventMode(pub, self.models, self.shared_list, 40, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2RoadMode(pub, 41,      is_left=False),
             Stanley2GreenMode(pub, 42, from_it=True),
             Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),

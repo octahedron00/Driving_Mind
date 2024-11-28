@@ -20,29 +20,6 @@ from src._lane_detect import get_resize_image_4_model, get_pos_before_xy, Line
 from src._sing import sing
 
 
-mtx = np.array([[624.021794, 0, 705.539195],
-                [0, 624.719173, 398.307132],
-                [0, 0, 1]])
-dist = np.array([[-0.318379, 0.108202, -0.000758, 0.000421, -0.016728]])
-
-
-
-def calibrate(img):
-    
-    h,  w = img.shape[:2]
-    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 0, (w,h))
-
-    # undistort
-    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
-    
-    # crop the image
-    x, y, w, h = roi
-    dst = dst[y+249:y+h, x:x+w]
-    #dst = dst[250:, :]
-    print(dst.shape)
-
-    return dst
-
 
 BOT_FROM_BEV_X = 100  # edit this
 BOT_FROM_BEV_Y = 500  # edit this
@@ -51,7 +28,7 @@ SPEED_X = 0.25
 SPEED_Z = 0.4
 TIME_90DEG = 0.52 / SPEED_Z
 TIME_SET_STANLEY = 1
-RATIO_SPEEDING = 2
+RATIO_SPEEDING = 3
 
 # 반경 줄일 거면 값을 높이기: x_speed 감소함
 RADIUS_VZ_OVER_VX_CONST = 240  #EDA
@@ -172,6 +149,36 @@ def get_2_point_dist(p1, p2):
     # PYTHAGORAS ROX
     dist = math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
     return dist
+
+
+
+
+
+mtx = np.array([[624.021794, 0, 705.539195],
+                [0, 624.719173, 398.307132],
+                [0, 0, 1]])
+dist = np.array([[-0.318379, 0.108202, -0.000758, 0.000421, -0.016728]])
+
+
+
+def calibrate(img):
+    
+    h,  w = img.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 0, (w,h))
+
+    # undistort
+    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
+    
+    # crop the image
+    x, y, w, h = roi
+    dst = dst[y+249:y+h, x:x+w]
+    #dst = dst[250:, :]
+    print(dst.shape)
+
+    return dst
+
+
+
 
 
 class Mode:
@@ -299,7 +306,7 @@ EVE_CONCENSUS_LIMIT = 3
 #Eve
 class EventMode(Mode):
 
-    def __init__(self, pub, model, shared_list_model_second, index, n_frame=5, wait_sec=1.0, show_log = False, step_for_cam = 0):
+    def __init__(self, pub, models, shared_list_model_second, index, n_frame=5, wait_sec=1.0, show_log = False, step_for_cam = 0):
         '''
             model: 여기서 바로 사용할 model의 뭐시기를 그대로 가져옴
             shared_list: model_second를 위한 것
@@ -312,7 +319,7 @@ class EventMode(Mode):
         self.end = False
         self.index = index
         self.pub = pub
-        self.model = model
+        self.models = models
 
         self.shared_list = shared_list_model_second
 
@@ -403,10 +410,10 @@ class EventMode(Mode):
 
             ### prediction works here
             # 촬영 부저 음
-            count_map = dict()
-            if self.model != None:
+            for model in self.models:
+                count_map = dict()
                 self.pub.play_buzzer(440)
-                result_list = self.model.predict(resize_image_4_model, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+                result_list = model.predict(resize_image_4_model, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
                 self.pub.stop_buzzer()
             
             # 결과 풀어서 정리
@@ -430,7 +437,7 @@ class EventMode(Mode):
                 # 만든 값 출력
                 self.log_add("count: ", str(count_map))
                 cv2.imwrite(os.path.join("predict", f"predict_{datetime.datetime.now().strftime('%H%M')}_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
-            self.count_map_list.append(count_map)
+                self.count_map_list.append(count_map)
 
 
             # 만약 3장 이상에서 합의 봤으면 그냥 넘어가기.
@@ -471,7 +478,7 @@ class EventMode(Mode):
                 self.pub.log(f" {AREA_NAME[self.index]}: Ally {count_result_map[KEY_PREDICT[0]]} / Enem {count_result_map[KEY_PREDICT[1]]}")
 
             # model_second를 위해서 자료 제공
-            self.shared_list[int(self.index/10)] = self.capsule[f"event_{self.index}_frame_list"]
+            self.shared_list[int(self.index/10)] = (self.capsule[f"event_{self.index}_frame_list"], self.count_map_list)
             
             self.time_start = time.time()
 

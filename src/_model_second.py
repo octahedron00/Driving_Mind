@@ -14,7 +14,7 @@ from tiki.mini import TikiMini
 from src._mode import get_vote_count_result, IOU_THRESHOLD, CONF_THRESHOLD, KEY_PREDICT, AREA_NAME
 
 
-def run_model_second(tiki: TikiMini, model_address, shared_list, is_detr = False):
+def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = False):
     """
         Model Second: 2번째 thread를 이용하는, multithreading:
         결과가 바로 나오지 않지만, 끝날 때에는 반드시 나온다!
@@ -28,13 +28,19 @@ def run_model_second(tiki: TikiMini, model_address, shared_list, is_detr = False
         log: 바로바로 로봇에 출력하도록. log는 얘만 쓸 수 있게 하면 된다!
     """
 
-
+    models = []
     pos = 0
 
     if is_detr:
-        model = RTDETR(model_address)
+        model = RTDETR(model_addresses[0])
     else:
-        model = YOLO(model_address)
+        for address in model_addresses:
+            models.append(YOLO(address))
+        
+        for model in models:
+            model.to('cuda')
+            # model.predict(np.zeros((640, 640, 3), dtype=np.uint8))
+        # model = YOLO(model_address)
     # model = RTDETR(model_address)
     model.to('cuda')
 
@@ -46,13 +52,15 @@ def run_model_second(tiki: TikiMini, model_address, shared_list, is_detr = False
         
 
         # 들어오면, 바로 inference 후 결과 출력!
-        image_list = shared_list[pos]
+        image_list, count_map_list = shared_list[pos]
         result_list = []
         for image in image_list:
             # model_predict의 구조는 항상 동일함: 이미지가 하나면 list 안에 하나만 들어옴.
-            result_list += model.predict(image, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+            for model in models:
+                tiki.play_buzzer(660)
+                result_list += model.predict(image, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+                tiki.stop_buzzer()
 
-        count_map_list = []
         for k, result in enumerate(result_list):
             count_map = dict()
             predict_frame = result.plot()
@@ -63,15 +71,20 @@ def run_model_second(tiki: TikiMini, model_address, shared_list, is_detr = False
 
                 count_map[class_id] = 1 + count_map.get(class_id, 0)
 
-            cv2.imwrite(os.path.join("predict", f"predict_{pos*10}_troops_{k}.jpg"), predict_frame)
+            cv2.imwrite(os.path.join("predict", f"predict_{pos*10}_troops_{k}_{model_addresses[k%len(model_addresses)]}.jpg"), predict_frame)
             count_map_list.append(count_map)
+        
+        '''
+            Count map list는 이렇게, 전체 결과를 합쳐서 만들어진다.
+        '''
+
         count_result = get_vote_count_result(count_map_list=count_map_list)
 
 
         # 일단 print는 하고, 실제 robot에도 보이는 방향으로.
         print(count_result)
         if pos > 0:
-            tiki.log(f" {AREA_NAME[pos]} AREA: Ally {count_result[KEY_PREDICT[0]]} / Enem {count_result[KEY_PREDICT[1]]}")
+            tiki.log(f" {AREA_NAME[pos]}: Ally {count_result[KEY_PREDICT[0]]} / Enem {count_result[KEY_PREDICT[1]]}")
         shared_list[pos] = count_result
         pos += 1
     
