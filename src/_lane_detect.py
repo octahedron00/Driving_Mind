@@ -249,7 +249,7 @@ def get_sliding_window_result(image, init=-1):
     win_h = 10
     win_w = 160
     win_n = 10
-    fill_min = 0.10
+    fill_min = 0.1
     fill_max = 0.6
 
     if init > 0:
@@ -279,8 +279,22 @@ def get_sliding_window_result(image, init=-1):
 
         # 최댓값 좌표를 x 기준에서 여기서 찾아내고, 양끝으로 가면서 어디까지가 길인지 알아내는 방식.
         x_hist = np.sum(roi, axis=0)
-        max_pos = np.argmax(x_hist)
+        start_r, start_l = int(win_w/2), int(win_w/2)
+        for i in range(int(win_w/2), win_w):
+            start_r = i
+            if x_hist[i] > 1024:
+                break
+
+        for i in range(int(win_w/2), 0, -1):
+            start_l = i
+            if x_hist[i] > 1024:
+                break
         
+        if (start_r+start_l) < win_w:
+            max_pos = start_r
+        else:
+            max_pos = start_l
+
         x_left = 0
         x_right = 0
         for i in range(max_pos, 0, -1):
@@ -292,6 +306,7 @@ def get_sliding_window_result(image, init=-1):
                 x_right = i
                 break
         
+        print(i, x_right, x_left, float(x_right-x_left)/len(x_hist))
         
         # 만약 그렇게 찾아낸 길의 경계 사이 area가 적당하다면: fill_min 과 fill_max 사이라면,
         # 그걸 제대로 된 길이라 생각하고, 쓸모 있는 frame으로 사용.
