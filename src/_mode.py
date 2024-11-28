@@ -96,9 +96,9 @@ def move_robot(pub, vel_x=0, rot_z=0, is_left=True):
 
 def move_stanley(pub, offset_mm, angle_deg, x_ratio=1):
 
-    kp = 0.05
-    ka = 0.10
-    k = 2.2
+    kp = 0.03 # 0.05
+    ka = 0.12 # 0.10
+    k = 2.0
     x = SPEED_X * x_ratio
 
     z = -(angle_deg * ka - math.atan(kp * offset_mm)) * k * x * x 
@@ -591,13 +591,19 @@ class _SheepMode(Mode):
         if showoff:
             self.show_list = [frame, bev, road_bev]
 
+
+
+
+
+
 S2X_LIMIT_Z = 0.7
+STANLEY_Z_STABLE = 0.2
 
 
 #S2G
 class Stanley2GreenMode(Mode):
 
-    def __init__(self, pub, index=0, from_it=False, left_offset=0, speed_weight=1.0, prefer_dist = PREFER_DIST, speeding_time=0.0):
+    def __init__(self, pub, index=0, from_it=False, left_offset=0, prefer_dist = PREFER_DIST, speeding_time=0.0):
         '''
             pub = tiki
             index = 번호, 로그에 남기기 위함
@@ -620,8 +626,6 @@ class Stanley2GreenMode(Mode):
         self.time_start = time.time()
 
         self.index = index
-
-        self.speed_weight = speed_weight
 
         self.frame_without_line = 5
         self.prefer_dist = prefer_dist
@@ -693,7 +697,7 @@ class Stanley2GreenMode(Mode):
         if self.phase == -1:
             self.log_add("Speeding ready")
             if time.time() - self.time_start < TIME_SET_STANLEY:
-                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+                z = move_stanley(self.pub, offset_mm, angle_deg)
                 self.log_add("z speed ", z)
             else:
                 self.time_start = time.time()
@@ -718,8 +722,12 @@ class Stanley2GreenMode(Mode):
             self.pub.stop_buzzer()
             
             # do stanley
-            z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
-
+            z = move_stanley(self.pub, offset_mm, angle_deg)
+            if z < STANLEY_Z_STABLE:
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=1.5)
+                self.pub.play_buzzer(660)
+            else:            
+                self.pub.stop_buzzer()
 
             self.log_add("z speed ", z)
 
