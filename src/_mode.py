@@ -596,7 +596,7 @@ class _SheepMode(Mode):
 
 
 
-S2X_LIMIT_Z = 0.7
+S2X_LIMIT_Z = 0.85
 STANLEY_Z_STABLE = 0.2
 
 
