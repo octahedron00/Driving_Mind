@@ -43,7 +43,7 @@ VID_CONNECT_CMD = (
     f'! appsink max-buffers=1 drop=True'
 )
 
-SLEEP_SEC = 0.1
+SLEEP_SEC = 0
 
 
 def showing_off(image_list, log="", get_image = False):
@@ -201,7 +201,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 31,      is_left=False),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10, prefer_dist=230, speeding_time=1.5),
+            Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10, prefer_dist=230, speeding_time=3.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 33,      is_left=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
