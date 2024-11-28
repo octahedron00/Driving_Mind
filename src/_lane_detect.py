@@ -306,7 +306,7 @@ def get_sliding_window_result(image, init=-1):
                 x_right = i
                 break
         
-        print(i, x_right, x_left, float(x_right-x_left)/len(x_hist))
+        # print(i, x_right, x_left, float(x_right-x_left)/len(x_hist))
         
         # 만약 그렇게 찾아낸 길의 경계 사이 area가 적당하다면: fill_min 과 fill_max 사이라면,
         # 그걸 제대로 된 길이라 생각하고, 쓸모 있는 frame으로 사용.
