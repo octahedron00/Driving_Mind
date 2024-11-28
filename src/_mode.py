@@ -964,7 +964,7 @@ class Stanley2GreenMode(Mode):
 
 class Turn2RoadMode(Mode):
 
-    def __init__(self, pub, index=0, is_left=True, min_turn_sec=TIME_90DEG*0.8, is_curve=False, z_ratio = 1):
+    def __init__(self, pub, index=0, is_left=True, min_turn_sec=TIME_90DEG*0.9, is_curve=False, z_ratio = 1):
         """
             is_left: 왼쪽으로 돌 때 true / 오른쪽으로 돌 거면 false
             min_turn_sec: 길을 무시하고 돌아갈 시간, 다른 오브젝트나 기물이 길처럼 보일 수 있음: 예상 시간의 80% 정도로 잡기.
