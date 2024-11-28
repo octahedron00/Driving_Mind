@@ -619,7 +619,7 @@ class _SheepMode(Mode):
 #S2G
 class Stanley2GreenMode(Mode):
 
-    def __init__(self, pub, index=0, from_it=False, left_offset=0, speed_weight=1.0, prefer_dist = PREFER_DIST, speeding_time=0.0):
+    def __init__(self, pub, index=0, from_it=False, left_offset=0, speed_weight=1.0, prefer_dist = PREFER_DIST, speeding_time=0.0, salting=False):
         '''
             pub = tiki
             index = 번호, 로그에 남기기 위함
@@ -642,6 +642,7 @@ class Stanley2GreenMode(Mode):
         self.time_start = time.time()
 
         self.index = index
+        self.salting = salting
 
         self.speed_weight = speed_weight
 
@@ -735,8 +736,14 @@ class Stanley2GreenMode(Mode):
 
         if self.phase == 1:
             self.pub.stop_buzzer()
+            
             # do stanley
-            z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+            if self.salting and self.frame_from_start_sensing % 3 == 0:
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight * RATIO_SPEEDING)
+            else:
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+
+
             self.log_add("z speed ", z)
 
             if green_max > TRUE_GREEN_CONF and self.line_road.get_distance(green_pos[1], green_pos[0]) < TRUE_GREEN_DIST_FROM_ROAD:
@@ -786,7 +793,7 @@ class Stanley2GreenMode(Mode):
 #S2C
 class Stanley2CrossMode(Mode):
 
-    def __init__(self, pub, index=0, left_way=True, right_way=True, from_it=False, left_offset=0, use_green=False, speed_weight=1.0, speeding_time=0.0):
+    def __init__(self, pub, index=0, left_way=True, right_way=True, from_it=False, left_offset=0, use_green=False, speed_weight=1.0, speeding_time=0.0, salting=False):
         '''
             pub = tiki
             index = 번호, 로그에 남기기 위함
@@ -813,6 +820,7 @@ class Stanley2CrossMode(Mode):
         self.time_start = time.time()
 
         self.index = index
+        self.salting = salting
 
         self.capsule = dict()
         self.use_green = use_green
@@ -910,7 +918,12 @@ class Stanley2CrossMode(Mode):
         # Phase 2는 녹색을 쓰는 경우만 / 그때는 거리에 맞춰서 속도 줄이고 할 예정.
         if self.phase == 1:
             self.pub.stop_buzzer()
-            z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+            # do stanley
+            if self.salting and self.frame_from_start_sensing % 3 == 0:
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight * RATIO_SPEEDING)
+            else:
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+
 
         self.log_add("offset", offset_mm)
         self.log_add("angle", angle_deg)
