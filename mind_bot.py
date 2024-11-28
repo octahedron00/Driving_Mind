@@ -17,7 +17,7 @@ from src._mode import StartMode, EventMode, Stanley2GreenMode, Turn2VoidMode, Tu
 from src._model_second import run_model_second
 
 
-DO_MODEL = True
+DO_MODEL = False ## True
 
 DO_DETR = False
 DO_SECOND = False
@@ -184,7 +184,7 @@ class Bot_Mind:
             Turn2RoadMode(pub, 11,      is_left=True),
             Stanley2GreenMode(pub, 12),
             Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=250, speeding_time=2.0),
+            Stanley2GreenMode(pub, 14,  from_it = True, prefer_dist=250, speeding_time=2.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True),
 
@@ -206,7 +206,7 @@ class Bot_Mind:
             Turn2RoadMode(pub, 41,      is_left=False),
             Stanley2GreenMode(pub, 42, from_it=True),
             Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
-            Stanley2GreenMode(pub, 44, speed_weight = 1, prefer_dist=200),
+            Stanley2GreenMode(pub, 44, prefer_dist=200),
 
             EndMode(pub, None, 100, predict_all=False),
         ]
