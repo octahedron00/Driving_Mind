@@ -10,10 +10,10 @@ BOT_FROM_BEV_Y = 500 # edit this
 
 
 
-LT_BEV = (572, 480)
-LD_BEV = (419, 634)
-RT_BEV = (813, 481)
-RD_BEV = (960, 637)
+LT_BEV = (572, 463)
+LD_BEV = (439, 675)
+RT_BEV = (828, 464)
+RD_BEV = (981, 618)
 
 H_BEV = 300
 W_BEV = 200
@@ -46,7 +46,7 @@ def get_road(image, with_green = True):
     """
     # rev = 255 - image
 
-    black_max = 120 # EDA
+    black_max = 135 # EDA
     black_min = 0
 
     # image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
