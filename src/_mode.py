@@ -66,7 +66,7 @@ BEV_SHAPE = (300, 200)
 
 TIME_MOVE_BACK = 0.04 / SPEED_X
 
-CONF_THRESHOLD = 0.75
+CONF_THRESHOLD = 0.25
 IOU_THRESHOLD = 0.6
 WAIT_FRAME_4_MODEL = 1 # 0.5 second: in 16fps, will be enough for jetson nano computing smaller yolo
 
