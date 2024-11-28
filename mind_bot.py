@@ -155,6 +155,12 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 13,      is_left=False,  is_curve=False),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
+            
+            Stanley2CrossMode(pub, 1,   use_green = True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
+            Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
+            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
+            EndMode(pub, 1000),
 
             # Stanley2CrossMode(pub, 1,   use_green = True),
             Stanley2GreenMode(pub, 1.5),
