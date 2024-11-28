@@ -31,7 +31,7 @@ IS_LOG_SIGHT = False
 
 IS_SHOW = True
 
-DO_STEP_BACK_FOR_CAM = True
+DO_STEP_BACK_FOR_CAM = False
 
 
 FRAME_IGNORE_LEVEL = 1
@@ -162,7 +162,7 @@ class Bot_Mind:
             Turn2RoadMode(pub, 11,      is_left=True),
             Stanley2GreenMode(pub, 12),
             Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=200, speeding_time=3.0),
+            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=250, speeding_time=3.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True),
 

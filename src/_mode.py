@@ -289,7 +289,7 @@ class EndMode(Mode):
             '''
                 sing sing sing sing 
             '''
-            sing(self.pub)
+            # sing(self.pub)
             self.running = False
 
 
