@@ -17,7 +17,7 @@ from src._mode import StartMode, EventMode, Stanley2GreenMode, Turn2VoidMode, Tu
 from src._model_second import run_model_second
 
 
-DO_MODEL = False ## True
+DO_MODEL = True ## True
 
 DO_DETR = False
 DO_SECOND = False

@@ -723,11 +723,11 @@ class Stanley2GreenMode(Mode):
             
             # do stanley
             z = move_stanley(self.pub, offset_mm, angle_deg)
-            if z < STANLEY_Z_STABLE:
-                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=1.5)
-                self.pub.play_buzzer(660)
-            else:            
-                self.pub.stop_buzzer()
+            # if z < STANLEY_Z_STABLE:
+            #     z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=1.5)
+            #     self.pub.play_buzzer(660)
+            # else:            
+            #     self.pub.stop_buzzer()
 
             self.log_add("z speed ", z)
 
