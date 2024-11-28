@@ -43,7 +43,7 @@ BEV_SHAPE = (300, 200)
 
 TIME_MOVE_BACK = 0.04 / SPEED_X
 
-CONF_THRESHOLD = 0.7
+CONF_THRESHOLD = 0.6
 IOU_THRESHOLD = 0.6
 WAIT_FRAME_4_MODEL = 1 # 0.5 second: in 16fps, will be enough for jetson nano computing smaller yolo
 
@@ -1047,7 +1047,7 @@ class Turn2RoadMode(Mode):
         if self.phase == 1:
 
             # 아예 처음에 엄청 빨리 돌아서, 시간을 좀 절약하자.
-            z_slowing_down = 1*(0.8-(time.time()-self.time_since_phase))
+            z_slowing_down = 1*(0.6-(time.time()-self.time_since_phase))
 
             if self.rot_z < z_slowing_down:
                 self.pub.play_buzzer(660)
