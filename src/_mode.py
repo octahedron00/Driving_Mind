@@ -1162,7 +1162,7 @@ class Turn2VoidMode(Mode):
                 else:
                     self.est_time_angle_calc = (TIME_90DEG / 90) * (90 + angle_at_start)
                 self.est_time = self.est_time_angle_calc
-                if abs(angle) > 45:
+                if abs(angle) > 10:
                     self.est_time = TIME_90DEG
 
                 self.log_add("angle", angle)
