@@ -139,7 +139,7 @@ class Bot_Mind:
                 for model_address in MODEL_FIRST_LIST:
                     self.models.append(YOLO(model_address))
             else:
-                self.model_each = [YOLO(FILE_EACH)]
+                self.models = [YOLO(FILE_EACH)]
             
             for model in self.models:
                 model.to('cuda')
