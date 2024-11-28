@@ -52,6 +52,14 @@ VID_CONNECT_CMD = (
     f'! appsink max-buffers=1 drop=True'
 )
 
+# gamma add
+VID_CONNECT_CMD = (
+    f'nvarguscamerasrc awbmode=manual gammavalue=1.0 aeLock=true exposuretimerange=\"5000000 5000000\" ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
+    f'! nvvidconv flip-method=2 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
+    f'! videoconvert ! video/x-raw, format=(string)BGR '
+    f'! appsink max-buffers=1 drop=True'
+)
+
 SLEEP_SEC = 0.2
 
 
