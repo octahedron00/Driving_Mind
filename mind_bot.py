@@ -43,7 +43,7 @@ VID_CONNECT_CMD = (
     f'! appsink max-buffers=1 drop=True'
 )
 
-SLEEP_SEC = 0.2
+SLEEP_SEC = 0.1
 
 
 def showing_off(image_list, log="", get_image = False):
@@ -170,7 +170,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 4,       is_left=True),
 
-            EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
+            EventMode(pub, self.model_each, self.shared_list, 10, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 11,      is_left=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             # Stanley2CrossMode(pub, 12),
@@ -178,11 +178,11 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=200, speeding_time=1.0),
+            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=200, speeding_time=3.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True),
 
-            EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
+            EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 21,      is_left=False),
             # Turn2VoidMode(pub, 21.5,      is_left=False),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
@@ -192,26 +192,26 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 24,  left_offset = -10, prefer_dist=230, speeding_time=1.0),
+            Stanley2GreenMode(pub, 24,  left_offset = -10, prefer_dist=230, speeding_time=3.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 25,      is_left=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
 
-            EventMode(pub, self.model_each, self.shared_list, 30, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
+            EventMode(pub, self.model_each, self.shared_list, 30, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 31,      is_left=False),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10, prefer_dist=230, speeding_time=1.0),
+            Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10, prefer_dist=230, speeding_time=3.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 33,      is_left=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
 
-            EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 1.0, show_log= not DO_SECOND),
+            EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 41,      is_left=False),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             # Stanley2CrossMode(pub, 42,  right_way=False),
-            Stanley2GreenMode(pub, 42.5),
+            Stanley2GreenMode(pub, 42.5, from_it=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
