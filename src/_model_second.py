@@ -28,6 +28,11 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
 
         log: 바로바로 로봇에 출력하도록. log는 얘만 쓸 수 있게 하면 된다!
     """
+    for i in range(8):
+        tiki.set_led_color(i, 0, 0, 0)
+
+
+
 
     models = []
     pos = 0
@@ -56,7 +61,10 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
         # 기존의 이미지, 그리고 count map까지 한 번에 받아오기.
         image_list, count_map_list = shared_list[pos]
 
-        
+
+        tiki.set_led_color(pos, 255, 0, 0)
+
+
         result_list = []
         for image in image_list:
             # model_predict의 구조는 항상 동일함: 이미지가 하나면 list 안에 하나만 들어옴.
@@ -65,6 +73,7 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
                 result_list += model.predict(image, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD, device=0)
                 tiki.stop_buzzer()
 
+        tiki.set_led_color(pos, 0, 0, 255)
         for k, result in enumerate(result_list):
             count_map = dict()
             predict_frame = result.plot()
@@ -85,6 +94,7 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
 
         count_result = get_vote_count_result(count_map_list=count_map_list)
 
+        tiki.set_led_color(pos, 0, 255, 0)
 
         # 일단 print는 하고, 실제 robot에도 보이는 방향으로.
         print(count_result)
