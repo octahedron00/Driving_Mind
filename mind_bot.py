@@ -159,7 +159,7 @@ class Bot_Mind:
             # EndMode(pub, 1000),
 
             # Stanley2CrossMode(pub, 1,   use_green = True),
-            Stanley2GreenMode(pub, 1.5, salting=True),
+            Stanley2GreenMode(pub, 1.5, salting=False),
             Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
             # Turn2VoidMode(pub, 2.5,       is_left=True),
             Stanley2GreenMode(pub, 3,   left_offset = -10, prefer_dist=200),
@@ -195,7 +195,7 @@ class Bot_Mind:
             EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND),
             Turn2RoadMode(pub, 41,      is_left=False),
             # Stanley2CrossMode(pub, 42,  right_way=False),
-            Stanley2GreenMode(pub, 42.5, from_it=True),
+            Stanley2GreenMode(pub, 42.5, from_it=True, salting=True),
             Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
             Stanley2GreenMode(pub, 44, speed_weight = 1, prefer_dist=200),
 
