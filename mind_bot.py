@@ -197,7 +197,8 @@ class Bot_Mind:
             Turn2VoidMode(pub, 15,      is_left=True),
 
             EventMode(pub, self.models, self.shared_list, 20, n_frame = INF_FRAMES, wait_sec = 0.1, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 21,      is_left=False),
+            Turn2VoidMode(pub, 21,      is_left=False),
+            # Turn2RoadMode(pub, 21,      is_left=False),
             Stanley2GreenMode(pub, 22,  from_it=True, left_offset=-10),
             Turn2VoidMode(pub, 23,      is_left=False),
             # Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
