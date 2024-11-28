@@ -1049,13 +1049,13 @@ class Turn2RoadMode(Mode):
             # 아예 처음에 엄청 빨리 돌아서, 시간을 좀 절약하자.
             z_slowing_down = 1*(0.6-(time.time()-self.time_since_phase))
 
-            if self.rot_z < z_slowing_down:
-                self.pub.play_buzzer(660)
-            else:
-                self.pub.stop_buzzer()
+            # if self.rot_z < z_slowing_down:
+            #     self.pub.play_buzzer(660)
+            # else:
+            #     self.pub.stop_buzzer()
 
 
-            move_robot(self.pub, self.speed_x, max(self.rot_z, z_slowing_down), self.is_left)
+            move_robot(self.pub, self.speed_x, max(self.rot_z, self.rot_z), self.is_left)
 
             if time.time() - self.time_since_phase > self.min_turn_sec:
                 self.phase = 2
