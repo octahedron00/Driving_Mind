@@ -27,8 +27,8 @@ FILE_EACH = "best.pt"
 
 DO_ENSEMBLE = True
 
-FILE_SECOND = ["best.pt", 'yolo11s.pt']
-YOLO_ENSEMBLE_LIST = ["yolo11s.pt", "yolo11s.pt"]
+MODEL_FIRST_LIST = ["yolo11s.pt", "yolo11s.pt"]
+MODEL_SECOND_LIST = ["best.pt", 'yolo11s.pt']
 
 IS_LOG = True
 IS_LOG_VID = True
@@ -118,15 +118,13 @@ class Bot_Mind:
         pub.set_motor_power(pub.MOTOR_RIGHT, 0)
         pub.stop_buzzer()
         pub.log_clear()
-
-        # pub.log(f" AI-FORCE  >v< {pub.get_battery_voltage()}V {pub.get_current()}mA")
         
 
         # second thread 준비, init까지 진행
         manager = Manager()
         self.shared_list = manager.list([None] * 10)
         if DO_SECOND:
-            self.thread_model_second = Process(target=run_model_second, args=(pub, FILE_SECOND, self.shared_list, DO_SECOND_DETR))
+            self.thread_model_second = Process(target=run_model_second, args=(pub, MODEL_SECOND_LIST, self.shared_list, DO_SECOND_DETR))
             self.thread_model_second.start()
             self.shared_list[0] = ([np.zeros((640, 640, 3))], [])
 
@@ -138,10 +136,11 @@ class Bot_Mind:
             if DO_DETR:
                 self.models = [RTDETR(FILE_EACH)]
             elif DO_ENSEMBLE:
-                for model_address in YOLO_ENSEMBLE_LIST:
+                for model_address in MODEL_FIRST_LIST:
                     self.models.append(YOLO(model_address))
             else:
                 self.model_each = [YOLO(FILE_EACH)]
+            
             for model in self.models:
                 model.to('cuda')
                 null_predict_to_turn_on = model.predict(np.zeros((640, 640, 3)), device=0)

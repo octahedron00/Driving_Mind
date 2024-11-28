@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+import datetime
 import cv2
 import numpy as np
 import time
@@ -33,6 +34,7 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
 
     if is_detr:
         model = RTDETR(model_addresses[0])
+        model.to('cuda')
     else:
         for address in model_addresses:
             models.append(YOLO(address))
@@ -42,7 +44,6 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
             # model.predict(np.zeros((640, 640, 3), dtype=np.uint8))
         # model = YOLO(model_address)
     # model = RTDETR(model_address)
-    model.to('cuda')
 
     while pos < 5:
 
@@ -58,7 +59,7 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
             # model_predict의 구조는 항상 동일함: 이미지가 하나면 list 안에 하나만 들어옴.
             for model in models:
                 tiki.play_buzzer(660)
-                result_list += model.predict(image, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+                result_list += model.predict(image, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD, device=0)
                 tiki.stop_buzzer()
 
         for k, result in enumerate(result_list):
@@ -71,7 +72,8 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
 
                 count_map[class_id] = 1 + count_map.get(class_id, 0)
 
-            cv2.imwrite(os.path.join("predict", f"predict_{pos*10}_troops_{k}_{model_addresses[k%len(model_addresses)]}.jpg"), predict_frame)
+            if pos > 0:
+                cv2.imwrite(os.path.join("predict", f"predict_{datetime.datetime.now().strftime('%H%M')}_{pos*10}_{k}_second{k%len(model_addresses)}.jpg"), predict_frame)
             count_map_list.append(count_map)
         
         '''

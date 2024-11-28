@@ -410,10 +410,10 @@ class EventMode(Mode):
 
             ### prediction works here
             # 촬영 부저 음
-            for model in self.models:
+            for n_model, model in enumerate(self.models):
                 count_map = dict()
                 self.pub.play_buzzer(440)
-                result_list = model.predict(resize_image_4_model, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD)
+                result_list = model.predict(resize_image_4_model, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD, device=0)
                 self.pub.stop_buzzer()
             
             # 결과 풀어서 정리
@@ -436,7 +436,7 @@ class EventMode(Mode):
 
                 # 만든 값 출력
                 self.log_add("count: ", str(count_map))
-                cv2.imwrite(os.path.join("predict", f"predict_{datetime.datetime.now().strftime('%H%M')}_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
+                cv2.imwrite(os.path.join("predict", f"predict_{datetime.datetime.now().strftime('%H%M')}_{self.index}_{self.n_frame_done}_model{n_model}.jpg"), predict_frame)
                 self.count_map_list.append(count_map)
 
 
