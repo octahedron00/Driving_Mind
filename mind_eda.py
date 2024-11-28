@@ -36,8 +36,17 @@ def show(frame, frame_before, stop=False):
     green_bev_cm = get_cm_px_from_mm(green_bev)
     green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
     edge_bev, _ = get_road_edge_angle(road_bev)
-    sliding_bev, _, _ = get_sliding_window_result(road_bev)
+    sliding_bev, x_list, y_list = get_sliding_window_result(road_bev)
     cross_bev, _, _, _, _ = get_sliding_window_and_cross_result(road_bev)
+
+    cross_bev = sliding_bev.copy()
+
+    if len(x_list) > 2:
+
+        line_road = Line(x_list, y_list)
+
+
+        cv2.line(cross_bev, (int(line_road.calc(0)), 0), (int(line_road.calc(np.shape(cross_bev)[0])),np.shape(cross_bev)[0],), (0, 0, 255), 5)
     
     # BEV만드는 ROI는 여기서 만듭니다!
     polypoint = np.array([LT_BEV, LD_BEV, RD_BEV, RT_BEV], dtype=np.int32)
