@@ -10,10 +10,10 @@ BOT_FROM_BEV_Y = 500 # edit this
 
 
 
-LT_BEV = (582, 430)
-LD_BEV = (438, 591)
-RT_BEV = (833, 431)
-RD_BEV = (985, 584)
+LT_BEV = (573, 417)
+LD_BEV = (429, 577)
+RT_BEV = (825, 415)
+RD_BEV = (980, 568)
 
 H_BEV = 300
 W_BEV = 200
