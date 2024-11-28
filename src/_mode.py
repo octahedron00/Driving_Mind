@@ -298,7 +298,7 @@ EVE_CONCENSUS_LIMIT = 3
 #Eve
 class EventMode(Mode):
 
-    def __init__(self, pub, model, shared_list_model_second, index, n_frame=5, wait_sec=1.0, show_log = False):
+    def __init__(self, pub, model, shared_list_model_second, index, n_frame=5, wait_sec=1.0, show_log = False, do_step_back=True):
         '''
             model: 여기서 바로 사용할 model의 뭐시기를 그대로 가져옴
             shared_list: model_second를 위한 것
@@ -340,6 +340,8 @@ class EventMode(Mode):
         self.time_start = time.time()
         self.show_log = show_log
 
+        self.do_step_back = do_step_back
+
 
     def set_frame_and_move(self, frame, showoff=True):
         """
@@ -362,6 +364,10 @@ class EventMode(Mode):
 
         ### phase 1: 일단 뒤로 조금 가볼까? -> 90도 맞추기에도 도움이 될 것으로 보임...      
         if self.phase == 1:
+            if not self.do_step_back:
+                move_robot(self.pub)
+                self.phase = 2
+
             self.log_add("mode ", self.n_frame)
             move_robot(self.pub, -SPEED_X)
 
@@ -469,6 +475,9 @@ class EventMode(Mode):
             self.time_start = time.time()
 
         elif self.phase == 4:
+            if not self.do_step_back:
+                move_robot(self.pub)
+                self.phase = 5
 
             self.log_add("mode ", self.n_frame)
             move_robot(self.pub, SPEED_X)
