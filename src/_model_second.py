@@ -53,7 +53,10 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
         
 
         # 들어오면, 바로 inference 후 결과 출력!
+        # 기존의 이미지, 그리고 count map까지 한 번에 받아오기.
         image_list, count_map_list = shared_list[pos]
+
+        
         result_list = []
         for image in image_list:
             # model_predict의 구조는 항상 동일함: 이미지가 하나면 list 안에 하나만 들어옴.
