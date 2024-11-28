@@ -43,7 +43,7 @@ BEV_SHAPE = (300, 200)
 
 TIME_MOVE_BACK = 0.04 / SPEED_X
 
-CONF_THRESHOLD = 0.6
+CONF_THRESHOLD = 0.25
 IOU_THRESHOLD = 0.6
 WAIT_FRAME_4_MODEL = 1 # 0.5 second: in 16fps, will be enough for jetson nano computing smaller yolo
 
@@ -152,28 +152,19 @@ def get_2_point_dist(p1, p2):
 
 
 
-
-
 mtx = np.array([[624.021794, 0, 705.539195],
                 [0, 624.719173, 398.307132],
                 [0, 0, 1]])
 dist = np.array([[-0.318379, 0.108202, -0.000758, 0.000421, -0.016728]])
 
-
+roi = (0, 0, 1279, 959)
 
 def calibrate(img):
-    
-    h,  w = img.shape[:2]
-    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 0, (w,h))
-
     # undistort
-    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
-    
+    dst = cv2.undistort(img, mtx, dist, None, mtx) #newcameramtx==mtx
     # crop the image
     x, y, w, h = roi
-    dst = dst[y+249:y+h, x:x+w]
-    #dst = dst[250:, :]
-    print(dst.shape)
+    dst = dst[y+250:y+h, x:x+w]
 
     return dst
 
