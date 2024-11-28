@@ -31,6 +31,8 @@ IS_LOG_SIGHT = False
 
 IS_SHOW = True
 
+SPEEDING_TIME = 1.0
+
 
 FRAME_IGNORE_LEVEL = 1
 CAM_WIDTH = 1280
@@ -171,7 +173,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=200),
+            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=230, speeding_time=SPEEDING_TIME),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True),
 
@@ -185,7 +187,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 24,  left_offset = -10, prefer_dist=200),
+            Stanley2GreenMode(pub, 24,  left_offset = -10, prefer_dist=230, speeding_time=SPEEDING_TIME),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 25,      is_left=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
@@ -194,7 +196,7 @@ class Bot_Mind:
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2RoadMode(pub, 31,      is_left=False),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10, prefer_dist=200),
+            Stanley2GreenMode(pub, 32,  from_it=True, left_offset = -10, prefer_dist=230, speeding_time=SPEEDING_TIME),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 33,      is_left=True),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),

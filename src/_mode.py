@@ -49,6 +49,8 @@ BOT_FROM_BEV_Y = 500  # edit this
 SPEED_X = 0.25
 SPEED_Z = 0.4
 TIME_90DEG = 0.53 / SPEED_Z
+TIME_SET_STANLEY = 1
+RATIO_SPEEDING = 2
 
 # 반경 줄일 거면 값을 높이기: x_speed 감소함
 RADIUS_VZ_OVER_VX_CONST = 240  #EDA
@@ -606,7 +608,7 @@ class _SheepMode(Mode):
 #S2G
 class Stanley2GreenMode(Mode):
 
-    def __init__(self, pub, index=0, from_it=False, left_offset=0, speed_weight=1.0, prefer_dist = PREFER_DIST):
+    def __init__(self, pub, index=0, from_it=False, left_offset=0, speed_weight=1.0, prefer_dist = PREFER_DIST, speeding_time=0.0):
         '''
             pub = tiki
             index = 번호, 로그에 남기기 위함
@@ -623,6 +625,10 @@ class Stanley2GreenMode(Mode):
         self.left_offset = left_offset
 
         self.phase = 1
+        if speeding_time > 0.1:
+            self.phase = -2
+        self.speeding_time = speeding_time
+        self.time_start = time.time()
 
         self.index = index
 
@@ -638,6 +644,9 @@ class Stanley2GreenMode(Mode):
 
     def set_frame_and_move(self, frame, showoff=True):
         """
+            phase -2 : setting time
+            phase -1 : normal stanley
+            phase  0 : speeding!!
             phase 1: stanley until find the green point on road
             phase 2: adjusting distance from green: slowing down / backing
         """
@@ -671,7 +680,7 @@ class Stanley2GreenMode(Mode):
             # Must find the line here, First!
             self.log_add("no line here... backing")
             self.show_list = [frame, bev, road_bev, road_sw_bev]
-            move_robot(self.pub, -0.25)
+            move_robot(self.pub, -SPEED_X)
             return
 
 
@@ -686,6 +695,30 @@ class Stanley2GreenMode(Mode):
         angle_deg = self.line_road.get_angle()
         self.log_add("offset", offset_mm)
         self.log_add("angle", angle_deg)
+
+
+        if self.phase == -2:
+            self.time_start = time.time()
+            self.phase = -1
+        
+        if self.phase == -1:
+            self.log_add("Speeding ready")
+            if time.time() - self.time_start < TIME_SET_STANLEY:
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+                self.log_add("z speed ", z)
+            else:
+                self.time_start = time.time()
+                self.phase = 0
+
+        if self.phase == 0:
+            if time.time() - self.time_start < self.speeding_time:
+                self.log_add("Speeding ready")
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=RATIO_SPEEDING)
+                self.log_add("z speed ", z)
+            else:
+                self.time_start = time.time()
+                self.phase = 1
+
 
 
         if self.phase == 1:
@@ -740,7 +773,7 @@ class Stanley2GreenMode(Mode):
 #S2C
 class Stanley2CrossMode(Mode):
 
-    def __init__(self, pub, index=0, left_way=True, right_way=True, from_it=False, left_offset=0, use_green=False, speed_weight=1.0):
+    def __init__(self, pub, index=0, left_way=True, right_way=True, from_it=False, left_offset=0, use_green=False, speed_weight=1.0, speeding_time=0.0):
         '''
             pub = tiki
             index = 번호, 로그에 남기기 위함
@@ -759,8 +792,12 @@ class Stanley2CrossMode(Mode):
         self.left_way = left_way
         self.right_way = right_way
         self.left_offset = left_offset
-        self.phase = 1
-        self.phase = 1
+
+        self.phase = 1        
+        if speeding_time > 0.1:
+            self.phase = -2
+        self.speeding_time = speeding_time
+        self.time_start = time.time()
 
         self.index = index
 
@@ -777,6 +814,10 @@ class Stanley2CrossMode(Mode):
 
     def set_frame_and_move(self, frame, showoff=True):
         """
+            phase -2 : setting time
+            phase -1 : normal stanley
+            phase  0 : speeding!!
+            
             Phase는 녹색을 쓸 때만: S2G와 동일 / 그 외에는 그냥, 진행시킴.
         """
         
@@ -818,13 +859,38 @@ class Stanley2CrossMode(Mode):
             # Must find the line here, First!
             self.log_add("no line here... backing")
             self.show_list = [frame, bev, road_bev, road_sw_bev]
-            move_robot(self.pub, -0.25)
+            move_robot(self.pub, -SPEED_X)
             return
 
 
         # stanley
         offset_mm = self.line_road.get_offset(BOT_FROM_BEV_X + self.left_offset, BOT_FROM_BEV_Y)
         angle_deg = self.line_road.get_angle()
+
+
+        if self.phase == -2:
+            self.time_start = time.time()
+            self.phase = -1
+        
+        if self.phase == -1:
+            self.log_add("Speeding ready")
+            if time.time() - self.time_start < TIME_SET_STANLEY:
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+                self.log_add("z speed ", z)
+            else:
+                self.time_start = time.time()
+                self.phase = 0
+
+        if self.phase == 0:
+            if time.time() - self.time_start < self.speeding_time:
+                self.log_add("Speeding ready")
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=RATIO_SPEEDING)
+                self.log_add("z speed ", z)
+            else:
+                self.time_start = time.time()
+                self.phase = 1
+
+
 
 
         # Phase 2는 녹색을 쓰는 경우만 / 그때는 거리에 맞춰서 속도 줄이고 할 예정.
