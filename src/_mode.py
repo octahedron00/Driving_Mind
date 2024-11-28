@@ -1158,32 +1158,33 @@ class Turn2VoidMode(Mode):
 
         # phase 0: time starting
         if self.phase == 0:
-            self.phase = 2
+            self.phase = 1
             self.time_since_phase = time.time()
 
 
-        # # phase 1: rotating to other side a little bit: to get max data and right angle.
-        # if self.phase == 1:
-        #     # move_robot(self.pub, 0, -SPEED_Z, self.is_left)
+        # phase 1: rotating to other side a little bit: to get max data and right angle.
+        if self.phase == 1:
+            # move_robot(self.pub, 0, -SPEED_Z, self.is_left)
 
-        #     # 지금은 other turn sec = 0이라, 아래 코드가 바로 작동된다. 하지만 가서는 쓰게 될수도...
-        #     if time.time() - self.time_since_phase > self.other_turn_sec:
-        #         self.phase = 2
-        #         self.time_since_phase = time.time()
-        #         move_robot(self.pub)
+            # 지금은 other turn sec = 0이라, 아래 코드가 바로 작동된다. 하지만 가서는 쓰게 될수도...
+            if time.time() - self.time_since_phase > self.other_turn_sec:
+                self.phase = 2
+                self.time_since_phase = time.time()
+                move_robot(self.pub)
 
-        #         angle_at_start = angle
+                angle_at_start = angle
 
-        #         if self.is_left:
-        #             self.est_time_angle_calc = (TIME_90DEG / 90) * (90 - angle_at_start)
-        #         else:
-        #             self.est_time_angle_calc = (TIME_90DEG / 90) * (90 + angle_at_start)
-        #         self.est_time = self.est_time_angle_calc
-        #         if abs(angle) > 6:
-        #             self.est_time = TIME_90DEG
+                if self.is_left:
+                    self.est_time_angle_calc = (TIME_90DEG / 90) * (90 - angle_at_start)
+                else:
+                    self.est_time_angle_calc = (TIME_90DEG / 90) * (90 + angle_at_start)
+                self.est_time = self.est_time_angle_calc
+                if abs(angle) > 6:
+                    self.est_time = TIME_90DEG
 
-        #         self.log_add("angle", angle)
-        #         self.log_add("time", self.est_time)
+                self.log_add("angle", angle)
+                self.log_add("time", self.est_time)
+                
 
         # turning while the line is shown: to estimate time to be exact 90 degrees
         if self.phase == 2:
