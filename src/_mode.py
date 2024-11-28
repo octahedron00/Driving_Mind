@@ -1078,7 +1078,7 @@ class Turn2RoadMode(Mode):
                     self.road_encounter += 1
                     move_robot(self.pub, 0, -self.rot_z, self.is_left)
                 # needs 2 time for road_encounter
-                if self.road_encounter >= 4:
+                if self.road_encounter >= 5:
                     move_robot(self.pub)
                     self.end = True
             else:
