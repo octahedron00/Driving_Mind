@@ -379,6 +379,7 @@ class EventMode(Mode):
                 move_robot(self.pub, SPEED_X)
             elif self.step_for_cam < 0:
                 move_robot(self.pub, -SPEED_X)
+            move_robot(self.pub, -SPEED_X)
 
             if (TIME_MOVE_BACK * abs(self.step_for_cam)) < time.time() - self.time_start:
                 move_robot(self.pub)
