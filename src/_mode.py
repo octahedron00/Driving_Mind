@@ -668,6 +668,7 @@ class Stanley2GreenMode(Mode):
             # Must find the line here, First!
             self.log_add("no line here... backing")
             self.show_list = [frame, bev, road_bev, road_sw_bev]
+            self.frame_from_start_sensing -= 2
             move_robot(self.pub, -SPEED_X)
             return
 
