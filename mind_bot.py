@@ -39,7 +39,7 @@ CAM_WIDTH = 1280
 CAM_HEIGHT = 960
 CAM_FRAMERATE = 16
 VID_CONNECT_CMD = (
-    f'nvarguscamerasrc ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
+    f'nvarguscamerasrc  awbmode=manual aeLock=true exposuretimerange=\"5000000 5000000\" ! video/x-raw(memory:NVMM), width={CAM_WIDTH}, height={CAM_HEIGHT}, format=(string)NV12, framerate=(fraction){CAM_FRAMERATE}/1 '
     f'! nvvidconv flip-method=2 ! video/x-raw, width=(int){CAM_WIDTH}, height=(int){CAM_HEIGHT}, format=(string)BGRx '
     f'! videoconvert ! video/x-raw, format=(string)BGR '
     f'! appsink max-buffers=1 drop=True'
@@ -167,7 +167,8 @@ class Bot_Mind:
             Turn2VoidMode(pub, 15,      is_left=True),
 
             EventMode(pub, self.model_each, self.shared_list, 20, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, do_step_back=DO_STEP_BACK_FOR_CAM),
-            Turn2RoadMode(pub, 21,      is_left=False),
+            Turn2VoidMode(pub, 21,      is_left=False),
+            # Turn2RoadMode(pub, 21,      is_left=False),
             Stanley2GreenMode(pub, 22,  from_it=True),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
             Stanley2GreenMode(pub, 24,  prefer_dist=230, speeding_time=1.0),

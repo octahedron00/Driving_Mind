@@ -3,6 +3,7 @@
 # %matplotlib inline
 
 
+import datetime
 import os
 import cv2
 import numpy as np
@@ -428,7 +429,7 @@ class EventMode(Mode):
 
                 # 만든 값 출력
                 self.log_add("count: ", str(count_map))
-                cv2.imwrite(os.path.join("predict", f"predict_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
+                cv2.imwrite(os.path.join("predict", f"predict_{datetime.datetime.now().strftime("%H%M")}_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
             self.count_map_list.append(count_map)
 
 
@@ -1049,7 +1050,7 @@ class Turn2RoadMode(Mode):
                 self.pub.stop_buzzer()
 
 
-            move_robot(self.pub, self.speed_x, max(self.rot_z, self.rot_z), self.is_left)
+            move_robot(self.pub, self.speed_x, max(self.rot_z, z_slowing_down), self.is_left)
 
             if time.time() - self.time_since_phase > self.min_turn_sec:
                 self.phase = 2
