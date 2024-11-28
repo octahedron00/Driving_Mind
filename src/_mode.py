@@ -1164,7 +1164,7 @@ class Turn2VoidMode(Mode):
                 self.time_since_phase = time.time()
                 move_robot(self.pub)
 
-                angle_at_start = self.capsule["angle_from_road"]
+                angle_at_start = angle
 
                 if self.is_left:
                     self.est_time_angle_calc = (TIME_90DEG / 90) * (90 - angle_at_start)
