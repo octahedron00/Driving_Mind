@@ -26,7 +26,7 @@ BOT_FROM_BEV_Y = 500  # edit this
 
 SPEED_X = 0.25
 SPEED_Z = 0.8 # 0.4
-TIME_90DEG = 0.52 / SPEED_Z
+TIME_90DEG = 0.54 / SPEED_Z
 TIME_SET_STANLEY = 1
 RATIO_SPEEDING = 3
 
@@ -1179,8 +1179,8 @@ class Turn2VoidMode(Mode):
                 else:
                     self.est_time_angle_calc = (TIME_90DEG / 90) * (90 + angle_at_start)
                 self.est_time = self.est_time_angle_calc
-                if abs(angle) > 0:
-                    self.est_time = TIME_90DEG
+                if abs(angle) > 0: ###### 45 or 10
+                    self.est_time = TIME_90DEG 
 
                 self.log_add("angle", angle)
                 self.log_add("time", self.est_time)
