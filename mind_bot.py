@@ -20,12 +20,12 @@ from src._model_second import run_model_second
 DO_MODEL = True
 
 DO_DETR = False
-DO_SECOND = True
+DO_SECOND = False
 DO_SECOND_DETR = False
 FILE_EACH = "best.pt"
 
 
-DO_ENSEMBLE = True
+DO_ENSEMBLE = False
 
 MODEL_FIRST_LIST = ["yolo11s.pt"]
 MODEL_SECOND_LIST = ["best.pt", 'yolo11s.pt']
@@ -248,7 +248,7 @@ class Bot_Mind:
         # 로그 출력
         if self.mode.running:
             self.mode.log_add("time: ", time.time() - time_start)
-            self.mode.log_add(f"[ battery: {self.pub.get_battery_voltage()}V / {self.pub.get_current()}mA ]")
+            # self.mode.log_add(f"[ battery: {self.pub.get_battery_voltage()}V / {self.pub.get_current()}mA ]")
             print(self.mode.log)
             if IS_LOG:
                 self.logtxt.write(self.mode.log + "\n")
