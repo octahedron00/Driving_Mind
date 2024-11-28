@@ -1032,7 +1032,7 @@ class Turn2RoadMode(Mode):
         if self.phase == 1:
 
             # 아예 처음에 엄청 빨리 돌아서, 시간을 좀 절약하자.
-            z_slowing_down = 1*(1-(time.time()-self.time_since_phase))
+            z_slowing_down = 1*(1.2-(time.time()-self.time_since_phase))
 
             if self.rot_z < z_slowing_down:
                 self.pub.play_buzzer(660)
