@@ -150,17 +150,6 @@ class Bot_Mind:
 
         self.mode_list = [
             StartMode(pub),
-            Turn2RoadMode(pub, 0,       is_left=True),
-            Stanley2GreenMode(pub, 1, speeding_time=1.0),
-            EndMode(pub, 1000),
-
-            # # testing salting
-            # Stanley2GreenMode(pub, 0, salting=True),
-            # Turn2RoadMode(pub, 0,       is_left=True,  is_curve=True),
-            # Turn2RoadMode(pub, 0,       is_left=True,  is_curve=True),
-            # Stanley2GreenMode(pub, 0, salting=False),
-            # EndMode(pub, 1000),
-
 
 
             Stanley2GreenMode(pub, 1, speeding_time=1.0),
@@ -193,7 +182,7 @@ class Bot_Mind:
 
             EventMode(pub, self.model_each, self.shared_list, 40, n_frame = 5, wait_sec = 0.5, show_log= not DO_SECOND, do_step_back=DO_STEP_BACK_FOR_CAM),
             Turn2RoadMode(pub, 41,      is_left=False),
-            Stanley2GreenMode(pub, 42.5, from_it=True),
+            Stanley2GreenMode(pub, 42, from_it=True),
             Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
             Stanley2GreenMode(pub, 44, speed_weight = 1, prefer_dist=200),
 
