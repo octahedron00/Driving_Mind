@@ -151,12 +151,12 @@ class Bot_Mind:
             Turn2RoadMode(pub, 0,       is_left=True),
             EndMode(pub, 1000),
 
-            # testing salting
-            Stanley2GreenMode(pub, 0, salting=True),
-            Turn2RoadMode(pub, 0,       is_left=True,  is_curve=True),
-            Turn2RoadMode(pub, 0,       is_left=True,  is_curve=True),
-            Stanley2GreenMode(pub, 0, salting=False),
-            EndMode(pub, 1000),
+            # # testing salting
+            # Stanley2GreenMode(pub, 0, salting=True),
+            # Turn2RoadMode(pub, 0,       is_left=True,  is_curve=True),
+            # Turn2RoadMode(pub, 0,       is_left=True,  is_curve=True),
+            # Stanley2GreenMode(pub, 0, salting=False),
+            # EndMode(pub, 1000),
 
 
 
