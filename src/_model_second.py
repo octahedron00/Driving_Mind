@@ -58,7 +58,7 @@ def run_model_second(tiki: TikiMini, model_addresses, shared_list, is_detr = Fal
         for image in image_list:
             # model_predict의 구조는 항상 동일함: 이미지가 하나면 list 안에 하나만 들어옴.
             for model in models:
-                tiki.play_buzzer(660)
+                tiki.play_buzzer(1320)
                 result_list += model.predict(image, show=False, conf=CONF_THRESHOLD, iou=IOU_THRESHOLD, device=0)
                 tiki.stop_buzzer()
 
