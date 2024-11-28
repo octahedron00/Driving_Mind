@@ -429,7 +429,7 @@ class EventMode(Mode):
 
                 # 만든 값 출력
                 self.log_add("count: ", str(count_map))
-                cv2.imwrite(os.path.join("predict", f"predict_{datetime.datetime.now().strftime("%H%M")}_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
+                cv2.imwrite(os.path.join("predict", f"predict_{datetime.datetime.now().strftime('%H%M')}_{self.index}_{self.n_frame_done}.jpg"), predict_frame)
             self.count_map_list.append(count_map)
 
 
