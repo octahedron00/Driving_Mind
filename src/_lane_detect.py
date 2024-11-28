@@ -47,6 +47,7 @@ def get_road(image, with_green = True):
     # rev = 255 - image
 
     black_max = 135 # EDA
+    black_max = 120 # EDA
     black_min = 0
 
     # image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
