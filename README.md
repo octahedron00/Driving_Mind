@@ -4,6 +4,12 @@ AI driving mind uploaded on github:
 
 for Team AI-FORCE
 
+2024 MAICON WINNER
+
+with zerothweek, rkdgmldnjs52, h0bin2, KwCCCC
+
+Thanks to jsonmona
+
 ## TODO
 
 jupyter는 그냥 로봇에서 돌리면 그만이다: 세션 자주 갈아주기 정도
@@ -11,6 +17,8 @@ jupyter는 그냥 로봇에서 돌리면 그만이다: 세션 자주 갈아주�
 pip install ultralytics keyboard 
 
 아예 Jupyter 말고 그냥 Python을 쓰고 싶다면, 그냥 -ssh 접속 쓰기로 하자.
+
+Venv 위치: ~/Setup/venv/bin/activate
 
 VS Code 안에서도 어.. 이것저것 해줄 것
 
