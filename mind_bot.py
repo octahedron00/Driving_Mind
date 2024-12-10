@@ -13,7 +13,7 @@ from ultralytics import YOLO, RTDETR
 from tiki.mini import TikiMini
 
 from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_square_pos, Line
-from src._mode import StartMode, EventMode, Stanley2GreenMode, Turn2VoidMode, Turn2RoadMode, EndMode, _SheepMode
+from src._mode import StartMode, EventMode, Stanley2GreenMode, Stanley2CrossMode, Turn2VoidMode, Turn2RoadMode, EndMode, _SheepMode
 from src._model_second import run_model_second
 
 
@@ -167,6 +167,9 @@ class Bot_Mind:
             StartMode(pub),
             # Turn2VoidMode(pub, 4,       is_left=True),
             # Turn2RoadMode(pub, 13,      is_left=False),
+
+            Stanley2CrossMode(pub, 0, speeding_time=1.0, prefer_dist=220),
+            EndMode(pub, None, 0),
 
 
             Stanley2GreenMode(pub, 1, speeding_time=1.0),

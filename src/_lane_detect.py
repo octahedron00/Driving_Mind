@@ -543,42 +543,46 @@ def get_mm_px_from_cm(frame_cm):
     return frame_mm
 
 
-# Not using Code:
-# def get_cross_pos_by_filter(frame_cm, width_road = 5, left_way = True, right_way = True):
 
-#     a = 6
-#     b = -2
-#     if left_way and right_way:
-#         a = 9
-#         b = -3
-#     matrix = np.ones((width_road*3, width_road*3))/float(a*width_road*width_road)
-#     matrix[:, :width_road] = 3 / float(a*width_road*width_road)
-#     matrix[:, width_road*2:] = 3 / float(a*width_road*width_road)
-#     if not left_way:
-#         matrix[:, :width_road-1] = b / float(a*width_road*width_road)
-#     if not right_way:
-#         matrix[:, width_road*2+1:] = b / float(a*width_road*width_road)
+def get_cross_pos_by_filter(frame_cm, width_road = 3, left_way = True, right_way = True):
 
-#     matrix[:width_road-1, :width_road-1] = b / float(a*width_road*width_road)
-#     matrix[width_road*2+1:, :width_road-1] = b / float(a*width_road*width_road)
-#     matrix[:width_road-1, width_road*2+1:] = b / float(a*width_road*width_road)
-#     matrix[width_road*2+1:, width_road*2+1:] = b / float(a*width_road*width_road)
+    a = 4*width_road*width_road
+    if left_way and right_way:
+        a = 5*width_road*width_road
     
-#     cross_frame = cv2.filter2D(frame_cm, -1, matrix)
 
-#     color_frame = cv2.cvtColor(cross_frame, cv2.COLOR_GRAY2BGR)
+    matrix = np.ones((width_road*3, width_road*3)) / a
 
-#     max_pos = (0, 0)
-#     max_pos_xy = (0, 0)
+    matrix[:width_road, :width_road] = 0
+    matrix[-width_road:, :width_road] = 0
+    matrix[:width_road, -width_road:] = 0
+    matrix[-width_road:, -width_road:] = 0
+    if not left_way:
+        matrix[:, :width_road] = 0
+    if not right_way:
+        matrix[:, -width_road:] = 0
 
-#     for i in range(np.shape(cross_frame)[0]):
-#         for j in range(np.shape(cross_frame)[1]):
+    matrix[ 0,  0] = -1
+    matrix[ 0, -1] = -1
+    matrix[-1,  0] = -1
+    matrix[-1, -1] = -1
+
+    
+    cross_frame = cv2.filter2D(frame_cm, -1, matrix)
+
+    color_frame = cv2.cvtColor(cross_frame, cv2.COLOR_GRAY2BGR)
+
+    max_pos = (0, 0)
+    max_pos_xy = (0, 0)
+
+    for i in range(np.shape(cross_frame)[0]):
+        for j in range(np.shape(cross_frame)[1]):
             
-#             if cross_frame[max_pos] < cross_frame[i, j]:
-#                 max_pos = (i, j)
-#                 max_pos_xy = (j, i)
+            if cross_frame[max_pos] < cross_frame[i, j]:
+                max_pos = (i, j)
+                max_pos_xy = (j, i)
 
-#     cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(cross_frame[max_pos]), 0), 1)
+    cv2.rectangle(color_frame, max_pos_xy, max_pos_xy, (0, int(cross_frame[max_pos]), 0), 1)
 
-#     return color_frame, max_pos, cross_frame[max_pos]
+    return color_frame, max_pos, cross_frame[max_pos]
 

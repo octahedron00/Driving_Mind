@@ -14,7 +14,7 @@ from ultralytics import YOLO, RTDETR
 
 from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm 
 from src._lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result
-from src._lane_detect import get_resize_image_4_model, get_pos_before_xy, Line
+from src._lane_detect import get_resize_image_4_model, get_cross_pos_by_filter, get_pos_before_xy, Line
 
 #for fun
 from src._sing import sing
@@ -35,6 +35,8 @@ RADIUS_VZ_OVER_VX_CONST = 240  #EDA
 
 TRUE_GREEN_CONF = 100
 TRUE_GREEN_DIST_FROM_ROAD = 30  # mm
+
+TRUE_CROSS_CONF = 220
 
 
 BEV_SHAPE = (300, 200)
@@ -768,197 +770,191 @@ class Stanley2GreenMode(Mode):
 
 
 
-# #S2C
-# class Stanley2CrossMode(Mode):
+#S2C
+class Stanley2CrossMode(Mode):
 
-#     def __init__(self, pub, index=0, left_way=True, right_way=True, from_it=False, left_offset=0, use_green=False, speed_weight=1.0, speeding_time=0.0, salting=False):
-#         '''
-#             pub = tiki
-#             index = 번호, 로그에 남기기 위함
-#             left / right_way = cross에 각 방향의 길이 있는가? 십자는 둘 다 true / 둘 다 false일 수 없음.
-#             from_it: 시작 첫 10프레임에 보이는 green/cross을 무시할 것인지의 여부
-#             left_offset: 길보다 왼쪽으로 몇 mm 틀어서 갈 것인가
-#             speed_weight: 기본 stanley에서 속도를 조금 더 빠르게 할 수 있음: max 1.5, 그 이상은 의미 X
-#         '''
-#         self.end = False
-#         self.pub = pub
+    def __init__(self, pub, index=0, left_way=True, right_way=True, from_it=False, left_offset=0, use_green=False, speed_weight=1.0, speeding_time=0.0, prefer_dist = 220):
+        '''
+            pub = tiki
+            index = 번호, 로그에 남기기 위함
+            left / right_way = cross에 각 방향의 길이 있는가? 십자는 둘 다 true / 둘 다 false일 수 없음.
+            from_it: 시작 첫 10프레임에 보이는 green/cross을 무시할 것인지의 여부
+            left_offset: 길보다 왼쪽으로 몇 mm 틀어서 갈 것인가
+            speed_weight: 기본 stanley에서 속도를 조금 더 빠르게 할 수 있음: max 1.5, 그 이상은 의미 X
+        '''
+        self.end = False
+        self.pub = pub
 
-#         self.line_road = None
-#         self.init_pos_for_sliding_windows = -1
-#         self.green_encounter = -2
-#         self.cross_encounter = -2
-#         self.left_way = left_way
-#         self.right_way = right_way
-#         self.left_offset = left_offset
+        self.line_road = None
+        self.init_pos_for_sliding_windows = -1
+        self.green_encounter = -2
+        self.cross_encounter = -2
+        self.left_way = left_way
+        self.right_way = right_way
+        self.left_offset = left_offset
+        self.prefer_dist = prefer_dist
 
-#         self.phase = 1        
-#         if speeding_time > 0.1:
-#             self.phase = -2
-#         self.speeding_time = speeding_time
-#         self.time_start = time.time()
+        self.phase = 1        
+        if speeding_time > 0.1:
+            self.phase = -2
+        self.speeding_time = speeding_time
+        self.time_start = time.time()
 
-#         self.index = index
-#         self.salting = salting
+        self.index = index
 
-#         self.capsule = dict()
-#         self.use_green = use_green
+        self.capsule = dict()
+        self.use_green = use_green
 
-#         self.speed_weight = speed_weight
-#         self.frame_without_line = 5
+        self.speed_weight = speed_weight
+        self.frame_without_line = 5
 
-#         self.frame_from_start_sensing = 0
-#         if from_it:
-#             self.frame_from_start_sensing = -20
+        self.frame_from_start_sensing = 0
+        if from_it:
+            self.frame_from_start_sensing = -20
 
 
-#     def set_frame_and_move(self, frame, showoff=True):
-#         """
-#             phase -2 : setting time
-#             phase -1 : normal stanley
-#             phase  0 : speeding!!
+    def set_frame_and_move(self, frame, showoff=True):
+        """
+            phase -2 : setting time
+            phase -1 : normal stanley
+            phase  0 : speeding!!
 
-#             Phase는 녹색을 쓸 때만: S2G와 동일 / 그 외에는 그냥, 진행시킴.
-#         """
+            Phase는 녹색을 쓸 때만: S2G와 동일 / 그 외에는 그냥, 진행시킴.
+        """
         
-#         self.frame_from_start_sensing += 1
+        """
+            phase -2 : setting time
+            phase -1 : normal stanley
+            phase  0 : speeding!!
+            phase 1: stanley until find the green point on road
+            phase 2: adjusting distance from green: slowing down / backing
+        """
+        self.frame_from_start_sensing += 1
 
-#         self.log_set(self.index, "Stanley2Cross")
-#         bev = get_bev(frame)
+        self.log_set(self.index, "S2G")
+        bev = get_bev(frame)
+        self.log_add("phase ", self.phase)
 
+        # slidingwindow
+        road_bev = get_road(bev)
+        road_blur_bev = get_rect_blur(road_bev, 5)
+        road_sw_bev, x_list, y_list = get_sliding_window_result(road_blur_bev, self.init_pos_for_sliding_windows)
 
-#         # slidingwindow & cross position!
-#         road_bev = get_road(bev)
-#         road_blur_bev = get_rect_blur(road_bev, 5)
-#         cross_find_view, x_list, y_list, is_cross, positions = get_sliding_window_and_cross_result(road_blur_bev, self.left_way, self.right_way, self.init_pos_for_sliding_windows)
-#         road_sw_bev = cross_find_view
-
-#         # green event!
-#         green_bev = get_green(bev)
-#         green_bev_cm = get_cm_px_from_mm(green_bev)
-#         green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 5)
-#         green_pos = [pos * 10 for pos in green_pos_cm]
-
-
-
-#         # x, y list = sliding window midpoints -> can be used to find the exact line
-#         if len(x_list) > 2:
-#             self.init_pos_for_sliding_windows = x_list[1]
-#             self.line_road = Line(x_list, y_list)
-#             self.frame_without_line = 0
-#             # if no line was found next time, the Line will be used as a real one for 5 frames
-#         elif self.frame_without_line < 5:
-#             self.frame_without_line += 1
-#             self.init_pos_for_sliding_windows = -1
-#         else:
-#             self.line_road = None
-
-
-#         # 시작 시 길 없거나 / 길 잃어버리면 여기서 다시 시작: 조금 뒤로 가면, 길은 보이게 되어있다.
-#         if self.line_road == None:
-#             # Must find the line here, First!
-#             self.log_add("no line here... backing")
-#             self.show_list = [frame, bev, road_bev, road_sw_bev]
-#             move_robot(self.pub, -SPEED_X)
-#             return
-
-
-#         # stanley
-#         offset_mm = self.line_road.get_offset(BOT_FROM_BEV_X + self.left_offset, BOT_FROM_BEV_Y)
-#         angle_deg = self.line_road.get_angle()
-
-
-#         if self.phase == -2:
-#             self.time_start = time.time()
-#             self.phase = -1
         
-#         if self.phase == -1:
-#             self.log_add("Speeding ready")
-#             if time.time() - self.time_start < TIME_SET_STANLEY:
-#                 z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
-#                 self.log_add("z speed ", z)
-#             else:
-#                 self.time_start = time.time()
-#                 self.phase = 0
-
-#         if self.phase == 0:
-#             self.pub.play_buzzer(660)
-#             if time.time() - self.time_start < self.speeding_time:
-#                 self.log_add("Speeding!!!")
-#                 z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=RATIO_SPEEDING)
-#                 self.log_add("z speed ", z)
-#             else:
-#                 self.time_start = time.time()
-#                 self.phase = 1
+        # x, y list = sliding window midpoints -> can be used to find the exact line
+        if len(x_list) > 2:
+            self.init_pos_for_sliding_windows = x_list[1]
+            self.line_road = Line(x_list, y_list)
+            self.frame_without_line = 0
+            # if no line was found next time, the Line will be used as a real one for 5 frames
+        elif self.frame_without_line < 5:
+            self.frame_without_line += 1
+            self.init_pos_for_sliding_windows = -1
+        else:
+            self.line_road = None
 
 
+        # 시작 시 길 없거나 / 길 잃어버리면 여기서 다시 시작: 조금 뒤로 가면, 길은 보이게 되어있다.
+        if self.line_road == None:
+            # Must find the line here, First!
+            self.log_add("no line here... backing")
+            self.show_list = [frame, bev, road_bev, road_sw_bev]
+            self.frame_from_start_sensing -= 2
+            move_robot(self.pub, -SPEED_X)
+            return
 
 
-#         # Phase 2는 녹색을 쓰는 경우만 / 그때는 거리에 맞춰서 속도 줄이고 할 예정.
-#         if self.phase == 1:
-#             self.pub.stop_buzzer()
-#             # do stanley
-#             if self.salting and self.frame_from_start_sensing % 3 == 0:
-#                 z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight * RATIO_SPEEDING)
-#             else:
-#                 z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+        # for cross event!
+        road_bev_cm = get_cm_px_from_mm(road_bev)
+        road_blur_bev, cross_pos_cm, cross_max = get_cross_pos_by_filter(road_bev_cm, 5, left_way=self.left_way, right_way=self.right_way)
+        cross_pos = [pos * 10 for pos in cross_pos_cm]
+
+        # for stanley!
+        offset_mm = self.line_road.get_offset(BOT_FROM_BEV_X + self.left_offset, BOT_FROM_BEV_Y)
+        angle_deg = self.line_road.get_angle()
+        self.log_add("offset", offset_mm)
+        self.log_add("angle", angle_deg)
 
 
-#         self.log_add("offset", offset_mm)
-#         self.log_add("angle", angle_deg)
-#         self.log_add("speed_z", z)
+        if self.phase == -2:
+            self.time_start = time.time()
+            self.phase = -1
+        
+        if self.phase == -1:
+            self.log_add("Speeding ready")
+            if time.time() - self.time_start < TIME_SET_STANLEY:
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
+                self.log_add("z speed ", z)
+            else:
+                self.time_start = time.time()
+                self.phase = 0
 
-#         self.log_add("Cross position", positions)
+        if self.phase == 0:
+            self.pub.play_buzzer(660)
+            if time.time() - self.time_start < self.speeding_time:
+                self.log_add("Speeding!!!")
+                z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=RATIO_SPEEDING)
+                if abs(z) > S2X_LIMIT_Z:
+                    self.time_start = time.time()
+                    self.phase = 1
+                self.log_add("z speed ", z)
+            else:
+                self.time_start = time.time()
+                self.phase = 1
 
-#         if is_cross and self.frame_from_start_sensing > 0:
-#             self.cross_encounter += 1
-#             self.log_add("cross?", self.cross_encounter)
-#         else:
-#             self.cross_encounter = max(0, self.cross_encounter-1)
-
-#         if self.cross_encounter >= 3:
-#             self.end = True
-#             move_robot(self.pub)
-#             self.capsule["dist_from_cross"] = BOT_FROM_BEV_Y - np.mean(positions)
 
 
-#         # Green 보고 처리할 때의 코드: phase랑 use_green 확인, green 위치랑 거리 확인, 감속까지.
-#         if self.use_green and self.phase == 1:
-#             if green_max > TRUE_GREEN_CONF and self.line_road.get_distance(green_pos[1], green_pos[0]) < TRUE_GREEN_DIST_FROM_ROAD:
-#                 self.log_add("true green?", green_max)
-#                 self.log_add("true green at", green_pos)
-#                 self.log_add("true green from line", self.line_road.get_distance(green_pos[1], green_pos[0]))
-#                 if self.frame_from_start_sensing > 0:
-#                     self.green_encounter += 1
-#             else:
-#                 self.green_encounter = max(0, self.green_encounter-1)
+        if self.phase == 1:
+            self.pub.stop_buzzer()
+            
+            # do stanley
+            z = move_stanley(self.pub, offset_mm, angle_deg, x_ratio=self.speed_weight)
 
-#             if self.green_encounter >= 3:
-#                 self.phase = 2
 
-#         elif self.use_green and self.phase == 2:
-#             self.capsule["dist_from_cross"] = 0
-#             # 만약 Green이 사라진다면? 일단 거기서 끝내기. 그럴 일은 없겠지만, 거기서 멈추기로 함.
-#             if green_max < TRUE_GREEN_CONF:
-#                 self.end = True
-#                 self.log_add("Green is Gone! ", green_max)
-#                 return
+            self.log_add("z speed ", z)
 
-#             # 가까우면 음수, 멀면 양수, -0.5 ~ 0.25까지 나올 수 있음: BEV 따라서..
-#             dist_ratio = (get_2_point_dist((green_pos[1], green_pos[0]), (BOT_FROM_BEV_X, BOT_FROM_BEV_Y)) / PREFER_DIST) - 1
-#             self.log_add("Dist ratio ", dist_ratio)
+            if cross_max > TRUE_CROSS_CONF and self.line_road.get_distance(cross_pos[1], cross_pos[0]) < TRUE_GREEN_DIST_FROM_ROAD:
+                self.log_add("true cross?", cross_max)
+                self.log_add("true cross at", cross_pos)
+                self.log_add("true cross from line", self.line_road.get_distance(cross_pos[1], cross_pos[0]))
+                if self.frame_from_start_sensing > 0:
+                    self.green_encounter += 1
+            else:
+                self.green_encounter = max(0, self.green_encounter-1)
 
-#             if abs(dist_ratio) > PREFER_ERR_RATIO:
-#                 z = move_stanley(self.pub, offset_mm, angle_deg, dist_ratio)  # slow down a lot
-#             else:
-#                 z = move_robot(self.pub)  # stop
-#                 self.end = True
+            if self.green_encounter >= 3:
+                self.phase = 2
+                # move_robot(self.pub)
 
-#         # showoff now
-#         if showoff:
-#             cv2.line(road_sw_bev,
-#                      (int(self.line_road.calc(0)), 0),(int(self.line_road.calc(np.shape(road_sw_bev)[0])),np.shape(road_sw_bev)[0],),
-#                      (0, 0, 255),5)
-#             self.show_list = [frame, bev, road_bev, road_sw_bev, get_mm_px_from_cm(green_bev_cm), get_mm_px_from_cm(green_blur_bev)]
+
+        ### 녹색 보고 phase 2: 속도 자체를 녹색 표식과의 위치 관계에 따라 바꿈, PREFER_ERR_RATIO 안으로 들어오면 끝. 
+        elif self.phase == 2:
+            self.capsule["dist_from_cross"] = get_2_point_dist((cross_pos[1], cross_pos[0]), (BOT_FROM_BEV_X, BOT_FROM_BEV_Y))
+            self.capsule["angle_from_road"] = angle_deg
+            # 만약 Green이 사라진다면? 일단 거기서 끝내기. 그럴 일은 없겠지만, 거기서 멈추기로 함.
+            if cross_max < TRUE_CROSS_CONF:
+                self.end = True            
+                self.capsule["dist_from_cross"] = BOT_FROM_BEV_Y - BEV_SHAPE[0]
+                self.log_add("Cross is Gone! ", cross_max)
+                return
+
+            # 가까우면 음수, 멀면 양수, -0.5 ~ 0.25까지 나올 수 있음: BEV 따라서..
+            dist_ratio = (get_2_point_dist((cross_pos[1], cross_pos[0]), (BOT_FROM_BEV_X, BOT_FROM_BEV_Y)) / self.prefer_dist) - 1
+            self.log_add("Dist ratio ", dist_ratio)
+
+            if abs(dist_ratio) > PREFER_ERR_RATIO:
+                z = move_stanley(self.pub, offset_mm, angle_deg, dist_ratio*2)  # slow down a lot
+            else:
+                z = move_robot(self.pub)  # stop
+                self.end = True
+
+
+        # showoff now
+        if showoff:
+            cv2.line(road_sw_bev,
+                     (int(self.line_road.calc(0)), 0),(int(self.line_road.calc(np.shape(road_sw_bev)[0])),np.shape(road_sw_bev)[0],),
+                     (0, 0, 255),5)
+            self.show_list = [frame, bev, road_bev, road_sw_bev, get_mm_px_from_cm(road_bev_cm), get_mm_px_from_cm(road_blur_bev),]
 
 
 
@@ -1042,7 +1038,7 @@ class Turn2RoadMode(Mode):
         if self.phase == 1:
 
             # 아예 처음에 엄청 빨리 돌아서, 시간을 좀 절약하자.
-            z_slowing_down = 1*(0.6-(time.time()-self.time_since_phase))
+            # z_slowing_down = 1*(0.6-(time.time()-self.time_since_phase))
 
             # if self.rot_z < z_slowing_down:
             #     self.pub.play_buzzer(660)
