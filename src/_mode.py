@@ -777,7 +777,7 @@ class Stanley2GreenMode(Mode):
 #S2C
 class Stanley2CrossMode(Mode):
 
-    def __init__(self, pub, index=0, left_way=True, right_way=True, from_it=False, left_offset=0, use_green=False, speed_weight=1.0, speeding_time=0.0, prefer_dist = 220):
+    def __init__(self, pub, index=0, left_way=True, right_way=True, front_way=True, from_it=False, left_offset=0, use_green=False, speed_weight=1.0, speeding_time=0.0, prefer_dist = 220):
         '''
             pub = tiki
             index = 번호, 로그에 남기기 위함
@@ -793,6 +793,7 @@ class Stanley2CrossMode(Mode):
         self.init_pos_for_sliding_windows = -1
         self.green_encounter = -2
         self.cross_encounter = -2
+        self.front_way = front_way
         self.left_way = left_way
         self.right_way = right_way
         self.left_offset = left_offset
@@ -870,7 +871,7 @@ class Stanley2CrossMode(Mode):
 
         # for cross event!
         road_bev_cm = get_cm_px_from_mm(road_bev)
-        road_blur_bev, cross_pos_cm, cross_max = get_cross_pos_by_filter(road_bev_cm, 5, left_way=self.left_way, right_way=self.right_way)
+        road_blur_bev, cross_pos_cm, cross_max = get_cross_pos_by_filter(road_bev_cm, 5, left_way=self.left_way, right_way=self.right_way, front_way=self.front_way)
         cross_pos = [pos * 10 for pos in cross_pos_cm]
 
         # for stanley!

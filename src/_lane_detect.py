@@ -544,11 +544,16 @@ def get_mm_px_from_cm(frame_cm):
 
 
 
-def get_cross_pos_by_filter(frame_cm, width_road = 3, left_way = True, right_way = True):
+def get_cross_pos_by_filter(frame_cm, width_road = 3, left_way = True, right_way = True, front_way = True):
 
-    a = 4*width_road*width_road
-    if left_way and right_way:
-        a = 5*width_road*width_road
+    t = 2
+    if left_way:
+        t += 1
+    if right_way:
+        t += 1
+    if front_way:
+        t += 1
+    a = t*width_road*width_road
     
 
     matrix = np.ones((width_road*3, width_road*3)) / a
@@ -561,6 +566,8 @@ def get_cross_pos_by_filter(frame_cm, width_road = 3, left_way = True, right_way
         matrix[:, :width_road] = 0
     if not right_way:
         matrix[:, -width_road:] = 0
+    if not front_way:
+        matrix[:width_road, :] = 0
 
     matrix[ 0,  0] = -1
     matrix[ 0, -1] = -1

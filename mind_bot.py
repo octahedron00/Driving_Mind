@@ -169,22 +169,6 @@ class Bot_Mind:
             # Turn2VoidMode(pub, 4,       is_left=True),
             # Turn2RoadMode(pub, 13,      is_left=False),
 
-            Stanley2CrossMode(pub, 0, speeding_time=1.0, prefer_dist=220),
-            Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True, z_ratio=0.3),
-            Stanley2GreenMode(pub, 3,   left_offset = 0, prefer_dist=220),
-            _SheepMode(pub, 3.5, sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 4,       is_left=True),
-
-            EventMode(pub, self.models, self.shared_list, 10, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 11,      is_left=True),
-            Stanley2CrossMode(pub, 0, speeding_time=0.0, prefer_dist=220),
-            Turn2RoadMode(pub, 2,       is_left=False,  is_curve=True, z_ratio=0.3),
-            Stanley2CrossMode(pub, 0, speeding_time=1.0, prefer_dist=220),
-            Turn2RoadMode(pub, 2,       is_left=False, min_turn_sec=2.5),
-            _SheepMode(pub, -1, sleep_sec = 0.6, x_speed = -0.12),
-            EndMode(pub, None, 0),
-
-
             Stanley2GreenMode(pub, 1, speeding_time=1.0),
             Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
             Stanley2GreenMode(pub, 3,   left_offset = 0, prefer_dist=220),
@@ -219,7 +203,25 @@ class Bot_Mind:
             Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
             Stanley2GreenMode(pub, 44, speed_weight = 1, prefer_dist=200),
 
-            EndMode(pub, None, 100, predict_all=False),
+            # EndMode(pub, None, 100, predict_all=False),
+
+            Turn2RoadMode(pub, 100,       is_left=False, min_turn_sec=2.6),            
+
+            Stanley2CrossMode(pub, 101, speeding_time=0.0, prefer_dist=220, front_way=False),
+            Turn2RoadMode(pub, 102,       is_left=False,  is_curve=True, z_ratio=0.3),
+            Stanley2CrossMode(pub, 103, speeding_time=2.0, left_way=False, prefer_dist=220, from_it=True),
+            Stanley2CrossMode(pub, 104, speeding_time=2.0, prefer_dist=220, front_way=False, from_it=True),
+            Turn2RoadMode(pub, 105,       is_left=True,  is_curve=True, z_ratio=0.3),
+            
+            Stanley2GreenMode(pub, 106, prefer_dist=400),
+            Stanley2CrossMode(pub, 107, speeding_time=3.0, prefer_dist=220, from_it=True),
+            Stanley2CrossMode(pub, 108, speeding_time=1.0, prefer_dist=220, from_it=True),
+            Turn2RoadMode(pub, 109,       is_left=False, min_turn_sec=2.6),
+            _SheepMode(pub, 110, sleep_sec = 1.5, x_speed = -0.12),
+
+            EndMode(pub, None, 0),
+
+
         ]
 
         # 모델 부르기 등이 오래 걸릴 수 있으니, 출발 자체는 엔터 한 번으로 진행
