@@ -10,7 +10,7 @@ import sys
 
 from math import *
 
-from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm
+from src._lane_detect import get_bev, get_road, get_sliding_window_result, get_green, get_rect_blur, get_mm_px_from_cm, get_cross_pos_by_filter
 from src._lane_detect import get_cm_px_from_mm, get_square_pos, get_road_edge_angle, get_sliding_window_and_cross_result, Line
 from src._lane_detect import LT_BEV, LD_BEV, RD_BEV, RT_BEV, H_BEV, W_BEV
 
@@ -32,12 +32,13 @@ def show(frame, frame_before, stop=False):
 
     bev = get_bev(frame)
     road_bev = get_road(bev)
+    cross_bev = get_mm_px_from_cm(get_cross_pos_by_filter(get_cm_px_from_mm(road_bev))[0])
     green_bev = get_green(bev)
     green_bev_cm = get_cm_px_from_mm(green_bev)
     green_blur_bev, green_pos_cm, green_max = get_square_pos(green_bev_cm, 7)
     edge_bev, _ = get_road_edge_angle(road_bev)
     sliding_bev, _, _ = get_sliding_window_result(road_bev)
-    cross_bev, _, _, _, _ = get_sliding_window_and_cross_result(road_bev)
+    # cross_bev, _, _, _, _ = get_sliding_window_and_cross_result(road_bev)
     
     # BEV만드는 ROI는 여기서 만듭니다!
     polypoint = np.array([LT_BEV, LD_BEV, RD_BEV, RT_BEV], dtype=np.int32)
