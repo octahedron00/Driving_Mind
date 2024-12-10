@@ -973,7 +973,7 @@ class Turn2RoadMode(Mode):
         self.is_left = is_left
         self.line_road = None
         self.init_pos_for_sliding_windows = -1
-        self.min_turn_sec = min_turn_sec
+        self.min_turn_sec = min_turn_sec/z_ratio
         self.is_curve = is_curve
 
         self.road_encounter = 0
