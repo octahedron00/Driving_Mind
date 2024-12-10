@@ -537,7 +537,7 @@ class EventMode(Mode):
 
 class _SheepMode(Mode):
 
-    def __init__(self, pub, index=0, sleep_sec = 1.0):
+    def __init__(self, pub, index=0, sleep_sec = 1.0, x_speed = 0, z_speed = 0, is_left = True):
         '''
             pub = tiki
             index = 번호, 로그에 남기기 위함
@@ -551,6 +551,9 @@ class _SheepMode(Mode):
         self.phase = 1
 
         self.index = index
+        self.x_speed = x_speed
+        self.z_speed = z_speed
+        self.is_left = is_left
 
         self.sleep_sec = sleep_sec
         self.time_start = time.time()
@@ -582,9 +585,10 @@ class _SheepMode(Mode):
             self.log_add("sleep ", time.time() - self.time_start)
             self.log_add("until ", self.sleep_sec)
             if time.time() - self.time_start < self.sleep_sec:
-                pass
+                move_robot(self.pub, self.x_speed, self.z_speed, self.is_left)
             else:
                 self.end = True
+                move_robot(self.pub)
 
 
 
