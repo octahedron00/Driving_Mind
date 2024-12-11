@@ -233,7 +233,7 @@ class Bot_Mind:
             Stanley2CrossMode(pub, 106, speeding_time=0.0, prefer_dist=220, from_it=True),
             Stanley2CrossMode(pub, 107, speeding_time=0.0, prefer_dist=220, from_it=True),
             Turn2RoadMode(pub, 109,       is_left=False, min_turn_sec=2.6),
-            _SheepMode(pub, 110, sleep_sec = 2.2, x_speed = -0.12),
+            _SheepMode(pub, 110, sleep_sec = 1.7, x_speed = -0.12),
 
             EndMode(pub, None, 0),
 
