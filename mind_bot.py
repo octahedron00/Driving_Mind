@@ -215,15 +215,15 @@ class Bot_Mind:
             Stanley2GreenMode(pub, 32,  from_it=True, prefer_dist=230, speeding_time=2.0),
             _SheepMode(pub, 32.5, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 33,      is_left=True, use_road_angle=True),
+            _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
 
             EventMode(pub, self.models, self.shared_list, 40, n_frame = INF_FRAMES, wait_sec = 0.1, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2VoidMode(pub, 41,      is_left=False, time_ratio = 0.95),
             # Turn2RoadMode(pub, 41,      is_left=False),
-            Stanley2GreenMode(pub, 42, from_it=True, speeding_time=2.0),
+            Stanley2GreenMode(pub, 42, from_it=True, speeding_time=0),
             Turn2VoidMode(pub, 43,      is_left=True, use_road_angle=True, time_ratio = 0.9),
             # Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
             Stanley2GreenMode(pub, 44, prefer_dist=200, speeding_time=0.5),
-            _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
 
             EndMode(pub, None, 100, predict_all=False),
         ]
