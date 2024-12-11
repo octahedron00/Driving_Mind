@@ -108,7 +108,7 @@ def showing_off(image_list, log="", get_image = False):
 
 class Bot_Mind:
 
-    def __init__(self, show_function = showing_off, go=True):
+    def __init__(self, show_function = showing_off, go=False):
 
 
         # 로그파일 만들기
