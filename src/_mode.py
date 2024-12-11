@@ -293,6 +293,9 @@ class EndMode(Mode):
             # sing(self.pub)
             self.running = False
             move_robot(self.pub)
+            
+            for i in range(8):
+                self.pub.set_led_color(i, 50, 50, 50)
 
 
 EVE_CONCENSUS_LIMIT = 3
