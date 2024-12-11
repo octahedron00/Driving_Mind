@@ -169,6 +169,7 @@ class Bot_Mind:
             StartMode(pub),
             ] + [
 
+            StartMode(pub),
             # Stanley2CrossMode(pub, -1, speeding_time=0.0, prefer_dist=220),
             # Turn2RoadMode(pub, -2,       is_left=True,  is_curve=True, z_ratio=0.3),
             # Stanley2GreenMode(pub, -3,   left_offset = 0, prefer_dist=220),

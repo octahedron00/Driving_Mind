@@ -225,7 +225,8 @@ class StartMode(Mode):
         self.pub = pub
 
     def set_frame_and_move(self, frame, showoff=True):
-
+        
+        self.pub.log_clear()
         if showoff:
             pass
         cv2.waitKey(1)
