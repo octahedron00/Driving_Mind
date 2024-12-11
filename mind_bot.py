@@ -30,7 +30,7 @@ DO_ENSEMBLE = False
 MODEL_FIRST_LIST = ["yolo11s.pt"]
 MODEL_SECOND_LIST = ["best.pt", 'yolo11s.pt']
 
-INF_FRAMES = 3
+INF_FRAMES = 1
 STEP_FOR_CAM = 0
 
 
@@ -185,6 +185,7 @@ class Bot_Mind:
             Stanley2GreenMode(pub, 3,   left_offset = 0, prefer_dist=220),
             _SheepMode(pub, 3.5, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 4,       is_left=True, use_road_angle=True),
+            _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
 
             EventMode(pub, self.models, self.shared_list, 10, n_frame = INF_FRAMES, wait_sec = 0.1, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2VoidMode(pub, 11,      is_left=True, time_ratio = 0.9),
@@ -195,6 +196,7 @@ class Bot_Mind:
             Stanley2GreenMode(pub, 14,  from_it = True, prefer_dist=250, speeding_time=2.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True, use_road_angle=True),
+            _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
 
             EventMode(pub, self.models, self.shared_list, 20, n_frame = INF_FRAMES, wait_sec = 0.1, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2VoidMode(pub, 21,      is_left=False, use_road_angle=True, time_ratio = 0.95),
@@ -205,6 +207,7 @@ class Bot_Mind:
             Stanley2GreenMode(pub, 24,  prefer_dist=230, speeding_time=1.0),
             _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 25,      is_left=True, use_road_angle=True, time_ratio = 1),
+            _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
 
             EventMode(pub, self.models, self.shared_list, 30, n_frame = INF_FRAMES, wait_sec = 0.1, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2VoidMode(pub, 31,      is_left=False, time_ratio = 0.95),
@@ -216,10 +219,11 @@ class Bot_Mind:
             EventMode(pub, self.models, self.shared_list, 40, n_frame = INF_FRAMES, wait_sec = 0.1, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2VoidMode(pub, 41,      is_left=False, time_ratio = 0.95),
             # Turn2RoadMode(pub, 41,      is_left=False),
-            Stanley2GreenMode(pub, 42, from_it=True),
+            Stanley2GreenMode(pub, 42, from_it=True, speeding_time=2.0),
             Turn2VoidMode(pub, 43,      is_left=True, use_road_angle=True, time_ratio = 0.9),
             # Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
             Stanley2GreenMode(pub, 44, prefer_dist=200, speeding_time=0.5),
+            _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
 
             EndMode(pub, None, 100, predict_all=False),
         ]
