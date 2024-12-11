@@ -292,7 +292,7 @@ class EndMode(Mode):
             '''
             # sing(self.pub)
             self.running = False
-            move_robot(pub)
+            move_robot(self.pub)
 
 
 EVE_CONCENSUS_LIMIT = 3
