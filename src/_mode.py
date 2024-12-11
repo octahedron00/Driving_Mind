@@ -474,7 +474,7 @@ class EventMode(Mode):
                 self.pub.log(f" {AREA_NAME[self.index]}: Ally {count_result_map[KEY_PREDICT[0]]} / Enem {count_result_map[KEY_PREDICT[1]]}")
 
                 for i in range(8):
-                    self.pub.set_led_color(i, 50, 50, 50)
+                    self.pub.set_led_color(i, 10, 10, 10)
 
                 for i in range(count_result_map[KEY_PREDICT[0]]):
                     self.pub.set_led_color(7-i, 0, 50, 0)
