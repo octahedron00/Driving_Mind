@@ -129,6 +129,8 @@ class Bot_Mind:
         pub.set_motor_power(pub.MOTOR_RIGHT, 0)
         pub.stop_buzzer()
         pub.log_clear()
+        for i in range(8):
+            pub.set_led_color(i, 50, 50, 50)
         
 
         # second thread 준비, init까지 진행

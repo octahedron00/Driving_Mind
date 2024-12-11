@@ -474,13 +474,13 @@ class EventMode(Mode):
                 self.pub.log(f" {AREA_NAME[self.index]}: Ally {count_result_map[KEY_PREDICT[0]]} / Enem {count_result_map[KEY_PREDICT[1]]}")
 
                 for i in range(8):
-                    self.pub.set_led_color(i, 255, 255, 255)
+                    self.pub.set_led_color(i, 50, 50, 50)
 
                 for i in range(count_result_map[KEY_PREDICT[0]]):
-                    self.pub.set_led_color(7-i, 0, 255, 0)
+                    self.pub.set_led_color(7-i, 0, 50, 0)
 
                 for i in range(count_result_map[KEY_PREDICT[0]]):
-                    self.pub.set_led_color(i, 0, 0, 255)
+                    self.pub.set_led_color(i, 0, 0, 50)
 
             # model_second를 위해서 자료 제공
             self.shared_list[int(self.index/10)] = (self.capsule[f"event_{self.index}_frame_list"], self.count_map_list)
