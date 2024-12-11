@@ -171,7 +171,7 @@ class Bot_Mind:
             # Turn2VoidMode(pub, 4,       is_left=True),
             # Turn2RoadMode(pub, 13,      is_left=False),
 
-            Stanley2GreenMode(pub, 1, speeding_time=1.0),
+            Stanley2GreenMode(pub, 1, speeding_time=0.0),
             Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
             Stanley2GreenMode(pub, 3,   left_offset = 0, prefer_dist=220),
             _SheepMode(pub, 3.5, sleep_sec = SLEEP_SEC),
@@ -181,7 +181,7 @@ class Bot_Mind:
             Turn2RoadMode(pub, 11,      is_left=True),
             Stanley2GreenMode(pub, 12),
             Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=250, speeding_time=3.0),
+            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=250, speeding_time=0.0),
             _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 15,      is_left=True),
 
@@ -189,13 +189,13 @@ class Bot_Mind:
             Turn2RoadMode(pub, 21,      is_left=False),
             Stanley2GreenMode(pub, 22,  from_it=True),
             Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
-            Stanley2GreenMode(pub, 24,  prefer_dist=230, speeding_time=1.0),
+            Stanley2GreenMode(pub, 24,  prefer_dist=260, speeding_time=0.0),
             _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 25,      is_left=True),
 
             EventMode(pub, self.models, self.shared_list, 30, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
             Turn2RoadMode(pub, 31,      is_left=False),
-            Stanley2GreenMode(pub, 32,  from_it=True, prefer_dist=230, speeding_time=3.0),
+            Stanley2GreenMode(pub, 32,  from_it=True, prefer_dist=230, speeding_time=0.0),
             _SheepMode(pub, 32.5, sleep_sec = SLEEP_SEC),
             Turn2VoidMode(pub, 33,      is_left=True),
 
