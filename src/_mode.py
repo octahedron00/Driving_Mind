@@ -850,7 +850,7 @@ class Stanley2CrossMode(Mode):
         """
         self.frame_from_start_sensing += 1
 
-        self.log_set(self.index, "S2G")
+        self.log_set(self.index, "S2C")
         bev = get_bev(frame)
         self.log_add("phase ", self.phase)
 

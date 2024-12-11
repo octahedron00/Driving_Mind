@@ -168,6 +168,18 @@ class Bot_Mind:
         self.mode_list = [
             StartMode(pub),
 
+
+            Stanley2CrossMode(pub, -1, speeding_time=0.0, prefer_dist=220),
+            Turn2RoadMode(pub, -2,       is_left=True,  is_curve=True, z_ratio=0.3),
+            Stanley2GreenMode(pub, -3,   left_offset = 0, prefer_dist=220),
+            _SheepMode(pub, -3.5, sleep_sec = SLEEP_SEC),
+            Turn2VoidMode(pub, -4,       is_left=True),
+            Turn2RoadMode(pub, -5,       is_left=True,  is_curve=True),
+            Stanley2CrossMode(pub, -6, speeding_time=0.0, prefer_dist=220),
+            Turn2RoadMode(pub, -7,       is_left=False,  is_curve=True, z_ratio=0.3),
+            Stanley2GreenMode(pub, -8, speeding_time=0.0),
+
+            EndMode(pub, None, 0),
             # Turn2VoidMode(pub, 4,       is_left=True),
             # Turn2RoadMode(pub, 13,      is_left=False),
 
@@ -207,7 +219,9 @@ class Bot_Mind:
 
             # EndMode(pub, None, 100, predict_all=False),
 
-            Turn2RoadMode(pub, 100,       is_left=False, min_turn_sec=2.6),            
+            _SheepMode(pub, 97, sleep_sec = SLEEP_SEC),
+            Turn2VoidMode(pub, 98,      is_left=False),
+            Turn2RoadMode(pub, 99,       is_left=False),            
 
             Stanley2CrossMode(pub, 101, speeding_time=0.0, prefer_dist=220, front_way=False),
             Turn2RoadMode(pub, 102,       is_left=False,  is_curve=True, z_ratio=0.3),
