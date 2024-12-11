@@ -479,7 +479,7 @@ class EventMode(Mode):
                 for i in range(count_result_map[KEY_PREDICT[0]]):
                     self.pub.set_led_color(7-i, 0, 50, 0)
 
-                for i in range(count_result_map[KEY_PREDICT[0]]):
+                for i in range(count_result_map[KEY_PREDICT[1]]):
                     self.pub.set_led_color(i, 0, 0, 50)
 
             # model_second를 위해서 자료 제공
