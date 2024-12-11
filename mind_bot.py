@@ -209,13 +209,13 @@ class Bot_Mind:
 
             # Stanley2CrossMode(pub, 101, speeding_time=0.0, prefer_dist=220, front_way=False),
             # Turn2RoadMode(pub, 102,       is_left=False,  is_curve=True, z_ratio=0.3),
-            # Stanley2CrossMode(pub, 103, speeding_time=2.0, left_way=False, prefer_dist=220, from_it=True),
-            # Stanley2CrossMode(pub, 104, speeding_time=2.0, prefer_dist=220, front_way=False, from_it=True),
+            # Stanley2CrossMode(pub, 103, speeding_time=0.0, left_way=False, prefer_dist=220, from_it=True),
+            # Stanley2CrossMode(pub, 104, speeding_time=0.0, prefer_dist=220, front_way=False, from_it=True),
             # Turn2RoadMode(pub, 105,       is_left=True,  is_curve=True, z_ratio=0.3),
             # 
             # Stanley2GreenMode(pub, 106, prefer_dist=400),
-            # Stanley2CrossMode(pub, 107, speeding_time=3.0, prefer_dist=220, from_it=True),
-            # Stanley2CrossMode(pub, 108, speeding_time=1.0, prefer_dist=220, from_it=True),
+            # Stanley2CrossMode(pub, 107, speeding_time=0.0, prefer_dist=220, from_it=True),
+            # Stanley2CrossMode(pub, 108, speeding_time=0.0, prefer_dist=220, from_it=True),
             # Turn2RoadMode(pub, 109,       is_left=False, min_turn_sec=2.6),
             # _SheepMode(pub, 110, sleep_sec = 1.5, x_speed = -0.12),
 

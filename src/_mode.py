@@ -31,7 +31,7 @@ TIME_SET_STANLEY = 1
 RATIO_SPEEDING = 3
 
 # 반경 줄일 거면 값을 높이기: x_speed 감소함
-RADIUS_VZ_OVER_VX_CONST = 205  #EDA
+RADIUS_VZ_OVER_VX_CONST = 190  #EDA
 
 TRUE_GREEN_CONF = 100
 TRUE_GREEN_DIST_FROM_ROAD = 30  # mm
@@ -936,7 +936,7 @@ class Stanley2CrossMode(Mode):
 
         ### 녹색 보고 phase 2: 속도 자체를 녹색 표식과의 위치 관계에 따라 바꿈, PREFER_ERR_RATIO 안으로 들어오면 끝. 
         elif self.phase == 2:
-            self.capsule["dist_from_cross"] = get_2_point_dist((cross_pos[1], cross_pos[0]), (BOT_FROM_BEV_X, BOT_FROM_BEV_Y))
+            self.capsule["dist_from_cross"] = BOT_FROM_BEV_Y - cross_pos[0]
             self.capsule["angle_from_road"] = angle_deg
             # 만약 Green이 사라진다면? 일단 거기서 끝내기. 그럴 일은 없겠지만, 거기서 멈추기로 함.
             if cross_max < TRUE_CROSS_CONF:
