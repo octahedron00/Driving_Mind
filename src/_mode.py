@@ -292,6 +292,7 @@ class EndMode(Mode):
             '''
             # sing(self.pub)
             self.running = False
+            move_robot(pub)
 
 
 EVE_CONCENSUS_LIMIT = 3
@@ -750,6 +751,7 @@ class Stanley2GreenMode(Mode):
             # 만약 Green이 사라진다면? 일단 거기서 끝내기. 그럴 일은 없겠지만, 거기서 멈추기로 함.
             if green_max < TRUE_GREEN_CONF:
                 self.end = True
+                z = move_robot(self.pub)
                 self.log_add("Green is Gone! ", green_max)
                 return
 
