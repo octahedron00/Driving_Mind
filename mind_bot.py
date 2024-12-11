@@ -167,7 +167,7 @@ class Bot_Mind:
 
         self.mode_list = [
             StartMode(pub),
-
+            ] + [
 
             # Stanley2CrossMode(pub, -1, speeding_time=0.0, prefer_dist=220),
             # Turn2RoadMode(pub, -2,       is_left=True,  is_curve=True, z_ratio=0.3),
@@ -234,129 +234,9 @@ class Bot_Mind:
             Stanley2CrossMode(pub, 107, speeding_time=0.0, prefer_dist=220, from_it=True),
             Turn2RoadMode(pub, 109,       is_left=False, min_turn_sec=2.6),
             _SheepMode(pub, 110, sleep_sec = 1.7, x_speed = -0.12),
-
-
-
-
-
-            Stanley2GreenMode(pub, 1, speeding_time=0.0),
-            Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
-            Stanley2GreenMode(pub, 3,   left_offset = 0, prefer_dist=220),
-            _SheepMode(pub, 3.5, sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 4,       is_left=True),
-
-            EventMode(pub, self.models, self.shared_list, 10, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 11,      is_left=True),
-            Stanley2GreenMode(pub, 12),
-            Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=250, speeding_time=0.0),
-            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 15,      is_left=True),
-
-            EventMode(pub, self.models, self.shared_list, 20, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 21,      is_left=False),
-            Stanley2GreenMode(pub, 22,  from_it=True),
-            Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
-            Stanley2GreenMode(pub, 24,  prefer_dist=260, speeding_time=0.0),
-            _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 25,      is_left=True),
-
-            EventMode(pub, self.models, self.shared_list, 30, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 31,      is_left=False),
-            Stanley2GreenMode(pub, 32,  from_it=True, prefer_dist=230, speeding_time=0.0),
-            _SheepMode(pub, 32.5, sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 33,      is_left=True),
-
-            EventMode(pub, self.models, self.shared_list, 40, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 41,      is_left=False),
-            Stanley2GreenMode(pub, 42, from_it=True),
-            Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
-            Stanley2GreenMode(pub, 44, speed_weight = 1, prefer_dist=200),
-
-            # EndMode(pub, None, 100, predict_all=False),
-
-            _SheepMode(pub, 97, sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 98,      is_left=False),
-            Turn2RoadMode(pub, 99,       is_left=False),            
-
-            Stanley2CrossMode(pub, 101, speeding_time=0.0, prefer_dist=220, front_way=False),
-            Turn2RoadMode(pub, 102,       is_left=False,  is_curve=True, z_ratio=0.3),
-            Stanley2CrossMode(pub, 103, speeding_time=0.0, left_way=False, prefer_dist=220, from_it=True),
-            Stanley2CrossMode(pub, 104, speeding_time=0.0, prefer_dist=220, front_way=False, from_it=True),
-            Turn2RoadMode(pub, 105,       is_left=True,  is_curve=True, z_ratio=0.3),
-            
-            # Stanley2GreenMode(pub, 106, prefer_dist=400),
-            Stanley2CrossMode(pub, 106, speeding_time=0.0, prefer_dist=220, from_it=True),
-            Stanley2CrossMode(pub, 107, speeding_time=0.0, prefer_dist=220, from_it=True),
-            Turn2RoadMode(pub, 109,       is_left=False, min_turn_sec=2.6),
-            _SheepMode(pub, 110, sleep_sec = 1.7, x_speed = -0.12),
-
-
-
-
-
-
-
-            Stanley2GreenMode(pub, 1, speeding_time=0.0),
-            Turn2RoadMode(pub, 2,       is_left=True,  is_curve=True),
-            Stanley2GreenMode(pub, 3,   left_offset = 0, prefer_dist=220),
-            _SheepMode(pub, 3.5, sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 4,       is_left=True),
-
-            EventMode(pub, self.models, self.shared_list, 10, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 11,      is_left=True),
-            Stanley2GreenMode(pub, 12),
-            Turn2RoadMode(pub, 13,      is_left=True,  is_curve=True),
-            Stanley2GreenMode(pub, 14,  from_it = True, speed_weight=1, prefer_dist=250, speeding_time=0.0),
-            _SheepMode(pub, 0, sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 15,      is_left=True),
-
-            EventMode(pub, self.models, self.shared_list, 20, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 21,      is_left=False),
-            Stanley2GreenMode(pub, 22,  from_it=True),
-            Turn2RoadMode(pub, 23,      is_left=False,  is_curve=True),
-            Stanley2GreenMode(pub, 24,  prefer_dist=260, speeding_time=0.0),
-            _SheepMode(pub, 24.5,   sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 25,      is_left=True),
-
-            EventMode(pub, self.models, self.shared_list, 30, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 31,      is_left=False),
-            Stanley2GreenMode(pub, 32,  from_it=True, prefer_dist=230, speeding_time=0.0),
-            _SheepMode(pub, 32.5, sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 33,      is_left=True),
-
-            EventMode(pub, self.models, self.shared_list, 40, n_frame = INF_FRAMES, wait_sec = 0.3, show_log= not DO_SECOND, step_for_cam=STEP_FOR_CAM),
-            Turn2RoadMode(pub, 41,      is_left=False),
-            Stanley2GreenMode(pub, 42, from_it=True),
-            Turn2RoadMode(pub, 43,      is_left=True, is_curve=True),
-            Stanley2GreenMode(pub, 44, speed_weight = 1, prefer_dist=200),
-
-            # EndMode(pub, None, 100, predict_all=False),
-
-            _SheepMode(pub, 97, sleep_sec = SLEEP_SEC),
-            Turn2VoidMode(pub, 98,      is_left=False),
-            Turn2RoadMode(pub, 99,       is_left=False),            
-
-            Stanley2CrossMode(pub, 101, speeding_time=0.0, prefer_dist=220, front_way=False),
-            Turn2RoadMode(pub, 102,       is_left=False,  is_curve=True, z_ratio=0.3),
-            Stanley2CrossMode(pub, 103, speeding_time=0.0, left_way=False, prefer_dist=220, from_it=True),
-            Stanley2CrossMode(pub, 104, speeding_time=0.0, prefer_dist=220, front_way=False, from_it=True),
-            Turn2RoadMode(pub, 105,       is_left=True,  is_curve=True, z_ratio=0.3),
-            
-            # Stanley2GreenMode(pub, 106, prefer_dist=400),
-            Stanley2CrossMode(pub, 106, speeding_time=0.0, prefer_dist=220, from_it=True),
-            Stanley2CrossMode(pub, 107, speeding_time=0.0, prefer_dist=220, from_it=True),
-            Turn2RoadMode(pub, 109,       is_left=False, min_turn_sec=2.6),
-            _SheepMode(pub, 110, sleep_sec = 1.7, x_speed = -0.12),
-
-
-
-
-
+            ] * 10 + [
             EndMode(pub, None, 0),
-
-
-        ]
+            ]
 
         # 모델 부르기 등이 오래 걸릴 수 있으니, 출발 자체는 엔터 한 번으로 진행
         # input 하나 받는 걸로 준비해두기.
