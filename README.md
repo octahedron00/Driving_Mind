@@ -1,3 +1,13 @@
+## Congrats to our team AI-FORCE
+
+2024 Military AI CONtest([MAICON](https://maicon.kr)), 제3회 국방 AI 경진대회 출전
+
+[최우수상(국방부장관상)](https://maicon.kr/ai-force/) 수상.
+
+출전 영상은 [여기](https://www.youtube.com/watch?v=BKBcChfYz6s)에서 확인하실 수 있습니다.
+
+이 repo는 해당 경진대회에서 활용한 코드입니다.
+
 # Driving_Mind
 
 AI driving mind uploaded on github:
@@ -6,9 +16,9 @@ for Team AI-FORCE
 
 2024 MAICON WINNER
 
-with zerothweek, rkdgmldnjs52, h0bin2, KwCCCC
+with [zerothweek](https://github.com/zerothweek), [rkdgmldnjs52](https://github.com/rkdgmldnjs52), [h0bin2](https://github.com/h0bin2), [KwCCCC](https://github.com/KwCCCC)
 
-Thanks to jsonmona
+Thanks to [jsonmona](https://github.com/jsonmona) with key-idea of [OOP-shaped code](https://github.com/jsonmona/carsim)
 
 ## TODO
 
