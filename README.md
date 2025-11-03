@@ -1,3 +1,7 @@
+## 2025 MAICON을 응원합니다!
+
+관련 자료: [docs](./docs)에 업로드.
+
 ## Congrats to our team AI-FORCE
 
 2024 Military AI CONtest([MAICON](https://maicon.kr)), 제3회 국방 AI 경진대회 출전
@@ -20,29 +24,17 @@ with [zerothweek](https://github.com/zerothweek), [rkdgmldnjs52](https://github.
 
 Thanks to [jsonmona](https://github.com/jsonmona) with key-idea of [OOP-shaped code](https://github.com/jsonmona/carsim)
 
-## TODO
+## mind_bot.py
 
-jupyter는 그냥 로봇에서 돌리면 그만이다: 세션 자주 갈아주기 정도
+실제 주행 코드.
 
-pip install ultralytics keyboard 
+## mind_control.py
 
-아예 Jupyter 말고 그냥 Python을 쓰고 싶다면, 그냥 -ssh 접속 쓰기로 하자.
+로봇 조작 코드: 주행, 촬영 등
 
-Venv 위치: ~/Setup/venv/bin/activate
+## mind_eda.py
 
-VS Code 안에서도 어.. 이것저것 해줄 것
-
-### 실행을 원한다면, ssh -X username@ip_address
-
-이렇게 해야 GUI가 내 화면에서 뜬다. 
-
-### Model을 적용할 때 주의점
-
-JetPack 4.6.1 / Onnx 1.11 이하, TensorRT 8.2.1, CUDA 10.2
-
-여기서... DETR이랑 YOLO가 잘 돌아갈까? 
-
-일단 GPU memory는 몇백 MB밖에 먹지 않는 것으로 보임.. 의외로 괜찮을지도
+데이터 분석 코드: python mind_eda.py vlog_1153.mp4 식으로 사용.
 
 ## Basic Shape
 
@@ -101,6 +93,22 @@ T2R (Turn2Road)
 ## TODO
 
 - 연산량이 많은 게 아니라 그냥 iteration을 python이 아니라 C에서 최대한 굴리도록 해야 함: Numpy의 함수들을 최대한 많이 활용할 것.
+
+pip install ultralytics keyboard 
+
+Venv 위치: ~/Setup/venv/bin/activate
+
+### 실행을 원한다면, ssh -X username@ip_address
+
+이렇게 해야 GUI가 내 화면에서 뜬다. 
+
+### Model을 적용할 때 주의점
+
+JetPack 4.6.1 / Onnx 1.11 이하, TensorRT 8.2.1, CUDA 10.2
+
+여기서... DETR이랑 YOLO가 잘 돌아갈까? 
+
+일단 GPU memory는 몇백 MB밖에 먹지 않는 것으로 보임.. 의외로 괜찮을지도
 
 
 
